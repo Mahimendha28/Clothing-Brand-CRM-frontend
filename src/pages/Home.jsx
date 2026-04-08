@@ -91,7 +91,7 @@ function Home() {
     navigate(`/products${params.toString() ? `?${params.toString()}` : ""}`);
   };
 
-  const spotlightProduct = featuredProducts[0] || null;
+  const spotlightProduct = featuredProducts.find((product) => product.hero_image) || featuredProducts[0] || null;
   const spotlightImage = buildCatalogImageUrl(spotlightProduct?.hero_image);
 
   return (
