@@ -1,6 +1,10 @@
 export const getDefaultRouteForRole = (role) => {
   if (role === "admin") {
-    return "/admin/users";
+    return "/dashboard";
+  }
+
+  if (role === "customer") {
+    return "/";
   }
 
   return "/dashboard";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 import PasswordToggleButton from "../components/PasswordToggleButton";
@@ -11,6 +11,7 @@ import { loginUser } from "../services/authService";
 import { getDefaultRouteForRole } from "../utils/redirect";
 
 function Login() {
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +38,11 @@ function Login() {
     try {
       const response = await loginUser(formData);
       dispatch(setCredentials({ token: response.token, user: response.user }));
-      navigate(getDefaultRouteForRole(response.user.role));
+      const redirectTarget = location.state?.from
+        ? `${location.state.from.pathname}${location.state.from.search || ""}`
+        : getDefaultRouteForRole(response.user.role);
+
+      navigate(redirectTarget, { replace: true });
     } catch (apiError) {
       setError(apiError.message || "Login failed");
     } finally {

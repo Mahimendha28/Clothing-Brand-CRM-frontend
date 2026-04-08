@@ -1,16 +1,20 @@
-import React from "react";
-import { getStoredUser } from "../utils/auth";
 import AdminDashboard from "./AdminDashboard";
-import UserDashboard from "./UserDashboard";
+import InventoryDashboardPage from "./InventoryDashboardPage";
+import SalesDashboard from "./SalesDashboard";
+import { getStoredUser } from "../utils/auth";
 
 function Dashboard() {
   const user = getStoredUser();
 
-  if (user?.role === "admin") {
-    return <AdminDashboard />;
+  if (user?.role === "sales_executive" || user?.role === "marketing_manager") {
+    return <SalesDashboard />;
   }
 
-  return <UserDashboard />;
+  if (user?.role === "inventory_manager") {
+    return <InventoryDashboardPage />;
+  }
+
+  return <AdminDashboard />;
 }
 
 export default Dashboard;
