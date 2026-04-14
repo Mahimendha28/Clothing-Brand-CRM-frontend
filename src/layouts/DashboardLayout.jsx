@@ -1,5 +1,7 @@
 import { NavLink, Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { clearAuth, getStoredUser } from "../utils/auth";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   BarChart3,
@@ -13,9 +15,12 @@ import {
   Settings as SettingsIcon,
   ShoppingBag,
   UserCircle2,
-  Users
+  Users,
+  Menu,
+  X,
+  ChevronRight
 } from "lucide-react";
-import Button from "../components/common/Button";
+import { landingContent } from "../data/themeContent";
 
 const crmShellPaths = new Set([
   "/dashboard",
@@ -28,7 +33,7 @@ const crmShellPaths = new Set([
 
 const crmNavItems = [
   {
-    label: "Dashboard",
+    label: "Overview",
     to: "/dashboard",
     icon: LayoutDashboard,
     match: (pathname) => pathname === "/dashboard" || pathname.startsWith("/dashboard/")
@@ -77,6 +82,8 @@ function DashboardLayout() {
   const user = getStoredUser();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const useCrmShell =
     user?.role === "admin" ||
     location.pathname.startsWith("/admin") ||
@@ -86,282 +93,221 @@ function DashboardLayout() {
     location.pathname.startsWith("/customers") ||
     crmShellPaths.has(location.pathname);
 
+  const brandName = landingContent?.brand || "Badshah";
+
   if (useCrmShell) {
     return (
-      <div className="flex min-h-screen bg-page text-primary">
-        <aside className="relative z-10 hidden w-[276px] flex-col border-r border-line bg-[#f8f5f0] lg:flex">
-          <div className="px-8 pb-8 pt-10">
-            <h1 className="font-display text-2xl font-semibold text-ink">Atelier CRM</h1>
-            <p className="mt-1 text-xs tracking-wide text-secondary">System Administrator</p>
+      <div className="flex h-screen overflow-hidden bg-page text-primary selection:bg-accent/20">
+        
+        {/* Mobile menu overlay */}
+        <AnimatePresence>
+           {mobileMenuOpen && (
+              <>
+                 <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-40 bg-primary/20 backdrop-blur-sm lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+                 <motion.aside initial={{x:"-100%"}} animate={{x:0}} exit={{x:"-100%"}} transition={{type:"spring", damping:25, stiffness:200}} className="fixed inset-y-0 left-0 z-50 w-72 bg-canvas flex flex-col border-r border-soft shadow-2xl lg:hidden">
+                    <div className="flex items-center justify-between px-6 py-6 border-b border-soft">
+                       <Link to="/" className="font-display text-xl font-bold tracking-tight text-primary flex items-center gap-2">
+                          <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
+                             <span className="text-canvas text-sm leading-none font-bold">B</span>
+                          </div>
+                          <span>{brandName}</span>
+                       </Link>
+                       <button onClick={() => setMobileMenuOpen(false)} className="text-secondary hover:text-primary p-2">
+                          <X className="h-5 w-5" />
+                       </button>
+                    </div>
+                    {/* Reuse nav rendering below */}
+                    <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                      {crmNavItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = item.match(location.pathname);
+                        return (
+                          <NavLink key={item.label} to={item.to} onClick={()=>setMobileMenuOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? "bg-primary text-canvas shadow-sm" : "text-secondary hover:bg-input hover:text-primary"}`}>
+                            <Icon className="h-5 w-5" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </nav>
+                 </motion.aside>
+              </>
+           )}
+        </AnimatePresence>
+
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:flex w-[260px] flex-col border-r border-soft bg-canvas shrink-0 relative z-10 transition-all duration-300">
+          <div className="px-6 py-6">
+            <Link to="/" className="font-display text-xl font-bold tracking-tight text-primary flex items-center gap-2 mb-1">
+               <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-canvas text-lg leading-none font-bold">B</span>
+               </div>
+               <span>{brandName}</span>
+            </Link>
+            <p className="text-xs text-muted font-medium ml-10">Administration</p>
           </div>
 
-          <nav className="mt-2 flex-1 px-4">
-            <div className="space-y-2">
+          <nav className="flex-1 px-4 mt-6 overflow-y-auto">
+            <div className="space-y-1.5">
               {crmNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.match(location.pathname);
-
                 return (
                   <NavLink
                     key={item.label}
                     to={item.to}
-                    className={`flex items-center gap-4 rounded-[12px] px-4 py-3 text-sm transition-colors ${
+                    className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? "bg-white font-semibold text-ink shadow-sm"
-                        : "font-medium text-secondary hover:bg-white/60 hover:text-ink"
+                        ? "bg-primary text-canvas shadow-md shadow-primary/10"
+                        : "text-secondary hover:bg-input hover:text-primary"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                    <div className="flex items-center gap-3">
+                       <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
+                       <span>{item.label}</span>
+                    </div>
+                    {isActive && <motion.div layoutId="sidebar-active" className="w-1.5 h-1.5 rounded-full bg-accent" />}
                   </NavLink>
                 );
               })}
             </div>
           </nav>
 
-          <div className="mt-auto border-t border-line p-6">
-            <Button
-              type="button"
-              className="w-full !rounded-[8px] !bg-[#6d6c6a] !px-6 !py-3.5 !text-base !font-medium !normal-case !tracking-[0.02em] shadow-sm"
-              onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}
-            >
-              New Collection
-            </Button>
-
-            <div className="mt-6 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white bg-line shadow-sm">
-                  <div className="absolute inset-x-0 bottom-0 top-3 flex flex-col items-center bg-ink/20 pt-1">
-                    <div className="h-4 w-4 rounded-full bg-ink/80"></div>
+          <div className="p-4 border-t border-soft">
+            <div className="bg-input rounded-2xl p-4 flex flex-col gap-4">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-canvas border border-soft shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+                     <UserCircle2 className="w-6 h-6 text-muted" />
                   </div>
-                </div>
-                <div>
-                  <p className="mt-0.5 text-xs font-bold text-ink">{user?.name || "Julian Vane"}</p>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-muted">Chief Curator</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  clearAuth();
-                  navigate("/");
-                }}
-                className="text-muted transition-colors hover:text-ink"
-                title="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+                  <div className="overflow-hidden w-full">
+                     <p className="text-sm font-semibold truncate text-primary">{user?.name || "Admin User"}</p>
+                     <p className="text-[10px] uppercase tracking-wider text-muted font-bold truncate">{user?.role || "System Admin"}</p>
+                  </div>
+               </div>
+               <button onClick={() => { clearAuth(); navigate("/"); }} className="w-full py-2 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
+                  <LogOut className="w-4 h-4" /> Sign Out
+               </button>
             </div>
           </div>
         </aside>
 
-        <main className="flex flex-1 flex-col bg-[#fcf8f3]">
-          <header className="flex items-center justify-between gap-6 px-10 py-6">
-            <div className="relative w-full max-w-[660px]">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                placeholder="Search orders, clients, or inventory..."
-                className="w-full rounded-[14px] bg-[#f4f1eb] py-3 pl-11 pr-4 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-[#e2ddd5]"
-              />
-            </div>
-
-            <div className="flex items-center gap-6 text-muted">
-              <Link to="/dashboard/notifications" className="transition-colors hover:text-ink" title="Notifications">
-                <Bell className="h-5 w-5" />
-              </Link>
-              <MessageSquare className="h-5 w-5 cursor-pointer transition-colors hover:text-ink" />
-              <div className="h-6 w-px bg-line"></div>
-              <UserCircle2 className="h-5 w-5 cursor-pointer transition-colors hover:text-ink" />
-              <ShoppingBag className="h-5 w-5 cursor-pointer transition-colors hover:text-ink" />
-            </div>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-page">
+          
+          {/* Top Header */}
+          <header className="h-20 shrink-0 flex items-center justify-between px-6 lg:px-10 bg-canvas/60 backdrop-blur-md border-b border-soft z-10 sticky top-0">
+             <div className="flex items-center gap-4">
+                <button className="lg:hidden p-2 text-secondary hover:bg-input rounded-lg transition-colors" onClick={() => setMobileMenuOpen(true)}>
+                   <Menu className="w-5 h-5" />
+                </button>
+                <div className="relative hidden md:block w-72 lg:w-96">
+                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                     type="text"
+                     placeholder="Search records, users, or products..."
+                     className="w-full rounded-full bg-input py-2.5 pl-10 pr-4 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:bg-canvas transition-all shadow-sm inset-shadow-sm"
+                  />
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-3">
+                <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-canvas text-sm font-medium rounded-full shadow-sm hover:scale-105 transition-transform" onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}>
+                   <span className="text-lg leading-none">+</span> New Product
+                </button>
+                <div className="h-6 w-px bg-strong mx-1 hidden md:block" />
+                <button className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
+                   <Bell className="w-5 h-5" />
+                   <span className="absolute top-2 right-2.5 w-2 h-2 bg-danger rounded-full border-2 border-canvas"></span>
+                </button>
+                <Link to="/" className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors" title="View Store">
+                   <LayoutDashboard className="w-5 h-5" />
+                </Link>
+             </div>
           </header>
 
-          <div className="mx-auto w-full max-w-[1200px] px-10 pb-16">
-            <Outlet />
-
-            <footer className="mt-24 flex flex-col justify-between gap-10 border-t border-line pt-12 md:flex-row">
-              <div className="max-w-xs">
-                <h4 className="font-display text-xl italic text-ink">The Editorial Boutique</h4>
-                <p className="mt-3 text-xs leading-relaxed text-secondary">
-                  &copy; 2024 The Editorial Boutique. Crafted for the Tactile Atelier.
-                </p>
-              </div>
-
-              <div className="flex gap-16">
-                <div>
-                  <h5 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-ink">Internal</h5>
-                  <ul className="space-y-3 text-xs text-secondary">
-                    <li>
-                      <Link to="/dashboard" className="hover:text-ink">
-                        Dashboard
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/inventory" className="hover:text-ink">
-                        Inventory
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h5 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-ink">Legal</h5>
-                  <ul className="space-y-3 text-xs text-secondary">
-                    <li>
-                      <Link to="/analytics" className="hover:text-ink">
-                        Analytics
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/settings" className="hover:text-ink">
-                        Settings
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h5 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-ink">Support</h5>
-                  <ul className="space-y-3 text-xs text-secondary">
-                    <li>
-                      <Link to="/customers" className="hover:text-ink">
-                        Customers
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/orders" className="hover:text-ink">
-                        Orders
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/dashboard/returns" className="hover:text-ink">
-                        Returns
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </footer>
-          </div>
-        </main>
+          <main className="flex-1 overflow-y-auto w-full p-6 lg:p-10">
+             <div className="max-w-7xl mx-auto space-y-8">
+                <Outlet />
+             </div>
+          </main>
+        </div>
       </div>
     );
   }
 
+  // Regular User Dashboard Layout (Non-CRM Shell)
   return (
-    <div className="flex min-h-screen flex-col bg-page font-sans text-primary">
-      <header className="flex items-center justify-between px-8 py-8">
-        <h1 className="cursor-pointer font-display text-2xl font-bold text-ink" onClick={() => navigate("/")}>
-          The Editorial Boutique
-        </h1>
+    <div className="flex min-h-screen flex-col bg-page font-sans text-primary selection:bg-accent/20">
+      <header className="flex items-center justify-between px-6 lg:px-10 py-5 bg-canvas border-b border-soft sticky top-0 z-40">
+         <div className="flex items-center gap-4">
+            <Link to="/" className="font-display text-xl font-bold tracking-tight text-primary flex items-center gap-2">
+               <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-canvas text-lg leading-none font-bold">B</span>
+               </div>
+               <span className="hidden sm:block">{brandName}</span>
+            </Link>
+         </div>
 
-        <nav className="hidden items-center gap-8 text-xs font-bold uppercase tracking-[0.2em] text-secondary md:flex">
-          <a href="/#collections" className="transition-colors hover:text-ink">
-            Collections
-          </a>
-          <a href="/#atelier" className="transition-colors hover:text-ink">
-            Atelier
-          </a>
-          <a href="/#archive" className="transition-colors hover:text-ink">
-            Archive
-          </a>
-          <a href="/#journal" className="transition-colors hover:text-ink">
-            Journal
-          </a>
+        <nav className="hidden items-center gap-6 text-sm font-medium text-secondary md:flex">
+          <Link to="/" className="transition-colors hover:text-primary">Store</Link>
+          <Link to="/products" className="transition-colors hover:text-primary">Collections</Link>
+          <Link to="/returns" className="transition-colors hover:text-primary">Returns</Link>
         </nav>
 
-        <div className="flex items-center justify-end gap-5 text-secondary">
-          <button
+        <div className="flex items-center gap-2 relative">
+           <Link to="/dashboard" className="p-2 text-primary bg-input rounded-full hover:bg-soft transition-colors">
+              <UserCircle2 className="h-5 w-5" />
+           </Link>
+           <Link to="/cart" className="p-2 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
+              <ShoppingBag className="h-5 w-5" />
+           </Link>
+           <button
             type="button"
             onClick={() => {
               clearAuth();
               navigate("/");
             }}
-            className="mr-2 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-ink"
+            className="ml-4 hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-danger transition-colors border-l border-soft pl-4"
           >
-            Logout
+            Sign Out
           </button>
-          <UserCircle2 className="h-5 w-5 cursor-pointer transition-colors hover:text-ink" />
-          <ShoppingBag className="h-5 w-5 cursor-pointer transition-colors hover:text-ink" />
         </div>
       </header>
 
-      <main className="mx-auto flex-1 w-full max-w-[1100px] px-8 pb-20 pt-10">
-        <Outlet />
-      </main>
-
-      <footer className="bg-[#f0ece5] px-8 pb-12 pt-16">
-        <div className="mx-auto flex max-w-[1100px] flex-col justify-between gap-16 md:flex-row">
-          <div className="max-w-xs">
-            <h4 className="mb-4 font-display text-2xl italic text-ink">The Editorial Boutique</h4>
-            <p className="text-xs leading-relaxed text-secondary">
-              Dedicated to the art of the tactile. Our boutique celebrates the physical essence of garment making.
-            </p>
-          </div>
-
-          <div className="flex gap-20">
-            <div>
-              <h5 className="mb-6 text-[10px] font-bold uppercase tracking-widest text-ink">Services</h5>
-              <ul className="space-y-4 text-[11px] text-secondary">
-                <li>
-                  <Link to="/orders" className="hover:text-ink">
-                    Shipping
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/addresses" className="hover:text-ink">
-                    Addresses
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/settings" className="hover:text-ink">
-                    Returns
-                  </Link>
-                </li>
-              </ul>
+      <div className="flex-1 flex w-full max-w-[1440px] mx-auto px-6 py-10 gap-10">
+         {/* User Account Sidebar */}
+         <aside className="hidden md:flex w-64 flex-col gap-6 shrink-0">
+            <div className="bg-canvas rounded-3xl p-6 border border-soft shadow-soft">
+               <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-primary text-canvas rounded-full flex items-center justify-center shadow-sm">
+                     <span className="text-xl font-display font-medium">{user?.name?.charAt(0) || "U"}</span>
+                  </div>
+                  <div className="overflow-hidden">
+                     <p className="font-semibold text-primary truncate">{user?.name || "Client"}</p>
+                     <p className="text-xs text-muted truncate">{user?.email || "Account Holder"}</p>
+                  </div>
+               </div>
+               
+               <nav className="space-y-1.5">
+                  <NavLink to="/dashboard" end className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
+                     Overview
+                  </NavLink>
+                  <NavLink to="/my-orders" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
+                     Order History
+                  </NavLink>
+                  <NavLink to="/wishlist" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
+                     Saved Items
+                  </NavLink>
+                  <NavLink to="/addresses" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
+                     Addresses
+                  </NavLink>
+               </nav>
             </div>
+         </aside>
 
-            <div>
-              <h5 className="mb-6 text-[10px] font-bold uppercase tracking-widest text-ink">Company</h5>
-              <ul className="space-y-4 text-[11px] text-secondary">
-                <li>
-                  <Link to="/profile" className="hover:text-ink">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <a href="/#atelier" className="hover:text-ink">
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a href="/#journal" className="hover:text-ink">
-                    Terms
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className="min-w-[280px]">
-              <h5 className="mb-6 text-[10px] font-bold uppercase tracking-widest text-ink">Newsletter</h5>
-              <div className="flex items-center">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="w-full border-b border-[#d4cfc7] bg-transparent py-2 text-sm text-[#111] placeholder:text-muted focus:border-ink focus:outline-none"
-                />
-                <button className="border-b border-[#d4cfc7] py-2 pl-3 text-muted transition-colors hover:text-ink">
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-8 text-[9px] text-[#a6a29c]">
-                &copy; 2024 The Editorial Boutique. Crafted for the Tactile Atelier.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+         <main className="flex-1 w-full min-w-0 pb-20">
+            <Outlet />
+         </main>
+      </div>
     </div>
   );
 }

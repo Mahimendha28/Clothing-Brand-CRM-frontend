@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Check, Truck, Home, User, Package, RotateCcw, Plus, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getStoredUser } from "../utils/auth";
@@ -6,73 +6,91 @@ import Button from "../components/common/Button";
 
 function UserDashboard() {
   const user = getStoredUser();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading to show Skeletons
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 pb-12">
       {/* Header section */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <p className="ui-eyebrow mb-4">Your Private Atelier Space</p>
-          <h1 className="font-display text-5xl md:text-6xl text-ink leading-tight">
+          <p className="ui-eyebrow mb-4 opacity-70">Your Private Atelier Space</p>
+          <h1 className="font-display text-5xl md:text-6xl text-primary leading-tight">
             Welcome back,<br />
-            {user?.name || "Alexandra"}.
+            {user?.name || "Member"}.
           </h1>
           <p className="mt-4 max-w-md text-secondary leading-relaxed">
             A curated overview of your tactile journey. Your orders are being handled with artisan care.
           </p>
         </div>
-        <div className="rounded-card bg-[#f3deb8] p-5 md:min-w-[280px] flex items-center justify-between border border-[#e5cca0]">
+        <div className="rounded-[24px] bg-input border border-soft shadow-sm p-5 md:min-w-[280px] flex items-center justify-between hover:-translate-y-1 hover:shadow-float transition-all duration-300">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#8b6e45] font-bold">Membership Status</p>
-            <p className="font-display text-xl text-[#5a4220] mt-1 italic">Atelier Gold Member</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Membership Status</p>
+            <p className="font-display text-xl text-primary mt-1 italic">Atelier Fast-Track</p>
           </div>
-          <div className="h-10 w-10 bg-[#5a4220] rounded-full flex items-center justify-center text-[#f3deb8]">
+          <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
             <Check className="h-5 w-5" />
           </div>
         </div>
       </section>
 
+      {loading ? (
+        <div className="space-y-10 animate-pulse">
+          <div className="grid gap-10 xl:grid-cols-[1.5fr_1fr]">
+             <div className="space-y-10">
+                <div className="h-[400px] rounded-[32px] bg-canvas border border-soft" />
+                <div className="h-[150px] rounded-[32px] bg-canvas border border-soft" />
+             </div>
+             <div className="h-[600px] rounded-[32px] bg-canvas border border-soft" />
+          </div>
+        </div>
+      ) : (
       <div className="grid gap-10 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-10">
           {/* Order Summary */}
           <section>
-            <div className="rounded-[24px] bg-[#f2efe9] p-8">
+            <div className="rounded-[32px] bg-canvas border border-soft shadow-sm p-8 hover:shadow-soft transition-shadow duration-300">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="font-display text-2xl text-ink">Recent Order Summary</h2>
-                  <p className="text-sm text-secondary mt-1">Order #EB-94021 • Placed Oct 12</p>
+                  <h2 className="font-display text-2xl text-primary">Recent Order Summary</h2>
+                  <p className="text-sm text-secondary mt-1">Order #EB-94021 • Placed Today</p>
                 </div>
-                <span className="rounded-full bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-ink shadow-sm">
+                <span className="rounded-full bg-input border border-soft px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary shadow-sm">
                   In Transit
                 </span>
               </div>
 
               {/* Progress Tracker Tracker */}
               <div className="relative mb-12 mt-6 px-4">
-                <div className="absolute top-1/2 left-4 right-4 h-[2px] bg-[#d3ccbf] -translate-y-1/2" />
-                <div className="absolute top-1/2 left-4 w-2/3 h-[2px] bg-[#75655a] -translate-y-1/2" />
+                <div className="absolute top-1/2 left-4 right-4 h-[2px] bg-line -translate-y-1/2" />
+                <div className="absolute top-1/2 left-4 w-2/3 h-[2px] bg-primary -translate-y-1/2 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
                 
                 <div className="relative flex justify-between">
-                  <div className="flex flex-col items-center">
-                    <div className="h-10 w-10 rounded-full bg-[#75655a] text-white flex items-center justify-center relative z-10 shadow-sm border-[4px] border-[#f2efe9]">
+                  <div className="flex flex-col items-center group">
+                    <div className="h-10 w-10 rounded-full bg-primary text-canvas flex items-center justify-center relative z-10 shadow-sm border-[4px] border-canvas group-hover:scale-110 transition-transform">
                       <Check className="h-4 w-4" />
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink mt-3">Processed</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-3">Processed</p>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div className="h-10 w-10 rounded-full bg-[#75655a] text-white flex items-center justify-center relative z-10 shadow-sm border-[4px] border-[#f2efe9]">
+                  <div className="flex flex-col items-center group">
+                    <div className="h-10 w-10 rounded-full bg-primary text-canvas flex items-center justify-center relative z-10 shadow-sm border-[4px] border-canvas group-hover:scale-110 transition-transform">
                       <Check className="h-4 w-4" />
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink mt-3">Shipped</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-3">Shipped</p>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div className="h-10 w-10 rounded-full bg-[#75655a] text-white flex items-center justify-center relative z-10 shadow-sm border-[4px] border-[#f2efe9]">
+                  <div className="flex flex-col items-center group">
+                    <div className="h-10 w-10 rounded-full bg-primary text-canvas flex items-center justify-center relative z-10 shadow-[0_0_15px_rgba(79,70,229,0.5)] border-[4px] border-canvas group-hover:scale-110 transition-transform">
                       <Truck className="h-4 w-4" />
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink mt-3">In Transit</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-3">In Transit</p>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div className="h-10 w-10 rounded-full bg-[#e6dfd3] text-muted flex items-center justify-center relative z-10 shadow-sm border-[4px] border-[#f2efe9]">
+                  <div className="flex flex-col items-center group">
+                    <div className="h-10 w-10 rounded-full bg-input text-muted flex items-center justify-center relative z-10 shadow-sm border-[4px] border-canvas group-hover:scale-110 transition-transform">
                       <Home className="h-4 w-4" />
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted mt-3">Delivered</p>
@@ -80,21 +98,17 @@ function UserDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[16px] p-4 flex items-center justify-between shadow-sm">
+              <div className="bg-input rounded-[16px] p-4 flex items-center justify-between shadow-sm border border-soft hover:-translate-y-1 hover:shadow-md transition-all duration-300 cursor-pointer">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 bg-[#2c3e50] rounded-[8px] flex flex-col justify-center items-center overflow-hidden">
-                     {/* placeholder icon/image */}
-                     <div className="w-8 h-8 rounded bg-[#bdc3c7] relative mt-2">
-                        <div className="absolute top-1 left-2 w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                        <div className="absolute top-1 right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                     </div>
+                  <div className="h-16 w-16 bg-primary/10 rounded-[8px] flex flex-col justify-center items-center overflow-hidden">
+                     <Package className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-display text-lg text-ink font-semibold">The Heritage Wool Trench</h3>
+                    <h3 className="font-display text-lg text-primary font-semibold">The Heritage Wool Trench</h3>
                     <p className="text-sm text-secondary">Size: M • Color: Oat Milk</p>
                   </div>
                 </div>
-                <Button variant="secondary" className="!bg-[#5a4220] !text-white !border-none text-sm px-6">
+                <Button variant="outline" className="text-sm px-6">
                   Track Package
                 </Button>
               </div>
@@ -103,21 +117,21 @@ function UserDashboard() {
 
           {/* Quick Actions */}
           <section>
-            <h2 className="font-display text-2xl text-ink mb-6">Quick Actions</h2>
+            <h2 className="font-display text-2xl text-primary mb-6">Quick Actions</h2>
             <div className="grid grid-cols-3 gap-5">
-              <Link to="/profile" className="bg-white rounded-[20px] p-6 shadow-sm transition hover:shadow-md block">
-                <User className="h-6 w-6 text-ink mb-4" />
-                <h3 className="font-bold text-sm text-ink mb-1">Edit Profile</h3>
+              <Link to="/profile" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
+                <User className="h-6 w-6 text-primary mb-4" />
+                <h3 className="font-bold text-sm text-primary mb-1">Edit Profile</h3>
                 <p className="text-xs text-secondary">Manage addresses & sizes</p>
               </Link>
-              <Link to="/orders" className="bg-white rounded-[20px] p-6 shadow-sm transition hover:shadow-md block">
-                <Package className="h-6 w-6 text-ink mb-4" />
-                <h3 className="font-bold text-sm text-ink mb-1">Track Order</h3>
+              <Link to="/orders" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
+                <Package className="h-6 w-6 text-primary mb-4" />
+                <h3 className="font-bold text-sm text-primary mb-1">Track Order</h3>
                 <p className="text-xs text-secondary">Check delivery status</p>
               </Link>
-              <Link to="/returns" className="bg-white rounded-[20px] p-6 shadow-sm transition hover:shadow-md block">
-                <RotateCcw className="h-6 w-6 text-ink mb-4" />
-                <h3 className="font-bold text-sm text-ink mb-1">View Returns</h3>
+              <Link to="/returns" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
+                <RotateCcw className="h-6 w-6 text-primary mb-4" />
+                <h3 className="font-bold text-sm text-primary mb-1">View Returns</h3>
                 <p className="text-xs text-secondary">History & active returns</p>
               </Link>
             </div>
@@ -127,8 +141,8 @@ function UserDashboard() {
         {/* Wishlist */}
         <section>
            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-2xl text-ink">My Wishlist</h2>
-              <Link className="text-xs font-bold uppercase tracking-widest text-ink underline underline-offset-4 decoration-line hover:text-accent transition">
+              <h2 className="font-display text-2xl text-primary">My Wishlist</h2>
+              <Link to="/wishlist" className="text-[10px] font-bold uppercase tracking-widest text-primary underline underline-offset-4 decoration-soft hover:text-accent transition">
                 View All
               </Link>
            </div>
@@ -136,58 +150,37 @@ function UserDashboard() {
            <div className="grid grid-cols-2 gap-5">
               {/* Item 1 */}
               <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] bg-[#0c0c0c] rounded-[16px] overflow-hidden mb-3">
-                  <div className="absolute top-3 right-3 h-8 w-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 shadow-sm z-10">
+                <div className="relative aspect-[3/4] bg-primary/5 rounded-[24px] border border-soft overflow-hidden mb-3 hover:shadow-float hover:-translate-y-2 transition-all duration-300">
+                  <div className="absolute top-3 right-3 h-8 w-8 bg-canvas/90 backdrop-blur-sm rounded-full flex items-center justify-center text-accent shadow-sm z-10 transition-transform group-hover:scale-110">
                     <Heart className="h-4 w-4 fill-current" />
                   </div>
                   {/* Subtle bottom gradient to simulate image overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4">
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent flex items-end p-4"></div>
                 </div>
-                <h3 className="font-display text-lg text-ink font-semibold">Silk Crepe Blouse</h3>
+                <h3 className="font-display text-lg text-primary font-semibold">Silk Crepe Blouse</h3>
                 <p className="text-sm text-secondary font-medium">$280.00</p>
               </div>
 
               {/* Item 2 */}
               <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] bg-[#f8f9fa] rounded-[16px] overflow-hidden mb-3 flex flex-col justify-center items-center text-center p-4">
-                  <div className="absolute top-3 right-3 h-8 w-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 shadow-sm z-10">
+                <div className="relative aspect-[3/4] bg-primary/5 rounded-[24px] border border-soft overflow-hidden mb-3 hover:shadow-float hover:-translate-y-2 transition-all duration-300 flex flex-col justify-center items-center text-center p-4">
+                  <div className="absolute top-3 right-3 h-8 w-8 bg-canvas/90 backdrop-blur-sm rounded-full flex items-center justify-center text-accent shadow-sm z-10 transition-transform group-hover:scale-110">
                     <Heart className="h-4 w-4 fill-current" />
                   </div>
-                  <h1 className="font-display text-3xl opacity-20 transform -rotate-12">Atelier<br/>Loafers</h1>
+                  <h1 className="font-display text-3xl opacity-20 transform -rotate-12 text-primary">Atelier<br/>Loafers</h1>
                 </div>
-                <h3 className="font-display text-lg text-ink font-semibold">Atelier Loafers</h3>
+                <h3 className="font-display text-lg text-primary font-semibold">Atelier Loafers</h3>
                 <p className="text-sm text-secondary font-medium">$410.00</p>
               </div>
 
-              {/* Item 3 */}
-              <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] bg-[#1a202c] rounded-[16px] overflow-hidden mb-3 p-4 flex flex-col items-center justify-center">
-                  <div className="absolute top-3 right-3 h-8 w-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 shadow-sm z-10">
-                    <Heart className="h-4 w-4 fill-current" />
-                  </div>
-                  <div className="w-16 h-16 rounded-full border border-white/20 mb-4 scale-[2]"></div>
-                  <div className="border border-white/20 p-4 rounded text-white/50 text-xs text-center z-10 backdrop-blur-md">
-                     Wishlist safe<br/>
-                     Ion<br/>
-                     to<br/>
-                     for work!
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/30 to-transparent flex items-end p-4">
-                  </div>
-                </div>
-                <h3 className="font-display text-lg text-ink font-semibold">Cashmere Wrap</h3>
-                <p className="text-sm text-secondary font-medium">$195.00</p>
-              </div>
-
               {/* Add Item */}
-              <div className="aspect-[3/4] rounded-[16px] border-2 border-dashed border-[#d3ccbf] flex flex-col items-center justify-center text-muted cursor-pointer hover:bg-white/50 hover:border-accent hover:text-accent transition">
+              <div className="aspect-[3/4] rounded-[24px] border-2 border-dashed border-soft flex flex-col items-center justify-center text-muted cursor-pointer hover:bg-input hover:border-accent hover:text-accent transition-all duration-300 hover:shadow-float hover:-translate-y-2">
                 <Plus className="h-6 w-6 mb-2" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Add Item</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Discover</span>
               </div>
            </div>
         </section>
-      </div>
+      </div>)}
     </div>
   );
 }

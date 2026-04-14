@@ -104,7 +104,7 @@ function ProductReviewsSection({ productId, productName }) {
   };
 
   return (
-    <section className="space-y-6 rounded-[34px] border border-line bg-white p-8 shadow-soft">
+    <section className="space-y-6 rounded-[32px] border border-soft bg-canvas p-8 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="ui-eyebrow">Customer Reviews</p>
@@ -156,7 +156,7 @@ function ProductReviewsSection({ productId, productName }) {
         </div>
       ) : null}
 
-      <div className="rounded-[28px] bg-[#f3eee6] p-6">
+      <div className="rounded-[28px] bg-input border border-soft p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="ui-eyebrow">Write a Review</p>

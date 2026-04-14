@@ -69,7 +69,7 @@ function AdminDashboard() {
               </Button>
             </Link>
             <Link to="/dashboard/sales">
-              <Button className="!rounded-[10px] !bg-[#6D6C6A] !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]">
+              <Button className="!rounded-[10px] !bg-primary !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em] !text-canvas">
                 Sales Dashboard
               </Button>
             </Link>
@@ -84,7 +84,19 @@ function AdminDashboard() {
 
       <StatusBanner tone="danger">{error}</StatusBanner>
 
-      {loading ? <p className="text-sm text-secondary">Loading dashboard report...</p> : null}
+      {loading ? (
+        <div className="space-y-8 animate-pulse">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map(idx => (
+              <div key={idx} className="h-[120px] rounded-[24px] bg-canvas border border-soft shadow-sm" />
+            ))}
+          </div>
+          <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
+             <div className="h-[400px] rounded-[32px] bg-canvas border border-soft shadow-sm" />
+             <div className="h-[400px] rounded-[32px] bg-canvas border border-soft shadow-sm" />
+          </div>
+        </div>
+      ) : null}
 
       {!loading && !report ? (
         <EmptyState
@@ -119,7 +131,7 @@ function AdminDashboard() {
           </div>
 
           <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
-            <SurfaceCard className="space-y-6 bg-[#f2ede4]">
+            <SurfaceCard className="space-y-6 bg-canvas border border-soft shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="ui-eyebrow">Sales Trend</p>
@@ -136,7 +148,7 @@ function AdminDashboard() {
                     return (
                       <div key={entry.month_key} className="flex flex-col items-center gap-3">
                         <div className="flex h-[220px] items-end">
-                          <div className="w-10 rounded-t-[18px] bg-[#6d6c6a]" style={{ height }}></div>
+                          <div className="w-10 rounded-t-[12px] bg-accent" style={{ height }}></div>
                         </div>
                         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{entry.month_label.slice(0, 3)}</p>
                         <p className="text-xs text-secondary">{formatCatalogPrice(entry.revenue)}</p>
@@ -152,7 +164,7 @@ function AdminDashboard() {
               )}
             </SurfaceCard>
 
-            <SurfaceCard className="space-y-6 bg-[#f2ede4]">
+            <SurfaceCard className="space-y-6 bg-canvas border border-soft shadow-sm">
               <div>
                 <p className="ui-eyebrow">Category Mix</p>
                 <h2 className="mt-3 font-display text-3xl text-ink">Sales by category</h2>
@@ -166,8 +178,8 @@ function AdminDashboard() {
                         <p className="font-medium text-ink">{entry.category_name}</p>
                         <p className="text-sm font-semibold text-ink">{entry.share}%</p>
                       </div>
-                      <div className="mt-3 h-3 rounded-full bg-white">
-                        <div className="h-3 rounded-full bg-[#6d6c6a]" style={{ width: `${Math.min(entry.share, 100)}%` }}></div>
+                      <div className="mt-3 h-3 rounded-full bg-input">
+                        <div className="h-3 rounded-full bg-accent" style={{ width: `${Math.min(entry.share, 100)}%` }}></div>
                       </div>
                       <p className="mt-3 text-sm text-secondary">{formatCatalogPrice(entry.revenue)}</p>
                     </div>

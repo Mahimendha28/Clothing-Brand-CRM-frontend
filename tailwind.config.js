@@ -30,9 +30,10 @@ export default {
         danger: "var(--color-danger)"
       },
       fontFamily: {
-        display: ['"Cormorant Garamond"', "serif"],
-        serif: ['"Cormorant Garamond"', "serif"],
-        sans: ['"Manrope"', "sans-serif"]
+        display: ['"Poppins"', "sans-serif"],
+        serif: ['"Inter"', "sans-serif"],
+        poppins: ['"Poppins"', "sans-serif"],
+        sans: ['"Inter"', "sans-serif"]
       },
       borderRadius: {
         pill: "9999px",
@@ -44,7 +45,7 @@ export default {
       boxShadow: {
         soft: "var(--shadow-soft)",
         float: "var(--shadow-float)",
-        glow: "0 0 15px rgba(177, 123, 85, 0.15)"
+        glow: "0 0 15px rgba(79, 70, 229, 0.15)"
       }
     }
   },

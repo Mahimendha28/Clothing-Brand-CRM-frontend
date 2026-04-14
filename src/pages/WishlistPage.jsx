@@ -213,7 +213,7 @@ function WishlistPage() {
             })}
           </div>
 
-          <aside className="h-fit rounded-[32px] border border-line bg-[#f3eee6] p-6 shadow-soft">
+          <aside className="h-fit rounded-[32px] border border-soft bg-canvas p-6 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-soft">
                 <Heart className="h-5 w-5" />

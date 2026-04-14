@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 import PasswordToggleButton from "../components/PasswordToggleButton";
 import Button from "../components/common/Button";
@@ -37,7 +38,7 @@ function Signup() {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -58,97 +59,148 @@ function Signup() {
       dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
       navigate(getDefaultRouteForRole(loginResponse.user.role));
     } catch (apiError) {
-      setError(apiError.message || "Signup failed");
+      setError(apiError.message || "Signup failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="ui-surface">
-      <p className="ui-eyebrow">Create Account</p>
-      <h2 className="mt-3 font-display text-4xl text-ink md:text-[2.8rem]">Join the brand</h2>
-      <p className="mt-3 text-sm leading-6 text-muted">
-        Start with a customer account and enter the brand workspace in a few steps.
-      </p>
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="ui-label">Full Name</label>
+  const itemAnim = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+  };
+
+  return (
+    <motion.div 
+      className="w-full"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={itemAnim} className="mb-6 text-center">
+         <p className="ui-eyebrow mb-2 opacity-70">Create Profile</p>
+         <h2 className="font-serif text-3xl leading-tight text-ink">Join the brand.</h2>
+         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary">
+           Register for access to exclusive streetwear drops and personalized curation.
+         </p>
+      </motion.div>
+
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        <motion.div variants={itemAnim} className="relative">
           <input
             type="text"
             name="name"
-            placeholder="Enter your full name"
-            className="ui-input mt-2"
+            id="name"
+            placeholder=" "
+            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
             value={formData.name}
             onChange={handleChange}
+            required
           />
-        </div>
+          <label 
+            htmlFor="name"
+            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
+          >
+            Full Name
+          </label>
+        </motion.div>
 
-        <div>
-          <label className="ui-label">Email</label>
+        <motion.div variants={itemAnim} className="relative">
           <input
             type="email"
             name="email"
-            placeholder="Enter your email"
-            className="ui-input mt-2"
+            id="email"
+            placeholder=" "
+            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
             value={formData.email}
             onChange={handleChange}
+            required
           />
-        </div>
+          <label 
+            htmlFor="email"
+            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
+          >
+            Email Address
+          </label>
+        </motion.div>
 
-        <div>
-          <label className="ui-label">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Create your password"
-              className="ui-input mt-2 pr-14"
-              value={formData.password}
-              onChange={handleChange}
-            />
-            <PasswordToggleButton
-              visible={showPassword}
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-2 top-[calc(50%+6px)] h-9 w-9 -translate-y-1/2 border-0 bg-transparent text-secondary"
-            />
-          </div>
-        </div>
+        <motion.div variants={itemAnim} className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            id="password"
+            placeholder=" "
+            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <label 
+            htmlFor="password"
+            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
+          >
+            Password
+          </label>
+          <PasswordToggleButton
+            visible={showPassword}
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
+          />
+        </motion.div>
 
-        <div>
-          <label className="ui-label">Confirm Password</label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Confirm your password"
-              className="ui-input mt-2 pr-14"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-            <PasswordToggleButton
-              visible={showConfirmPassword}
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="absolute right-2 top-[calc(50%+6px)] h-9 w-9 -translate-y-1/2 border-0 bg-transparent text-secondary"
-            />
-          </div>
-        </div>
+        <motion.div variants={itemAnim} className="relative">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            id="confirmPassword"
+            placeholder=" "
+            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+          <label 
+            htmlFor="confirmPassword"
+            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
+          >
+            Confirm Password
+          </label>
+          <PasswordToggleButton
+            visible={showConfirmPassword}
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
+          />
+        </motion.div>
 
-        <StatusBanner tone="danger">{error}</StatusBanner>
+        {error && (
+           <motion.div variants={itemAnim} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <StatusBanner tone="danger">{error}</StatusBanner>
+           </motion.div>
+        )}
 
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Creating account..." : "Create Account"}
-        </Button>
+        <motion.div variants={itemAnim}>
+           <Button type="submit" disabled={loading} className="w-full !mt-6 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
+             <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Registering..." : "Create Account"}</span>
+             <div className="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-300 group-hover:scale-y-100 z-0"></div>
+           </Button>
+        </motion.div>
       </form>
 
-      <div className="mt-6 flex items-center justify-between gap-4 text-sm text-secondary">
-        <span>Already have access?</span>
-        <Link to="/login" className="inline-flex items-center gap-2 text-accent transition hover:text-ink">
-          Sign in <ArrowRight className="h-4 w-4" />
+      <motion.div variants={itemAnim} className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-6">
+        <span className="text-sm text-secondary">Already hold access?</span>
+        <Link to="/login" className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70">
+          Sign In <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>
         </Link>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

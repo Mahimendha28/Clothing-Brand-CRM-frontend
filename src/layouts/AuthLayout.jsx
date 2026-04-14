@@ -1,69 +1,82 @@
-import { Outlet } from "react-router-dom";
-import { authSlides } from "../data/themeContent";
+import { Outlet, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { landingContent } from "../data/themeContent";
 
 function AuthLayout() {
   return (
-    <div className="ui-shell overflow-hidden px-4 py-4 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-5 lg:grid-cols-[1.15fr_420px]">
-        <section className="relative hidden min-h-[680px] overflow-hidden rounded-luxe border border-line bg-card shadow-float lg:block">
-          {authSlides.map((slide, index) => (
-            <div
-              key={slide.title}
-              className="auth-slide absolute inset-0 flex items-end"
-              style={{ animationDelay: `${index * 5}s` }}
-            >
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url('${slide.image}')` }}
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(54,38,27,0.1)_0%,rgba(54,38,27,0.16)_24%,rgba(54,38,27,0.66)_100%)]" />
-              <div className="absolute left-10 top-10 h-24 w-24 rounded-full border border-white/35 bg-white/10 backdrop-blur-sm" />
-              <div className="absolute right-12 top-10 h-44 w-36 rounded-[2rem] border border-white/30 bg-white/10 backdrop-blur-sm" />
-              <div className="absolute right-24 top-40 h-24 w-52 rounded-[2rem] border border-white/25 bg-white/10 backdrop-blur-sm" />
+    <div className="relative min-h-screen flex selection:bg-accent/20 bg-page">
+      
+      {/* Left side: Premium Image / Branding Panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-primary overflow-hidden items-end p-12">
+        {/* Deep abstract mesh background */}
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+        
+        {/* Animated abstract shapes for that high-end feel */}
+        <motion.div 
+           animate={{ rotate: 360 }}
+           transition={{ duration: 150, repeat: Infinity, ease: "linear" }}
+           className="absolute -top-[50%] -left-[50%] w-[100vw] h-[100vw] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-accent/20 via-primary/0 to-transparent pointer-events-none"
+        />
 
-              <div className="relative z-10 p-10">
-                <p className="text-[11px] uppercase tracking-[0.38em] text-white/80">{slide.eyebrow}</p>
-                <h1 className="mt-5 max-w-2xl font-display text-5xl leading-[0.95] text-white xl:text-6xl">
-                  {slide.title}
-                </h1>
-                <p className="mt-5 max-w-xl text-sm leading-7 text-white/85">{slide.text}</p>
-
-                <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/40 bg-white/20 px-4 py-2.5 backdrop-blur-sm">
-                  <span className="h-2.5 w-2.5 rounded-full bg-white" />
-                  <span className="text-sm font-medium text-white">{slide.label}</span>
-                </div>
-
-                <div className="mt-8 flex gap-2">
-                  {authSlides.map((_, dotIndex) => (
-                    <span
-                      key={dotIndex}
-                      className={`h-2.5 rounded-full ${
-                        dotIndex === index ? "w-8 bg-white" : "w-2.5 bg-white/45"
-                      }`}
-                    />
-                  ))}
-                </div>
+        <div className="relative z-10 w-full max-w-lg">
+           <Link to="/" className="inline-flex items-center gap-2 mb-8 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/90 text-sm font-medium hover:bg-white/20 transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Return to Store
+           </Link>
+           <motion.div
+             initial={{ opacity: 0, y: 30 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.8, delay: 0.2 }}
+           >
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl mb-6">
+                 <span className="text-primary text-2xl font-bold font-display">B</span>
               </div>
-            </div>
-          ))}
-        </section>
-
-        <section className="flex items-center justify-end">
-          <div className="w-full max-w-[420px]">
-            <div className="mb-5 lg:hidden">
-              <p className="ui-eyebrow">Clothing Brand CRM</p>
-              <h1 className="mt-3 max-w-sm font-display text-4xl leading-none text-ink">
-                Fashion operations with one shared visual language.
+              <h1 className="text-4xl md:text-5xl font-display font-medium text-white leading-tight mb-4 tracking-tight">
+                 Enter the <br />Badshah Ecosystem.
               </h1>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Sign in or create an account to enter your brand workspace.
+              <p className="text-white/70 text-lg max-w-sm tracking-wide">
+                 Premium apparel. Unmatched quality. Sign in to manage your drops and exclusive access.
               </p>
+           </motion.div>
+        </div>
+      </div>
+
+      {/* Right side: App Form Area */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center relative bg-page">
+         {/* Subtle gradient for right panel on mobile */}
+         <div className="absolute inset-0 pointer-events-none z-0 lg:hidden">
+            <motion.div 
+               animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+               transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+               className="absolute -top-[20%] -right-[20%] w-[70vw] h-[70vw] rounded-full bg-accent/10 blur-[100px]"
+            />
+         </div>
+
+         <div className="w-full max-w-md px-6 py-12 relative z-10">
+            {/* Mobile Header */}
+            <div className="lg:hidden mb-12 flex justify-between items-center">
+               <Link to="/" className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
+                  <span className="text-canvas text-xl font-bold font-display">B</span>
+               </Link>
+               <Link to="/" className="text-xs font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-2 px-4 py-2 rounded-full border border-soft shadow-sm bg-canvas/80 backdrop-blur-md">
+                  <ArrowLeft className="w-3 h-3" />
+                  Store
+               </Link>
             </div>
 
-            <Outlet />
-          </div>
-        </section>
+            {/* The Form Content Wrapper */}
+            <div className="bg-canvas/50 backdrop-blur-3xl rounded-[32px] p-6 sm:p-10 shadow-soft border border-soft relative overflow-hidden">
+               {/* Glass reflection */}
+               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none"></div>
+               
+               <div className="relative z-10">
+                  <Outlet />
+               </div>
+            </div>
+         </div>
       </div>
+
     </div>
   );
 }

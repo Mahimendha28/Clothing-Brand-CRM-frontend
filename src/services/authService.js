@@ -344,3 +344,12 @@ export const uploadProductImage = async (productId, file) => {
 
   return handleResponse(response);
 };
+
+export const deleteProductImage = async (productId, imageId) => {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/images/${imageId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders()
+  });
+
+  return handleResponse(response);
+};

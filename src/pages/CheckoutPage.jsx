@@ -549,7 +549,7 @@ function CheckoutPage() {
             </section>
           </div>
 
-          <aside className="h-fit rounded-[32px] border border-line bg-[#f3eee6] p-6 shadow-soft">
+          <aside className="h-fit rounded-[32px] border border-soft bg-canvas p-6 shadow-sm">
             <p className="ui-eyebrow">Price Summary</p>
             <h2 className="mt-3 font-display text-4xl text-ink">Checkout preview</h2>
             <p className="mt-4 text-sm leading-6 text-secondary">
