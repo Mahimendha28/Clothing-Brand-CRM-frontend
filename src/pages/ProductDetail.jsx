@@ -224,17 +224,17 @@ function ProductDetail() {
       <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
          
         {/* Left: Interactive Image Gallery */}
-        <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col-reverse md:flex-row gap-4 h-[600px] md:h-[700px]">
-           {/* Thumbnails */}
-           <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto scrollbar-hide py-1 px-1">
+        <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col-reverse lg:flex-row gap-6 h-auto lg:h-[700px]">
+           {/* Left side Thumbnails */}
+           <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto scrollbar-hide py-1 px-1 lg:w-28 shrink-0">
               {galleryImages.map((image) => {
                  const thumbnailUrl = buildCatalogImageUrl(image.image_url);
                  const isActive = activeImage === image.image_url || (!activeImage && galleryImages[0]?.id === image.id);
                  return (
                     <button
                        key={image.id}
-                       onMouseEnter={() => setActiveImage(image.image_url)}
-                       className={`relative w-20 h-24 md:w-24 md:h-32 shrink-0 rounded-2xl overflow-hidden border-2 transition-all duration-300 ${isActive ? "border-primary scale-95 shadow-sm" : "border-transparent opacity-60 hover:opacity-100 bg-input"}`}
+                       onClick={() => setActiveImage(image.image_url)}
+                       className={`relative w-20 h-24 lg:w-full lg:h-36 shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${isActive ? "border-primary shadow-md scale-100 ring-2 ring-primary/20 ring-offset-2" : "border-transparent opacity-70 hover:opacity-100 bg-input hover:scale-[1.02]"}`}
                     >
                        {thumbnailUrl ? (
                          <img src={thumbnailUrl} alt="thumbnail" className="w-full h-full object-cover" />
@@ -248,7 +248,7 @@ function ProductDetail() {
 
            {/* Main Zoomable Image */}
            <div 
-              className="flex-1 bg-input rounded-3xl overflow-hidden relative group cursor-crosshair border border-soft shadow-inner"
+              className="flex-1 bg-input rounded-[32px] overflow-hidden relative group cursor-crosshair border border-soft shadow-inner h-[500px] lg:h-full w-full"
               onMouseMove={handleMouseMove}
               onMouseEnter={() => setIsZoomed(true)}
               onMouseLeave={() => setIsZoomed(false)}
@@ -259,17 +259,22 @@ function ProductDetail() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.4 }}
                     src={activeImageUrl || "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=80"} 
                     alt={product.product_name} 
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-200"
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-300 ease-out"
                     style={{
                        transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-                       scale: isZoomed ? 1.6 : 1
+                       scale: isZoomed ? 2 : 1
                     }}
                     onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80"; }}
                  />
               </AnimatePresence>
+
+              {/* Hover Zoom Hint */}
+              <div className="absolute bottom-6 right-6 bg-white/80 backdrop-blur text-primary text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider opacity-100 group-hover:opacity-0 transition-opacity">
+                Hover to Zoom
+              </div>
            </div>
         </div>
 
@@ -282,10 +287,10 @@ function ProductDetail() {
              </button>
            </div>
            
-           <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary leading-[1.1] mb-4">{product.product_name}</h1>
+           <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary leading-[1.1] mb-3">{product.product_name}</h1>
            
            <div className="flex items-center gap-2 mb-6">
-              <div className="flex text-accent"><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/></div>
+              <div className="flex text-accent drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]"><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/><Star className="w-4 h-4 fill-current"/></div>
               <span className="text-sm font-medium text-secondary ml-1">4.9 / 5.0 (128 Reviews)</span>
            </div>
 
@@ -315,7 +320,7 @@ function ProductDetail() {
                    <button
                      key={size}
                      onClick={() => setSelectedSize(size)}
-                     className={`w-14 h-14 rounded-2xl flex items-center justify-center text-sm font-bold transition-all duration-200 border-2 ${
+                     className={`w-14 h-14 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 border-2 ${
                        selectedSize === size
                          ? "border-primary bg-primary text-canvas shadow-md scale-105"
                          : "border-soft bg-canvas text-secondary hover:border-strong hover:text-primary"
@@ -337,11 +342,11 @@ function ProductDetail() {
                      key={color}
                      onClick={() => setSelectedColor(color)}
                      title={color}
-                     className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 border-2 ${
+                     className={`px-6 py-3 rounded-[var(--radius-sm)] text-sm font-bold transition-all duration-200 border-2 ${
                        selectedColor === color
                          ? "border-primary bg-input text-primary shadow-sm"
                          : "border-soft bg-canvas text-secondary hover:border-strong"
-                     }`}
+                     } hover:-translate-y-0.5`}
                    >
                      {color}
                    </button>
@@ -356,8 +361,8 @@ function ProductDetail() {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddToCart}
                 disabled={isAddDisabled}
-                className={`flex-1 py-4 px-8 rounded-full font-bold text-canvas flex items-center justify-center gap-2 shadow-float transition-colors ${
-                   isAddDisabled ? 'bg-secondary cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
+                className={`flex-1 py-4 px-8 rounded-[var(--radius-sm)] font-semibold flex items-center justify-center gap-2 shadow-soft transition-all ${
+                   isAddDisabled ? 'bg-input text-muted border border-strong cursor-not-allowed' : 'bg-primary text-canvas hover:shadow-float hover:-translate-y-0.5'
                 }`}
               >
                 {addingToCart ? (
@@ -370,7 +375,7 @@ function ProductDetail() {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddToWishlist}
                 disabled={savingWishlist}
-                className="w-14 h-14 sm:w-auto sm:h-auto sm:px-6 sm:py-4 rounded-full border border-soft bg-canvas text-primary hover:bg-input transition-colors flex items-center justify-center shadow-sm shrink-0"
+                className="w-14 h-14 sm:w-auto sm:h-auto sm:px-6 sm:py-4 rounded-[var(--radius-sm)] border border-strong bg-canvas text-primary hover:bg-input transition-colors flex items-center justify-center shadow-sm shrink-0"
                 title="Save to Wishlist"
               >
                 <Heart className={`w-5 h-5 transition-transform ${savingWishlist ? 'animate-pulse fill-accent text-accent' : ''}`} />

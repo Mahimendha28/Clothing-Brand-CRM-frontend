@@ -7,6 +7,11 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import StorefrontLayout from "../layouts/StorefrontLayout";
 import CartPage from "../pages/CartPage";
 import CheckoutPage from "../pages/CheckoutPage";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_test_TYooMQauvdEDq54NiTphI7jx");
+import ForgotPassword from "../pages/ForgotPassword";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import MyOrdersPage from "../pages/MyOrdersPage";
@@ -15,6 +20,7 @@ import OrderDetailPage from "../pages/OrderDetailPage";
 import OrderQueuePage from "../pages/OrderQueuePage";
 import ReturnManagementPage from "../pages/ReturnManagementPage";
 import ReturnRequestPage from "../pages/ReturnRequestPage";
+import ResetPassword from "../pages/ResetPassword";
 import ReturnsPage from "../pages/ReturnsPage";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
@@ -55,13 +61,15 @@ function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<StorefrontLayout />}>
           <Route path="/cart" element={<CartPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout" element={<Elements stripe={stripePromise}><CheckoutPage /></Elements>} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
           <Route path="/my-orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/returns" element={<ReturnsPage />} />

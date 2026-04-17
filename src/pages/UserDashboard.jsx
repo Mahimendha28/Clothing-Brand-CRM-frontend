@@ -124,7 +124,7 @@ function UserDashboard() {
                 <h3 className="font-bold text-sm text-primary mb-1">Edit Profile</h3>
                 <p className="text-xs text-secondary">Manage addresses & sizes</p>
               </Link>
-              <Link to="/orders" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
+              <Link to="/my-orders" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
                 <Package className="h-6 w-6 text-primary mb-4" />
                 <h3 className="font-bold text-sm text-primary mb-1">Track Order</h3>
                 <p className="text-xs text-secondary">Check delivery status</p>

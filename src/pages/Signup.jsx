@@ -85,10 +85,10 @@ function Signup() {
       initial="hidden"
       animate="show"
     >
-      <motion.div variants={itemAnim} className="mb-6 text-center">
+      <motion.div variants={itemAnim} className="mb-8 text-center">
          <p className="ui-eyebrow mb-2 opacity-70">Create Profile</p>
          <h2 className="font-serif text-3xl leading-tight text-ink">Join the brand.</h2>
-         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary">
+         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary transform-gpu">
            Register for access to exclusive streetwear drops and personalized curation.
          </p>
       </motion.div>
@@ -186,15 +186,17 @@ function Signup() {
            </motion.div>
         )}
 
+        {/* Empty space matching Login 'Forgot password' to retain identical structural height/layout flow if needed, but not necessary if we just match spacing. Let's maintain spacing. */}
+
         <motion.div variants={itemAnim}>
-           <Button type="submit" disabled={loading} className="w-full !mt-6 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
+           <Button type="submit" disabled={loading} className="w-full !mt-4 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
              <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Registering..." : "Create Account"}</span>
              <div className="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-300 group-hover:scale-y-100 z-0"></div>
            </Button>
         </motion.div>
       </form>
 
-      <motion.div variants={itemAnim} className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-6">
+      <motion.div variants={itemAnim} className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-8">
         <span className="text-sm text-secondary">Already hold access?</span>
         <Link to="/login" className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70">
           Sign In <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>

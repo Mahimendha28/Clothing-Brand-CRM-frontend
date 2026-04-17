@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Heart, LogOut, Search, ShoppingBag, UserCircle2, Menu, X, ChevronRight } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-
-import { clearAuth, getStoredUser, isAuthenticated } from "../utils/auth";
+import { getCart } from "../services/cartService";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 import { landingContent } from "../data/themeContent";
 
 const navItems = [
@@ -16,14 +17,16 @@ const navItems = [
 function StorefrontLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = getStoredUser();
-  const loggedIn = isAuthenticated();
+  const dispatch = useDispatch();
+  const { user, isAuthenticated: loggedIn } = useSelector((state) => state.auth);
+  
   const isCustomer = user?.role === "customer";
   const accountPath = loggedIn ? (isCustomer ? "/my-orders" : "/dashboard") : "/login";
   const accountLabel = loggedIn ? (isCustomer ? "My Account" : "Dashboard") : "Sign In";
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -44,8 +47,58 @@ function StorefrontLayout() {
     else document.body.style.overflow = "";
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    const syncCartCount = async (event) => {
+      if (!loggedIn) {
+        if (!ignore) {
+          setCartCount(0);
+        }
+        return;
+      }
+
+      const nextCount = event?.detail?.cart?.item_count;
+
+      if (typeof nextCount === "number") {
+        if (!ignore) {
+          setCartCount(nextCount);
+        }
+        return;
+      }
+
+      try {
+        const response = await getCart();
+
+        if (!ignore) {
+          setCartCount(response.cart?.item_count || 0);
+        }
+      } catch (apiError) {
+        if (!ignore) {
+          setCartCount(0);
+        }
+      }
+    };
+
+    void syncCartCount();
+
+    const handleCartUpdated = (event) => {
+      void syncCartCount(event);
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdated);
+
+    return () => {
+      ignore = true;
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+    };
+  }, [loggedIn]);
+
   const handleLogout = () => {
-    clearAuth();
+    setCartCount(0);
+    setIsMobileMenuOpen(false);
+    setSearchOpen(false);
+    dispatch(logout());
     navigate("/");
   };
 
@@ -108,7 +161,11 @@ function StorefrontLayout() {
             </div>
             
             {!searchOpen && (
-              <button className="text-secondary hover:text-primary transition-colors p-2 md:hidden">
+              <button
+                onClick={() => navigate("/products")}
+                className="text-secondary hover:text-primary transition-colors p-2 md:hidden"
+                title="Search Products"
+              >
                  <Search className="h-5 w-5" />
               </button>
             )}
@@ -125,8 +182,23 @@ function StorefrontLayout() {
             
             <Link to="/cart" className="text-secondary hover:text-primary transition-colors p-2 relative">
               <ShoppingBag className="h-5 w-5" />
-              <span className="absolute top-[2px] right-0 w-4 h-4 bg-primary text-canvas text-[9px] items-center justify-center flex font-bold rounded-full">3</span>
+              {cartCount > 0 && (
+                <span className="absolute top-[2px] right-0 w-4 h-4 bg-primary text-canvas text-[9px] items-center justify-center flex font-bold rounded-full">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
             </Link>
+
+            {loggedIn && (
+              <button 
+                onClick={handleLogout} 
+                className="hidden items-center gap-2 rounded-full border border-soft px-4 py-2 text-sm font-medium text-secondary transition-colors hover:text-danger sm:inline-flex"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -244,9 +316,9 @@ function StorefrontLayout() {
             <h4 className="font-bold text-primary mb-6">Support</h4>
             <ul className="space-y-4">
               <li><Link to="/contact" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Contact Us</Link></li>
-              <li><Link to="/shipping" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Shipping & Returns</Link></li>
+              <li><Link to="/returns" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Shipping & Returns</Link></li>
               <li><Link to="/faq" className="text-secondary hover:text-accent transition-colors text-sm font-medium">FAQ</Link></li>
-              <li><Link to="/track" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Track Order</Link></li>
+              <li><Link to="/my-orders" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Track Order</Link></li>
             </ul>
           </div>
           

@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useState } from "react";
 import { ArrowLeft, CreditCard, MapPin, PackageCheck, TicketPercent } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -20,9 +21,9 @@ const paymentMethods = [
     description: "Place the order now and collect payment at the time of delivery."
   },
   {
-    value: "demo_card",
-    label: "Demo Card Payment",
-    description: "Simulate a card payment without a live gateway. Any 16-digit card number will work."
+    value: "stripe",
+    label: "Credit Card (Stripe)",
+    description: "Pay securely using your credit or debit card."
   }
 ];
 
@@ -57,6 +58,8 @@ const initialPaymentForm = {
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const stripe = useStripe();
+  const elements = useElements();
   const user = getStoredUser();
   const [cart, setCart] = useState(emptyCart);
   const [addresses, setAddresses] = useState([]);
@@ -232,16 +235,32 @@ function CheckoutPage() {
       });
       createdOrder = orderResponse.order;
 
-      if (paymentMethod === "demo_card") {
+      if (paymentMethod === "stripe") {
+        if (!stripe || !elements) {
+          throw new Error("Stripe is not initialized");
+        }
+
         const intentResponse = await createPaymentIntent(createdOrder.id);
+        const clientSecret = intentResponse.client_secret;
+
+        const result = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: user?.name || "Customer",
+              email: user?.email || "",
+            }
+          }
+        });
+
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
 
         await verifyPayment({
           orderId: createdOrder.id,
           paymentId: intentResponse.payment.id,
-          cardNumber: paymentForm.cardNumber,
-          cardholderName: paymentForm.cardholderName,
-          expiry: paymentForm.expiry,
-          cvc: paymentForm.cvc
+          cardNumber: ""
         });
       }
 
@@ -499,50 +518,29 @@ function CheckoutPage() {
                 ))}
               </div>
 
-              {paymentMethod === "demo_card" ? (
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label className="ui-label">Cardholder Name</label>
-                    <input
-                      name="cardholderName"
-                      value={paymentForm.cardholderName}
-                      onChange={handlePaymentFormChange}
-                      className="ui-input"
-                      placeholder="Alexandra Sterling"
+              {paymentMethod === "stripe" ? (
+                <div className="mt-6">
+                  <label className="ui-label block mb-2">Card Details</label>
+                  <div className="rounded-[16px] border border-line bg-white p-4 shadow-sm">
+                    <CardElement 
+                      options={{
+                        style: {
+                          base: {
+                            fontSize: '16px',
+                            color: '#111827',
+                            '::placeholder': {
+                              color: '#9ca3af',
+                            },
+                          },
+                          invalid: {
+                            color: '#9e2146',
+                          },
+                        },
+                      }}
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="ui-label">Card Number</label>
-                    <input
-                      name="cardNumber"
-                      value={paymentForm.cardNumber}
-                      onChange={handlePaymentFormChange}
-                      className="ui-input"
-                      placeholder="4242424242424242"
-                    />
-                  </div>
-                  <div>
-                    <label className="ui-label">Expiry</label>
-                    <input
-                      name="expiry"
-                      value={paymentForm.expiry}
-                      onChange={handlePaymentFormChange}
-                      className="ui-input"
-                      placeholder="12/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="ui-label">CVC</label>
-                    <input
-                      name="cvc"
-                      value={paymentForm.cvc}
-                      onChange={handlePaymentFormChange}
-                      className="ui-input"
-                      placeholder="123"
-                    />
-                  </div>
-                  <div className="md:col-span-2 rounded-[24px] bg-page p-4 text-sm leading-6 text-secondary">
-                    Demo payment tip: use any 16-digit card number. The default `4242424242424242` works immediately.
+                  <div className="mt-4 rounded-[12px] bg-sky-50 text-sky-700 p-4 text-xs">
+                    Payments are securely processed by Stripe. We do not store your full card details.
                   </div>
                 </div>
               ) : null}
@@ -597,10 +595,10 @@ function CheckoutPage() {
                 className="w-full !rounded-[16px] !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em] disabled:opacity-60"
               >
                 {placingOrder
-                  ? paymentMethod === "demo_card"
-                    ? "Processing demo payment..."
+                  ? paymentMethod === "stripe"
+                    ? "Processing payment..."
                     : "Placing COD order..."
-                  : paymentMethod === "demo_card"
+                  : paymentMethod === "stripe"
                     ? "Pay and Place Order"
                     : "Place COD Order"}
               </Button>

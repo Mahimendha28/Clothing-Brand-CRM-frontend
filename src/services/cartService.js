@@ -13,10 +13,26 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    const error = new Error(data.message || "Request failed");
+    error.status = response.status;
+    throw error;
   }
 
   return data;
+};
+
+const emitCartUpdated = (cart) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent("cartUpdated", {
+      detail: {
+        cart: cart || null
+      }
+    })
+  );
 };
 
 const getAuthHeaders = () => {
@@ -47,7 +63,9 @@ export const addCartItem = async (payload) => {
     body: JSON.stringify(payload)
   });
 
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  emitCartUpdated(data.cart);
+  return data;
 };
 
 export const updateCartItem = async (cartItemId, payload) => {
@@ -57,7 +75,9 @@ export const updateCartItem = async (cartItemId, payload) => {
     body: JSON.stringify(payload)
   });
 
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  emitCartUpdated(data.cart);
+  return data;
 };
 
 export const removeCartItem = async (cartItemId) => {
@@ -66,7 +86,9 @@ export const removeCartItem = async (cartItemId) => {
     headers: getAuthHeaders()
   });
 
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  emitCartUpdated(data.cart);
+  return data;
 };
 
 export const clearCart = async () => {
@@ -75,5 +97,7 @@ export const clearCart = async () => {
     headers: getAuthHeaders()
   });
 
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  emitCartUpdated(data.cart);
+  return data;
 };

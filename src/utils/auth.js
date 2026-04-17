@@ -1,19 +1,55 @@
+const getStorage = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage;
+};
+
 export const saveAuth = (token, user) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
+  const storage = getStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.setItem("token", token);
+  storage.setItem("user", JSON.stringify(user));
 };
 
 export const getStoredToken = () => {
-  return localStorage.getItem("token");
+  return getStorage()?.getItem("token") || null;
 };
 
 export const getStoredUser = () => {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+  const storage = getStorage();
+
+  if (!storage) {
+    return null;
+  }
+
+  const user = storage.getItem("user");
+
+  if (!user) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(user);
+  } catch (error) {
+    storage.removeItem("user");
+    return null;
+  }
 };
 
 export const updateStoredUser = (user) => {
-  localStorage.setItem("user", JSON.stringify(user));
+  const storage = getStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.setItem("user", JSON.stringify(user));
 };
 
 export const isAuthenticated = () => {
@@ -21,6 +57,12 @@ export const isAuthenticated = () => {
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  const storage = getStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem("token");
+  storage.removeItem("user");
 };

@@ -21,6 +21,7 @@ export default {
         soft: "var(--color-border-soft)",
         line: "var(--color-border-soft)",
         "line-strong": "var(--color-border-strong)",
+        strong: "var(--color-border-strong)",
         "btn-primary": "var(--color-btn-primary)",
         "btn-hover": "var(--color-btn-hover)",
         "btn-secondary": "var(--color-btn-secondary)",

@@ -13,7 +13,9 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    const error = new Error(data.message || "Request failed");
+    error.status = response.status;
+    throw error;
   }
 
   return data;
@@ -46,6 +48,38 @@ export const registerUser = async (payload) => {
 
 export const loginUser = async (payload) => {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  return handleResponse(response);
+};
+
+export const getCurrentUser = async () => {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: getAuthHeaders()
+  });
+
+  return handleResponse(response);
+};
+
+export const requestPasswordReset = async (payload) => {
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  return handleResponse(response);
+};
+
+export const resetPassword = async (payload) => {
+  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

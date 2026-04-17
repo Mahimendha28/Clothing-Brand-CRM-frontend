@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --color-bg-page: #F9FAFB;
+    --color-bg-page: #F8FAFC;
     --color-bg-canvas: #FFFFFF;
-    --color-bg-card: rgba(255, 255, 255, 0.75);
+    --color-bg-card: rgba(255, 255, 255, 0.85);
     --color-bg-sidebar: #FFFFFF;
-    --color-bg-panel: rgba(255, 255, 255, 0.85);
-    --color-bg-input: #F3F4F6;
-    --color-bg-dark: #0A0A0A;
-    --color-bg-dark-soft: rgba(17, 24, 39, 0.85);
-    --color-text-primary: #111827;
-    --color-text-secondary: #4B5563;
-    --color-text-muted: #9CA3AF;
-    --color-text-accent: #4F46E5;
-    --color-text-ivory: #F9FAFB;
-    --color-border-soft: rgba(17, 24, 39, 0.08);
-    --color-border-strong: rgba(17, 24, 39, 0.15);
-    --color-btn-primary: #0A0A0A;
-    --color-btn-hover: #1F2937;
-    --color-btn-secondary: #E0E7FF;
-    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
-    --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.08);
+    --color-bg-panel: rgba(255, 255, 255, 0.9);
+    --color-bg-input: #F1F5F9;
+    --color-bg-dark: #0F172A;
+    --color-bg-dark-soft: rgba(15, 23, 42, 0.85);
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94A3B8;
+    --color-text-accent: #6366F1;
+    --color-text-ivory: #F8FAFC;
+    --color-border-soft: rgba(15, 23, 42, 0.08);
+    --color-border-strong: rgba(15, 23, 42, 0.15);
+    --color-btn-primary: #0F172A;
+    --color-btn-hover: #1E293B;
+    --color-btn-secondary: #EEF2FF;
+    --shadow-soft: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    --shadow-float: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
     --radius-sm: 12px;
     --radius-md: 16px;
     --radius-lg: 24px;
@@ -103,24 +103,23 @@
   }
 
   .ui-surface {
-    @apply rounded-[var(--radius-md)] border border-line bg-panel p-6 shadow-soft backdrop-blur-sm md:p-8;
+    @apply rounded-[var(--radius-md)] border border-soft bg-canvas shadow-soft backdrop-blur-md p-6 md:p-8 transition-shadow duration-200 hover:shadow-float;
   }
 
   .ui-panel-dark {
-    @apply rounded-[var(--radius-md)] border border-white/10 bg-charcoal text-ivory shadow-float;
+    @apply rounded-[var(--radius-md)] border border-white/10 bg-gradient-to-br from-charcoal to-[#1E293B] text-ivory shadow-float;
   }
 
   .ui-label {
-    @apply block text-[11px] font-semibold uppercase tracking-[0.28em] text-muted;
+    @apply block text-xs font-semibold tracking-wide text-secondary mb-1.5;
   }
 
   .ui-input {
-    @apply w-full rounded-[20px] border border-line bg-input px-4 py-3.5 text-sm text-ink outline-none transition;
+    @apply w-full rounded-[var(--radius-sm)] border border-strong bg-canvas px-4 py-3 text-sm text-primary placeholder-muted outline-none transition-all duration-200;
   }
 
   .ui-input:focus {
-    border-color: var(--color-text-accent);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    @apply border-accent shadow-[0_0_0_4px_rgba(99,102,241,0.1)];
   }
 
   .ui-eyebrow {

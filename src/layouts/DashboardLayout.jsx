@@ -1,6 +1,8 @@
 import { NavLink, Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { clearAuth, getStoredUser } from "../utils/auth";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -79,10 +81,16 @@ const crmNavItems = [
 ];
 
 function DashboardLayout() {
-  const user = getStoredUser();
+  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
 
   const useCrmShell =
     user?.role === "admin" ||
@@ -173,17 +181,17 @@ function DashboardLayout() {
           </nav>
 
           <div className="p-4 border-t border-soft">
-            <div className="bg-input rounded-2xl p-4 flex flex-col gap-4">
+            <div className="bg-canvas border border-strong rounded-xl p-4 flex flex-col gap-4 shadow-sm">
                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-canvas border border-soft shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-input text-primary border border-strong flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
                      <UserCircle2 className="w-6 h-6 text-muted" />
                   </div>
                   <div className="overflow-hidden w-full">
                      <p className="text-sm font-semibold truncate text-primary">{user?.name || "Admin User"}</p>
-                     <p className="text-[10px] uppercase tracking-wider text-muted font-bold truncate">{user?.role || "System Admin"}</p>
+                     <p className="text-[11px] font-medium tracking-wide text-secondary truncate">{user?.role || "System Admin"}</p>
                   </div>
                </div>
-               <button onClick={() => { clearAuth(); navigate("/"); }} className="w-full py-2 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
+               <button onClick={handleLogout} className="w-full py-2.5 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
                   <LogOut className="w-4 h-4" /> Sign Out
                </button>
             </div>
@@ -262,10 +270,7 @@ function DashboardLayout() {
            </Link>
            <button
             type="button"
-            onClick={() => {
-              clearAuth();
-              navigate("/");
-            }}
+            onClick={handleLogout}
             className="ml-4 hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-danger transition-colors border-l border-soft pl-4"
           >
             Sign Out
@@ -278,12 +283,12 @@ function DashboardLayout() {
          <aside className="hidden md:flex w-64 flex-col gap-6 shrink-0">
             <div className="bg-canvas rounded-3xl p-6 border border-soft shadow-soft">
                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-primary text-canvas rounded-full flex items-center justify-center shadow-sm">
+                  <div className="w-12 h-12 bg-primary text-canvas rounded-full flex items-center justify-center shadow-md">
                      <span className="text-xl font-display font-medium">{user?.name?.charAt(0) || "U"}</span>
                   </div>
                   <div className="overflow-hidden">
-                     <p className="font-semibold text-primary truncate">{user?.name || "Client"}</p>
-                     <p className="text-xs text-muted truncate">{user?.email || "Account Holder"}</p>
+                     <p className="font-semibold text-lg text-primary truncate leading-tight">{user?.name || "Client"}</p>
+                     <p className="text-sm text-secondary truncate mt-0.5">{user?.email || "Account Holder"}</p>
                   </div>
                </div>
                

@@ -129,6 +129,15 @@ function Login() {
            </motion.div>
         )}
 
+        <motion.div variants={itemAnim} className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-secondary transition hover:text-ink"
+          >
+            Forgot password?
+          </Link>
+        </motion.div>
+
         <motion.div variants={itemAnim}>
            <Button type="submit" disabled={loading} className="w-full !mt-4 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
              <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Authenticating..." : "Sign In"}</span>

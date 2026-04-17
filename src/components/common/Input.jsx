@@ -2,24 +2,22 @@ import React from "react";
 
 const Input = React.forwardRef(({ label, icon: Icon, className = "", ...props }, ref) => {
   return (
-    <div className="space-y-2 w-full flex flex-col items-start">
+    <div className="space-y-1.5 w-full flex flex-col items-start">
       {label && (
-        <div className="flex justify-between w-full">
-           <label className="ui-label">
-             {label}
-           </label>
-        </div>
+         <label className="ui-label">
+           {label}
+         </label>
       )}
-      <div className="relative w-full">
+      <div className="relative w-full group">
         {Icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-secondary">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted transition-colors group-focus-within:text-accent">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
         )}
         <input
           ref={ref}
-          className={`ui-input block sm:text-sm ${
-            Icon ? "pl-10" : "px-4"
+          className={`ui-input ${
+            Icon ? "pl-11" : "px-4"
           } ${className}`}
           {...props}
         />
