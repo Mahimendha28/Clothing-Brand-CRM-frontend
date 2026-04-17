@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -28,19 +29,46 @@ const initialFormState = {
 };
 
 function Addresses() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const user = getStoredUser();
   const [addresses, setAddresses] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
+  const [defaultingId, setDefaultingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const returnTo = location.state?.returnTo || "";
+  const isFromCheckout = Boolean(location.state?.fromCheckout && returnTo);
 
   const loadAddresses = async () => {
     try {
       const response = await getUserAddresses(user.id);
-      setAddresses(response.addresses);
+      const nextAddresses = response.addresses || [];
+      setAddresses(nextAddresses);
+
+      if (location.state?.editAddressId) {
+        const addressToEdit = nextAddresses.find((address) => Number(address.id) === Number(location.state.editAddressId));
+
+        if (addressToEdit) {
+          setEditingId(addressToEdit.id);
+          setFormData({
+            address_type: addressToEdit.address_type || "home",
+            full_name: addressToEdit.full_name || "",
+            phone: addressToEdit.phone || "",
+            address_line_1: addressToEdit.address_line_1 || "",
+            address_line_2: addressToEdit.address_line_2 || "",
+            city: addressToEdit.city || "",
+            state: addressToEdit.state || "",
+            postal_code: addressToEdit.postal_code || "",
+            country: addressToEdit.country || "India",
+            is_default: Boolean(addressToEdit.is_default)
+          });
+        }
+      }
     } catch (apiError) {
       setError(apiError.message || "Failed to load addresses");
     } finally {
@@ -50,7 +78,7 @@ function Addresses() {
 
   useEffect(() => {
     loadAddresses();
-  }, []);
+  }, [location.state?.editAddressId]);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -114,6 +142,7 @@ function Addresses() {
 
     setError("");
     setMessage("");
+    setDeletingId(addressId);
 
     try {
       await deleteUserAddress(addressId);
@@ -121,6 +150,35 @@ function Addresses() {
       await loadAddresses();
     } catch (apiError) {
       setError(apiError.message || "Failed to delete address");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleSetDefault = async (address) => {
+    setError("");
+    setMessage("");
+    setDefaultingId(address.id);
+
+    try {
+      await updateUserAddress(address.id, {
+        address_type: address.address_type || "home",
+        full_name: address.full_name || "",
+        phone: address.phone || "",
+        address_line_1: address.address_line_1 || "",
+        address_line_2: address.address_line_2 || "",
+        city: address.city || "",
+        state: address.state || "",
+        postal_code: address.postal_code || "",
+        country: address.country || "India",
+        is_default: true
+      });
+      setMessage("Default address updated successfully");
+      await loadAddresses();
+    } catch (apiError) {
+      setError(apiError.message || "Failed to update default address");
+    } finally {
+      setDefaultingId(null);
     }
   };
 
@@ -131,6 +189,22 @@ function Addresses() {
         title="Address management"
         description="Add, edit, and remove saved delivery addresses. The layout keeps forms and saved records in one easy-to-scan workspace."
       />
+
+      {isFromCheckout ? (
+        <SurfaceCard>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-ink">Managing addresses for checkout</p>
+              <p className="mt-1 text-sm text-secondary">
+                Add or update a delivery address, then return to checkout to continue placing the order.
+              </p>
+            </div>
+            <Button type="button" variant="secondary" onClick={() => navigate(returnTo)}>
+              Back to Checkout
+            </Button>
+          </div>
+        </SurfaceCard>
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <SurfaceCard>
@@ -182,6 +256,21 @@ function Addresses() {
                   Cancel
                 </Button>
               ) : null}
+              {isFromCheckout ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    navigate(returnTo, {
+                      state: {
+                        preferredAddressId: editingId
+                      }
+                    })
+                  }
+                >
+                  Return to Checkout
+                </Button>
+              ) : null}
             </div>
           </form>
         </SurfaceCard>
@@ -222,11 +311,41 @@ function Addresses() {
                   </div>
 
                   <div className="flex gap-3">
+                    {!address.is_default ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleSetDefault(address)}
+                        disabled={defaultingId === address.id}
+                      >
+                        {defaultingId === address.id ? "Updating..." : "Set Default"}
+                      </Button>
+                    ) : null}
                     <Button type="button" variant="secondary" onClick={() => handleEdit(address)}>
                       Edit
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => handleDelete(address.id)}>
-                      Delete
+                    {isFromCheckout ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          navigate(returnTo, {
+                            state: {
+                              preferredAddressId: address.id
+                            }
+                          })
+                        }
+                      >
+                        Use in Checkout
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleDelete(address.id)}
+                      disabled={deletingId === address.id}
+                    >
+                      {deletingId === address.id ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>

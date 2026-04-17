@@ -4,11 +4,13 @@ import { clearAuth, getStoredUser } from "../utils/auth";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import useNotificationSummary from "../hooks/useNotificationSummary";
 import {
   ArrowRight,
   BarChart3,
   Bell,
   ClipboardList,
+  Home,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -80,12 +82,42 @@ const crmNavItems = [
   }
 ];
 
+const customerNavItems = [
+  {
+    label: "Overview",
+    to: "/dashboard",
+    match: (pathname) => pathname === "/dashboard"
+  },
+  {
+    label: "Profile",
+    to: "/profile",
+    match: (pathname) => pathname === "/profile"
+  },
+  {
+    label: "Order History",
+    to: "/my-orders",
+    match: (pathname) => pathname === "/my-orders" || pathname.startsWith("/my-orders/")
+  },
+  {
+    label: "Saved Items",
+    to: "/wishlist",
+    match: (pathname) => pathname === "/wishlist"
+  },
+  {
+    label: "Addresses",
+    to: "/addresses",
+    match: (pathname) => pathname === "/addresses"
+  }
+];
+
 function DashboardLayout() {
   const { user } = useSelector((state) => state.auth);
+  const { unreadCount } = useNotificationSummary(Boolean(user));
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const notificationsPath = user?.role === "customer" ? "/notifications" : "/dashboard/notifications";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -222,10 +254,14 @@ function DashboardLayout() {
                    <span className="text-lg leading-none">+</span> New Product
                 </button>
                 <div className="h-6 w-px bg-strong mx-1 hidden md:block" />
-                <button className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
+                <Link to={notificationsPath} className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
                    <Bell className="w-5 h-5" />
-                   <span className="absolute top-2 right-2.5 w-2 h-2 bg-danger rounded-full border-2 border-canvas"></span>
-                </button>
+                   {unreadCount > 0 ? (
+                     <span className="absolute -top-0.5 -right-1 min-w-[18px] rounded-full bg-danger px-1.5 text-center text-[10px] font-bold leading-[18px] text-canvas">
+                       {unreadCount > 99 ? "99+" : unreadCount}
+                     </span>
+                   ) : null}
+                </Link>
                 <Link to="/" className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors" title="View Store">
                    <LayoutDashboard className="w-5 h-5" />
                 </Link>
@@ -262,6 +298,17 @@ function DashboardLayout() {
         </nav>
 
         <div className="flex items-center gap-2 relative">
+           <Link to="/dashboard" className="p-2 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors md:hidden" title="Account">
+              <Home className="h-5 w-5" />
+           </Link>
+           <Link to={notificationsPath} className="p-2 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 ? (
+                <span className="absolute -top-0.5 -right-1 min-w-[18px] rounded-full bg-danger px-1.5 text-center text-[10px] font-bold leading-[18px] text-canvas">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
+           </Link>
            <Link to="/dashboard" className="p-2 text-primary bg-input rounded-full hover:bg-soft transition-colors">
               <UserCircle2 className="h-5 w-5" />
            </Link>
@@ -293,23 +340,45 @@ function DashboardLayout() {
                </div>
                
                <nav className="space-y-1.5">
-                  <NavLink to="/dashboard" end className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
-                     Overview
-                  </NavLink>
-                  <NavLink to="/my-orders" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
-                     Order History
-                  </NavLink>
-                  <NavLink to="/wishlist" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
-                     Saved Items
-                  </NavLink>
-                  <NavLink to="/addresses" className={({isActive}) => `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary text-canvas shadow-sm' : 'text-secondary hover:bg-input hover:text-primary'}`}>
-                     Addresses
-                  </NavLink>
-               </nav>
+                  {customerNavItems.map((item) => (
+                    <NavLink
+                      key={item.label}
+                      to={item.to}
+                      end={item.to === "/dashboard"}
+                      className={({ isActive }) =>
+                        `flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-all ${
+                          isActive || item.match(location.pathname)
+                            ? "bg-primary text-canvas shadow-sm"
+                            : "text-secondary hover:bg-input hover:text-primary"
+                        }`
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </nav>
             </div>
          </aside>
 
          <main className="flex-1 w-full min-w-0 pb-20">
+            <div className="mb-6 flex gap-3 overflow-x-auto pb-2 md:hidden">
+              {customerNavItems.map((item) => (
+                <NavLink
+                  key={item.label}
+                  to={item.to}
+                  end={item.to === "/dashboard"}
+                  className={({ isActive }) =>
+                    `whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                      isActive || item.match(location.pathname)
+                        ? "border-primary bg-primary text-canvas"
+                        : "border-soft bg-canvas text-secondary hover:border-primary hover:text-primary"
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
             <Outlet />
          </main>
       </div>

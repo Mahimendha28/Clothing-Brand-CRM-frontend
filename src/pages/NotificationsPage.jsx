@@ -11,6 +11,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead
 } from "../services/notificationService";
+import { emitNotificationsUpdated } from "../utils/notificationEvents";
 import { getStoredUser } from "../utils/auth";
 
 const formatNotificationDate = (value) =>
@@ -43,6 +44,7 @@ function NotificationsPage() {
         setNotifications(response.notifications || []);
         setUnreadCount(response.unread_count || 0);
       });
+      emitNotificationsUpdated();
     } catch (apiError) {
       setError(apiError.message || "Failed to load notifications");
       setNotifications([]);
@@ -68,6 +70,7 @@ function NotificationsPage() {
         )
       );
       setUnreadCount((current) => Math.max(0, current - 1));
+      emitNotificationsUpdated();
     } catch (apiError) {
       setError(apiError.message || "Failed to mark notification as read");
     } finally {
@@ -87,6 +90,7 @@ function NotificationsPage() {
           ? `${response.updated_count} notification(s) marked as read.`
           : "All notifications are already read."
       );
+      emitNotificationsUpdated();
     } catch (apiError) {
       setError(apiError.message || "Failed to mark all notifications as read");
     } finally {
@@ -94,13 +98,27 @@ function NotificationsPage() {
     }
   };
 
+  const getNotificationTarget = (notification) => {
+    if (notification.link_url) {
+      return notification.link_url;
+    }
+
+    if (notification.reference_id && notification.type === "order") {
+      return `/my-orders/${notification.reference_id}`;
+    }
+
+    return "";
+  };
+
   const handleOpenNotification = async (notification) => {
     if (!notification.is_read) {
       await handleMarkRead(notification.id);
     }
 
-    if (notification.link_url) {
-      navigate(notification.link_url);
+    const targetPath = getNotificationTarget(notification);
+
+    if (targetPath) {
+      navigate(targetPath);
     }
   };
 
@@ -148,7 +166,8 @@ function NotificationsPage() {
                 key={notification.id}
                 className={`rounded-[24px] border p-5 ${
                   notification.is_read ? "border-line bg-page" : "border-[#d7c29f] bg-[#fff7ea]"
-                }`}
+                } ${!notification.is_read || getNotificationTarget(notification) ? "cursor-pointer" : ""}`}
+                onClick={() => handleOpenNotification(notification)}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -169,7 +188,10 @@ function NotificationsPage() {
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => handleOpenNotification(notification)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenNotification(notification);
+                        }}
                         className="!px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
                       >
                         Open
@@ -179,7 +201,10 @@ function NotificationsPage() {
                     {!notification.is_read ? (
                       <Button
                         type="button"
-                        onClick={() => handleMarkRead(notification.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleMarkRead(notification.id);
+                        }}
                         disabled={pendingId === `read-${notification.id}`}
                         className="!px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
                       >

@@ -8,12 +8,44 @@ import StatusBanner from "../components/common/StatusBanner";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
 import { getOrderById } from "../services/orderService";
 
+const orderTimelineSteps = [
+  { key: "placed", label: "Order Placed" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "packed", label: "Packed" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" }
+];
+
+const orderStatusIndexMap = orderTimelineSteps.reduce((accumulator, step, index) => {
+  accumulator[step.key] = index;
+  return accumulator;
+}, {});
+
 const formatOrderDate = (value) =>
   new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric"
   }).format(new Date(value));
+
+const getTimelineStepState = (currentStatus, stepKey) => {
+  if (currentStatus === "cancelled") {
+    return "cancelled";
+  }
+
+  const currentIndex = orderStatusIndexMap[currentStatus] ?? -1;
+  const stepIndex = orderStatusIndexMap[stepKey] ?? -1;
+
+  if (stepIndex < currentIndex) {
+    return "completed";
+  }
+
+  if (stepIndex === currentIndex) {
+    return "current";
+  }
+
+  return "upcoming";
+};
 
 function OrderDetailPage() {
   const { orderId } = useParams();
@@ -114,6 +146,94 @@ function OrderDetailPage() {
 
       <div className="grid gap-8 xl:grid-cols-[1fr_360px]">
         <div className="space-y-6">
+          <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
+            <p className="ui-eyebrow">Tracking Timeline</p>
+            <h2 className="mt-3 font-display text-4xl text-ink">Order progress</h2>
+            <p className="mt-4 text-sm leading-6 text-secondary">
+              Follow each fulfillment milestone as the order moves from placement to delivery.
+            </p>
+
+            <div className="mt-8 grid gap-5 md:grid-cols-5">
+              {orderTimelineSteps.map((step, index) => {
+                const stepState = getTimelineStepState(order.order_status, step.key);
+                const isCompleted = stepState === "completed";
+                const isCurrent = stepState === "current";
+                const isCancelled = stepState === "cancelled";
+                const isUpcoming = stepState === "upcoming";
+
+                return (
+                  <div key={step.key} className="relative">
+                    {index < orderTimelineSteps.length - 1 ? (
+                      <div
+                        className={`absolute left-[calc(50%+20px)] top-5 hidden h-[2px] w-[calc(100%-8px)] md:block ${
+                          isCancelled
+                            ? "bg-line"
+                            : isCompleted
+                              ? "bg-ink"
+                              : "bg-line"
+                        }`}
+                      />
+                    ) : null}
+
+                    <div
+                      className={`relative rounded-[24px] border px-4 py-5 transition-colors ${
+                        isCancelled
+                          ? "border-line bg-page"
+                          : isCurrent
+                            ? "border-ink bg-page"
+                            : isCompleted
+                              ? "border-[#d7c29f] bg-[#fff7ea]"
+                              : "border-line bg-white"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
+                          isCancelled
+                            ? "bg-white text-muted"
+                            : isCurrent
+                              ? "bg-ink text-white"
+                              : isCompleted
+                                ? "bg-[#1b1408] text-white"
+                                : "bg-page text-muted"
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted">
+                        Step {index + 1}
+                      </p>
+                      <p
+                        className={`mt-2 text-lg font-semibold ${
+                          isUpcoming || isCancelled ? "text-secondary" : "text-ink"
+                        }`}
+                      >
+                        {step.label}
+                      </p>
+                      <p className="mt-2 text-sm text-secondary">
+                        {isCancelled
+                          ? "Order cancelled before completing this milestone."
+                          : isCurrent
+                            ? "Current stage"
+                            : isCompleted
+                              ? "Completed"
+                              : "Pending"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {order.order_status === "cancelled" ? (
+              <div className="mt-5 rounded-[24px] border border-line bg-page p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted">Order update</p>
+                <p className="mt-2 text-base text-ink">
+                  This order was cancelled, so the delivery timeline ended before shipment completion.
+                </p>
+              </div>
+            ) : null}
+          </section>
+
           <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
             <p className="ui-eyebrow">Ordered Items</p>
             <h2 className="mt-3 font-display text-4xl text-ink">Products in this order</h2>

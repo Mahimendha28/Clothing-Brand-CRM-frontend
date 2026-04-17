@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Heart, LogOut, Search, ShoppingBag, UserCircle2, Menu, X, ChevronRight } from "lucide-react";
+import { Bell, Heart, LogOut, MapPin, Search, ShoppingBag, UserCircle2, Menu, X, ChevronRight, Package } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getCart } from "../services/cartService";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import useNotificationSummary from "../hooks/useNotificationSummary";
 import { landingContent } from "../data/themeContent";
 
 const navItems = [
@@ -14,15 +15,25 @@ const navItems = [
   { label: "New Arrivals", to: "/products?sort=new" }
 ];
 
+const customerAccountLinks = [
+  { label: "Notifications", to: "/notifications", icon: Bell },
+  { label: "Profile", to: "/profile", icon: UserCircle2 },
+  { label: "Orders", to: "/my-orders", icon: Package },
+  { label: "Addresses", to: "/addresses", icon: MapPin },
+  { label: "Wishlist", to: "/wishlist", icon: Heart }
+];
+
 function StorefrontLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { user, isAuthenticated: loggedIn } = useSelector((state) => state.auth);
+  const { unreadCount } = useNotificationSummary(loggedIn);
   
   const isCustomer = user?.role === "customer";
-  const accountPath = loggedIn ? (isCustomer ? "/my-orders" : "/dashboard") : "/login";
-  const accountLabel = loggedIn ? (isCustomer ? "My Account" : "Dashboard") : "Sign In";
+  const accountPath = loggedIn ? (isCustomer ? "/profile" : "/dashboard") : "/login";
+  const accountLabel = loggedIn ? (isCustomer ? "Profile" : "Dashboard") : "Sign In";
+  const notificationsPath = isCustomer ? "/notifications" : "/dashboard/notifications";
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -170,9 +181,13 @@ function StorefrontLayout() {
               </button>
             )}
 
-            <Link to={loggedIn ? "/notifications" : "/login"} className="text-secondary hover:text-primary transition-colors p-2 hidden sm:block relative">
+            <Link to={loggedIn ? notificationsPath : "/login"} className="text-secondary hover:text-primary transition-colors p-2 hidden sm:block relative">
               <Bell className="h-5 w-5" />
-              {loggedIn && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full border-2 border-canvas"></span>}
+              {loggedIn && unreadCount > 0 ? (
+                <span className="absolute -top-0.5 -right-1 min-w-[18px] rounded-full bg-accent px-1.5 text-center text-[10px] font-bold leading-[18px] text-canvas">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
 
             <Link to={accountPath} className="text-secondary hover:text-primary transition-colors p-2 flex items-center gap-2">
@@ -242,14 +257,33 @@ function StorefrontLayout() {
                 
                 <div className="my-6 border-t border-soft mx-4" />
                 
-                <Link to={accountPath} className="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-input rounded-lg transition-colors font-medium">
-                  <UserCircle2 className="h-5 w-5" /> 
-                  {accountLabel}
-                </Link>
-                <Link to="/wishlist" className="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-input rounded-lg transition-colors font-medium">
-                  <Heart className="h-5 w-5" /> 
-                  Wishlist
-                </Link>
+                {loggedIn && isCustomer
+                  ? customerAccountLinks.map((item) => {
+                      const Icon = item.icon;
+
+                      return (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-input rounded-lg transition-colors font-medium"
+                        >
+                          <Icon className="h-5 w-5" />
+                          {item.label}
+                        </Link>
+                      );
+                    })
+                  : (
+                    <>
+                      <Link to={accountPath} className="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-input rounded-lg transition-colors font-medium">
+                        <UserCircle2 className="h-5 w-5" /> 
+                        {accountLabel}
+                      </Link>
+                      <Link to="/wishlist" className="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-input rounded-lg transition-colors font-medium">
+                        <Heart className="h-5 w-5" /> 
+                        Wishlist
+                      </Link>
+                    </>
+                  )}
               </div>
 
               {loggedIn ? (

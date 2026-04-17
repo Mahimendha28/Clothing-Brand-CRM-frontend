@@ -118,11 +118,16 @@ function UserDashboard() {
           {/* Quick Actions */}
           <section>
             <h2 className="font-display text-2xl text-primary mb-6">Quick Actions</h2>
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               <Link to="/profile" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
                 <User className="h-6 w-6 text-primary mb-4" />
                 <h3 className="font-bold text-sm text-primary mb-1">Edit Profile</h3>
-                <p className="text-xs text-secondary">Manage addresses & sizes</p>
+                <p className="text-xs text-secondary">Update account details</p>
+              </Link>
+              <Link to="/addresses" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
+                <Home className="h-6 w-6 text-primary mb-4" />
+                <h3 className="font-bold text-sm text-primary mb-1">Manage Addresses</h3>
+                <p className="text-xs text-secondary">Edit, delete, and set default</p>
               </Link>
               <Link to="/my-orders" className="bg-canvas border border-soft rounded-[24px] p-6 shadow-sm transition-all hover:shadow-float hover:-translate-y-2 block duration-300">
                 <Package className="h-6 w-6 text-primary mb-4" />

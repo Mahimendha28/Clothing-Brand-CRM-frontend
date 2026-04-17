@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useState } from "react";
 import { ArrowLeft, CreditCard, MapPin, PackageCheck, TicketPercent } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 import Button from "../components/common/Button";
@@ -57,6 +57,7 @@ const initialPaymentForm = {
 };
 
 function CheckoutPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
@@ -77,6 +78,11 @@ function CheckoutPage() {
   const [previewError, setPreviewError] = useState("");
   const [placeOrderError, setPlaceOrderError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const checkoutAddressState = {
+    fromCheckout: true,
+    returnTo: "/checkout"
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -100,7 +106,10 @@ function CheckoutPage() {
 
         const nextCart = cartResponse.cart || emptyCart;
         const nextAddresses = addressResponse.addresses || [];
-        const defaultAddress = nextAddresses.find((address) => address.is_default) || nextAddresses[0] || null;
+        const preferredAddress = location.state?.preferredAddressId
+          ? nextAddresses.find((address) => String(address.id) === String(location.state.preferredAddressId))
+          : null;
+        const defaultAddress = preferredAddress || nextAddresses.find((address) => address.is_default) || nextAddresses[0] || null;
 
         startTransition(() => {
           setCart(nextCart);
@@ -123,7 +132,7 @@ function CheckoutPage() {
     return () => {
       ignore = true;
     };
-  }, [user?.id]);
+  }, [location.state?.preferredAddressId, user?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -419,13 +428,32 @@ function CheckoutPage() {
             </section>
 
             <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
-                  <MapPin className="h-5 w-5" />
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="ui-eyebrow">Address Selection</p>
+                    <h2 className="mt-2 font-display text-3xl text-ink">Delivery destination</h2>
+                  </div>
                 </div>
-                <div>
-                  <p className="ui-eyebrow">Address Selection</p>
-                  <h2 className="mt-2 font-display text-3xl text-ink">Delivery destination</h2>
+
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/addresses"
+                    state={checkoutAddressState}
+                    className="inline-flex items-center rounded-full border border-line bg-page px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
+                  >
+                    Add Address
+                  </Link>
+                  <Link
+                    to="/addresses"
+                    state={checkoutAddressState}
+                    className="inline-flex items-center rounded-full border border-line bg-page px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
+                  >
+                    Manage Addresses
+                  </Link>
                 </div>
               </div>
 
@@ -435,7 +463,7 @@ function CheckoutPage() {
                   <p className="mt-2 text-sm leading-6 text-secondary">
                     Add at least one address from address management before final checkout is connected.
                   </p>
-                  <Link to="/addresses" className="mt-4 inline-flex text-sm font-medium text-ink underline">
+                  <Link to="/addresses" state={checkoutAddressState} className="mt-4 inline-flex text-sm font-medium text-ink underline">
                     Open address management
                   </Link>
                 </div>
@@ -474,6 +502,25 @@ function CheckoutPage() {
                             {`, ${address.city}, ${address.state} - ${address.postal_code}, ${address.country}`}
                           </p>
                           <p className="mt-2 text-sm text-secondary">Phone: {address.phone}</p>
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAddressId(String(address.id))}
+                              className="text-sm font-medium text-ink underline underline-offset-4"
+                            >
+                              {selectedAddressId === String(address.id) ? "Selected for checkout" : "Use this address"}
+                            </button>
+                            <Link
+                              to="/addresses"
+                              state={{
+                                ...checkoutAddressState,
+                                editAddressId: address.id
+                              }}
+                              className="text-sm font-medium text-ink underline underline-offset-4"
+                            >
+                              Edit address
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </label>
