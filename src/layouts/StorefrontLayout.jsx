@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import useNotificationSummary from "../hooks/useNotificationSummary";
 import { landingContent } from "../data/themeContent";
+import { getPublicCoupons } from "../services/couponService";
 
 const navItems = [
   { label: "Home", to: "/", end: true },
@@ -39,6 +40,8 @@ function StorefrontLayout() {
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [publicCoupons, setPublicCoupons] = useState([]);
+  const [activeCouponIndex, setActiveCouponIndex] = useState(0);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -105,6 +108,43 @@ function StorefrontLayout() {
     };
   }, [loggedIn]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    const loadPublicCoupons = async () => {
+      try {
+        const response = await getPublicCoupons();
+
+        if (!ignore) {
+          setPublicCoupons(response.coupons || []);
+          setActiveCouponIndex(0);
+        }
+      } catch (_error) {
+        if (!ignore) {
+          setPublicCoupons([]);
+        }
+      }
+    };
+
+    loadPublicCoupons();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (publicCoupons.length <= 1) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveCouponIndex((current) => (current + 1) % publicCoupons.length);
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [publicCoupons]);
+
   const handleLogout = () => {
     setCartCount(0);
     setIsMobileMenuOpen(false);
@@ -113,12 +153,50 @@ function StorefrontLayout() {
     navigate("/");
   };
 
+  const activeCoupon = publicCoupons[activeCouponIndex] || null;
+
+  const handleUseCoupon = async () => {
+    if (!activeCoupon?.code) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard?.writeText(activeCoupon.code);
+    } catch (_error) {
+      // ignore clipboard errors on unsupported browsers
+    }
+
+    if (loggedIn) {
+      navigate(`/checkout?coupon=${encodeURIComponent(activeCoupon.code)}`);
+      return;
+    }
+
+    navigate("/products");
+  };
+
   return (
     <div className="min-h-screen bg-page font-sans text-primary relative selection:bg-accent/20 flex flex-col">
       
       {/* Top Notification Bar */}
       <div className="bg-primary text-page text-xs font-medium py-2 px-4 text-center tracking-wide">
-             Free shipping on all orders over $150. <Link to="/products" className="underline underline-offset-2 ml-2 hover:text-accent transition-colors">Shop Now</Link>
+        {activeCoupon ? (
+          <div className="mx-auto flex max-w-[1440px] items-center justify-center gap-2 text-center">
+            <span>{activeCoupon.banner_text || activeCoupon.title}</span>
+            <span className="font-bold">Code: {activeCoupon.code}</span>
+            <button
+              type="button"
+              onClick={handleUseCoupon}
+              className="underline underline-offset-2 hover:text-accent transition-colors"
+            >
+              Use This Coupon
+            </button>
+          </div>
+        ) : (
+          <>
+            Free shipping on all orders over $150.
+            <Link to="/products" className="underline underline-offset-2 ml-2 hover:text-accent transition-colors">Shop Now</Link>
+          </>
+        )}
       </div>
 
       {/* Main Navbar */}

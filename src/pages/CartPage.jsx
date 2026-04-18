@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
-import StatusBanner from "../components/common/StatusBanner";
+import { useToast } from "../context/ToastContext";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
 import { clearCart, getCart, removeCartItem, updateCartItem } from "../services/cartService";
 
@@ -18,10 +18,9 @@ const emptyCart = {
 function CartPage() {
   const [cart, setCart] = useState(emptyCart);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [pendingItemId, setPendingItemId] = useState(null);
   const [clearing, setClearing] = useState(false);
+  const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
     let ignore = false;
@@ -29,7 +28,6 @@ function CartPage() {
     const loadCart = async () => {
       try {
         setLoading(true);
-        setError("");
         const response = await getCart();
 
         if (!ignore) {
@@ -39,7 +37,7 @@ function CartPage() {
         }
       } catch (apiError) {
         if (!ignore) {
-          setError(apiError.message || "Failed to load your cart");
+          toastError(apiError.message || "Failed to load your cart");
           setCart(emptyCart);
         }
       } finally {
@@ -56,12 +54,11 @@ function CartPage() {
     };
   }, []);
 
-  const applyCartResponse = (response) => {
+  const applyCartResponse = (response, fallbackMessage) => {
     startTransition(() => {
       setCart(response.cart || emptyCart);
     });
-    setError("");
-    setNotice(response.message || "Cart updated successfully");
+    toastSuccess(response.message || fallbackMessage || "Cart updated successfully");
   };
 
   const handleQuantityChange = async (item, nextQuantity) => {
@@ -71,14 +68,12 @@ function CartPage() {
 
     try {
       setPendingItemId(item.id);
-      setNotice("");
       const response = await updateCartItem(item.id, {
         quantity: nextQuantity
       });
-      applyCartResponse(response);
+      applyCartResponse(response, "Quantity updated");
     } catch (apiError) {
-      setNotice("");
-      setError(apiError.message || "Failed to update quantity");
+      toastError(apiError.message || "Failed to update quantity");
     } finally {
       setPendingItemId(null);
     }
@@ -87,12 +82,10 @@ function CartPage() {
   const handleRemoveItem = async (itemId) => {
     try {
       setPendingItemId(itemId);
-      setNotice("");
       const response = await removeCartItem(itemId);
-      applyCartResponse(response);
+      applyCartResponse(response, "Item removed from cart");
     } catch (apiError) {
-      setNotice("");
-      setError(apiError.message || "Failed to remove item");
+      toastError(apiError.message || "Failed to remove item");
     } finally {
       setPendingItemId(null);
     }
@@ -101,12 +94,10 @@ function CartPage() {
   const handleClearCart = async () => {
     try {
       setClearing(true);
-      setNotice("");
       const response = await clearCart();
-      applyCartResponse(response);
+      applyCartResponse(response, "Cart cleared");
     } catch (apiError) {
-      setNotice("");
-      setError(apiError.message || "Failed to clear cart");
+      toastError(apiError.message || "Failed to clear cart");
     } finally {
       setClearing(false);
     }
@@ -135,9 +126,6 @@ function CartPage() {
           Continue Shopping
         </Link>
       </div>
-
-      <StatusBanner tone="danger">{error}</StatusBanner>
-      <StatusBanner tone="success">{notice}</StatusBanner>
 
       {!cart.items.length ? (
         <div className="space-y-6">

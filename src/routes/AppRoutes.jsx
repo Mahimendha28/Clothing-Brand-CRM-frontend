@@ -7,10 +7,6 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import StorefrontLayout from "../layouts/StorefrontLayout";
 import CartPage from "../pages/CartPage";
 import CheckoutPage from "../pages/CheckoutPage";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_test_TYooMQauvdEDq54NiTphI7jx");
 import ForgotPassword from "../pages/ForgotPassword";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -46,6 +42,7 @@ import CustomerDetailOverviewPage from "../pages/CustomerDetailOverviewPage";
 import CustomerOrderHistoryPage from "../pages/CustomerOrderHistoryPage";
 import CustomerNotesPage from "../pages/CustomerNotesPage";
 import CouponManagementPage from "../pages/CouponManagementPage";
+import CouponFormPage from "../pages/CouponFormPage";
 import SalesDashboard from "../pages/SalesDashboard";
 import InventoryDashboardPage from "../pages/InventoryDashboardPage";
 
@@ -69,7 +66,7 @@ function AppRoutes() {
         <Route element={<StorefrontLayout />}>
           <Route path="/cart" element={<CartPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/checkout" element={<Elements stripe={stripePromise}><CheckoutPage /></Elements>} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
           <Route path="/my-orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
@@ -134,9 +131,11 @@ function AppRoutes() {
           </Route>
         </Route>
 
-        <Route element={<RoleRoute allowedRoles={["admin", "marketing_manager"]} />}>
+        <Route element={<RoleRoute allowedRoles={["admin", "marketing_manager", "sales_executive"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/admin/coupons" element={<CouponManagementPage />} />
+            <Route path="/admin/coupons/create" element={<CouponFormPage />} />
+            <Route path="/admin/coupons/:couponId/edit" element={<CouponFormPage />} />
           </Route>
         </Route>
 

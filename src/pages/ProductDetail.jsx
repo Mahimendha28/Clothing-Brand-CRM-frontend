@@ -15,6 +15,7 @@ import {
 } from "../services/catalogService";
 import { addCartItem } from "../services/cartService";
 import { addWishlistItem } from "../services/wishlistService";
+import { useToast } from "../context/ToastContext";
 import { isAuthenticated } from "../utils/auth";
 
 function ProductDetail() {
@@ -32,12 +33,9 @@ function ProductDetail() {
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [cartError, setCartError] = useState("");
-  const [cartNotice, setCartNotice] = useState("");
   const [addingToCart, setAddingToCart] = useState(false);
-  const [wishlistError, setWishlistError] = useState("");
-  const [wishlistNotice, setWishlistNotice] = useState("");
   const [savingWishlist, setSavingWishlist] = useState(false);
+  const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
     let ignore = false;
@@ -52,10 +50,6 @@ function ProductDetail() {
           startTransition(() => {
             setProduct(response.product || null);
           });
-          setCartError("");
-          setCartNotice("");
-          setWishlistError("");
-          setWishlistNotice("");
 
           if (response.product?.category_id) {
              getStoreProducts({ category: response.product.category_id, limit: 4 })
@@ -173,15 +167,10 @@ function ProductDetail() {
 
     try {
       setAddingToCart(true);
-      setCartError("");
-      setCartNotice("");
       const response = await addCartItem({ productId: product.id, variantId: selectedVariant?.id || null, quantity: 1 });
-      setCartNotice(response.message || "Item added to cart successfully.");
-      
-      // Clear notice after 3 seconds
-      setTimeout(() => setCartNotice(""), 3000);
+      toastSuccess(response.message || `${product.product_name} added to cart`);
     } catch (apiError) {
-      setCartError(apiError.message || "Failed to add item to cart.");
+      toastError(apiError.message || "Failed to add item to cart.");
     } finally {
       setAddingToCart(false);
     }
@@ -195,13 +184,10 @@ function ProductDetail() {
 
     try {
       setSavingWishlist(true);
-      setWishlistError("");
-      setWishlistNotice("");
       const response = await addWishlistItem({ productId: product.id, variantId: selectedVariant?.id || null });
-      setWishlistNotice(response.message || "Saved to wishlist.");
-      setTimeout(() => setWishlistNotice(""), 3000);
+      toastSuccess(response.message || `${product.product_name} saved to wishlist`);
     } catch (apiError) {
-      setWishlistError(apiError.message || "Failed to save to wishlist.");
+      toastError(apiError.message || "Failed to save to wishlist.");
     } finally {
       setSavingWishlist(false);
     }
@@ -299,15 +285,6 @@ function ProductDetail() {
            <p className="text-base leading-relaxed text-secondary mb-10">
               {product.description || "A highly versatile piece designed with premium materials. Its meticulous construction ensures effortless style and lasting comfort for any occasion."}
            </p>
-
-           <div className="space-y-3 mb-8">
-              <AnimatePresence>
-                 {cartNotice && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden"><StatusBanner tone="success">{cartNotice}</StatusBanner></motion.div>}
-                 {wishlistNotice && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden"><StatusBanner tone="success">{wishlistNotice}</StatusBanner></motion.div>}
-                 {cartError && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden"><StatusBanner tone="danger">{cartError}</StatusBanner></motion.div>}
-                 {wishlistError && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden"><StatusBanner tone="danger">{wishlistError}</StatusBanner></motion.div>}
-              </AnimatePresence>
-           </div>
 
            {sizeOptions.length ? (
              <div className="mb-8">

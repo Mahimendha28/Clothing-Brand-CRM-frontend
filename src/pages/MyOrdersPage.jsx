@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
+import { useToast } from "../context/ToastContext";
 import { formatCatalogPrice } from "../services/catalogService";
-import { getMyOrders } from "../services/orderService";
+import { downloadOrderInvoicePdf, getMyOrders } from "../services/orderService";
 
 const formatOrderDate = (value) =>
   new Intl.DateTimeFormat("en-US", {
@@ -19,6 +20,8 @@ function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pendingInvoiceOrderId, setPendingInvoiceOrderId] = useState(null);
+  const { toastError, toastSuccess } = useToast();
 
   useEffect(() => {
     let ignore = false;
@@ -53,18 +56,30 @@ function MyOrdersPage() {
     };
   }, []);
 
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      setPendingInvoiceOrderId(orderId);
+      await downloadOrderInvoicePdf(orderId);
+      toastSuccess("Invoice PDF download started");
+    } catch (apiError) {
+      toastError(apiError.message || "Failed to download invoice");
+    } finally {
+      setPendingInvoiceOrderId(null);
+    }
+  };
+
   if (loading) {
     return <p className="text-sm text-secondary">Loading your orders...</p>;
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ui-eyebrow">My Orders</p>
           <h1 className="mt-4 font-display text-6xl leading-[0.92] text-ink">Order history.</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
-            Review every COD order you have placed, track current status, and open each order for the detailed product and address breakdown.
+            View all orders in table format, open details, request returns, and download paid invoice PDFs.
           </p>
         </div>
 
@@ -83,76 +98,93 @@ function MyOrdersPage() {
         <div className="space-y-6">
           <EmptyState
             title="No orders yet"
-            description="Your placed COD orders will appear here once checkout is completed."
+            description="Your placed orders will appear here once checkout is completed."
           />
           <Link to="/products">
             <Button className="!text-sm !font-medium !normal-case !tracking-[0.02em]">Browse Products</Button>
           </Link>
         </div>
       ) : (
-        <div className="space-y-5">
-          {orders.map((order) => (
-            <article
-              key={order.id}
-              className="rounded-[30px] border border-line bg-white p-6 shadow-soft"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">Order Number</p>
-                  <h2 className="mt-3 font-display text-4xl leading-none text-ink">{order.order_number}</h2>
-                  <p className="mt-4 text-sm text-secondary">Placed on {formatOrderDate(order.created_at)}</p>
-                </div>
+        <div className="rounded-[30px] border border-line bg-white p-5 shadow-soft">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1180px] text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="ui-table-head">Order Number</th>
+                  <th className="ui-table-head">Placed On</th>
+                  <th className="ui-table-head">Items</th>
+                  <th className="ui-table-head">Total</th>
+                  <th className="ui-table-head">Payment</th>
+                  <th className="ui-table-head">Status</th>
+                  <th className="ui-table-head">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  const canDownloadInvoice = order.payment_status === "paid";
+                  const hasStripeReceipt = order.payment_method === "stripe" && !!order.stripe_receipt_url;
 
-                <div className="flex flex-wrap gap-3">
-                  <span className="rounded-full bg-page px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-ink">
-                    {order.order_status}
-                  </span>
-                  <span className="rounded-full border border-line px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary">
-                    {order.payment_method}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-4">
-                <div className="rounded-[22px] bg-page p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">Items</p>
-                  <p className="mt-3 text-xl font-semibold text-ink">{order.item_count}</p>
-                </div>
-                <div className="rounded-[22px] bg-page p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">Subtotal</p>
-                  <p className="mt-3 text-xl font-semibold text-ink">{formatCatalogPrice(order.subtotal)}</p>
-                </div>
-                <div className="rounded-[22px] bg-page p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">Total</p>
-                  <p className="mt-3 text-xl font-semibold text-ink">{formatCatalogPrice(order.total_amount)}</p>
-                </div>
-                <div className="rounded-[22px] bg-page p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">Payment Status</p>
-                  <p className="mt-3 text-xl font-semibold text-ink">{order.payment_status}</p>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <div className="flex flex-wrap gap-3">
-                  <Link to={`/my-orders/${order.id}`}>
-                    <Button
-                      variant="secondary"
-                      className="!px-6 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                    >
-                      View Order Detail
-                    </Button>
-                  </Link>
-                  {order.order_status === "delivered" ? (
-                    <Link to={`/returns/new/${order.id}`}>
-                      <Button className="!px-6 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]">
-                        Request Return
-                      </Button>
-                    </Link>
-                  ) : null}
-                </div>
-              </div>
-            </article>
-          ))}
+                  return (
+                    <tr key={order.id} className="border-b border-line align-top">
+                      <td className="px-5 py-4 font-semibold text-ink">{order.order_number}</td>
+                      <td className="px-5 py-4 text-secondary">{formatOrderDate(order.created_at)}</td>
+                      <td className="px-5 py-4 text-ink">{order.item_count}</td>
+                      <td className="px-5 py-4 text-ink">{formatCatalogPrice(order.total_amount)}</td>
+                      <td className="px-5 py-4">
+                        <p className="font-medium text-ink uppercase">{order.payment_method}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-secondary">{order.payment_status}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="rounded-full bg-page px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink">
+                          {order.order_status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Link to={`/my-orders/${order.id}`}>
+                            <Button
+                              variant="secondary"
+                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
+                            >
+                              View
+                            </Button>
+                          </Link>
+                          {order.order_status === "delivered" ? (
+                            <Link to={`/returns/new/${order.id}`}>
+                              <Button className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]">
+                                Return
+                              </Button>
+                            </Link>
+                          ) : null}
+                          {canDownloadInvoice ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => handleDownloadInvoice(order.id)}
+                              disabled={pendingInvoiceOrderId === order.id}
+                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
+                            >
+                              {pendingInvoiceOrderId === order.id ? "Preparing..." : "Invoice PDF"}
+                            </Button>
+                          ) : null}
+                          {hasStripeReceipt ? (
+                            <a
+                              href={order.stripe_receipt_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center rounded-full border border-line bg-white px-4 py-2 text-xs font-medium text-ink transition hover:bg-page"
+                            >
+                              Stripe Receipt
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

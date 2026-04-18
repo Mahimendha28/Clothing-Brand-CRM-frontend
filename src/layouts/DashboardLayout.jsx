@@ -40,7 +40,8 @@ const crmNavItems = [
     label: "Overview",
     to: "/dashboard",
     icon: LayoutDashboard,
-    match: (pathname) => pathname === "/dashboard" || pathname.startsWith("/dashboard/")
+    match: (pathname) => pathname === "/dashboard" || pathname.startsWith("/dashboard/"),
+    roles: ["admin", "sales_executive", "marketing_manager", "inventory_manager", "fulfillment_executive"]
   },
   {
     label: "Inventory",
@@ -51,13 +52,15 @@ const crmNavItems = [
       pathname.startsWith("/inventory/") ||
       pathname.startsWith("/admin/products") ||
       pathname.startsWith("/admin/categories") ||
-      pathname.startsWith("/admin/brands")
+      pathname.startsWith("/admin/brands"),
+    roles: ["admin", "inventory_manager"]
   },
   {
     label: "Orders",
     to: "/orders",
     icon: ClipboardList,
-    match: (pathname) => pathname === "/orders" || pathname.startsWith("/orders/")
+    match: (pathname) => pathname === "/orders" || pathname.startsWith("/orders/"),
+    roles: ["admin", "sales_executive", "fulfillment_executive"]
   },
   {
     label: "Customers",
@@ -65,20 +68,57 @@ const crmNavItems = [
     icon: Users,
     match: (pathname) =>
       pathname === "/customers" ||
-      pathname.startsWith("/customers/") ||
-      pathname.startsWith("/admin/users")
+      pathname.startsWith("/customers/"),
+    roles: ["admin", "sales_executive", "marketing_manager"]
+  },
+  {
+    label: "Users",
+    to: "/admin/users",
+    icon: Users,
+    match: (pathname) => pathname === "/admin/users" || pathname.startsWith("/admin/users/"),
+    roles: ["admin"]
+  },
+  {
+    label: "Coupons",
+    to: "/admin/coupons",
+    icon: MessageSquare,
+    match: (pathname) => pathname === "/admin/coupons",
+    roles: ["admin", "marketing_manager", "sales_executive"]
   },
   {
     label: "Analytics",
-    to: "/analytics",
+    to: "/dashboard/sales",
     icon: BarChart3,
-    match: (pathname) => pathname === "/analytics"
+    match: (pathname) => pathname === "/dashboard/sales",
+    roles: ["admin", "sales_executive", "marketing_manager"]
+  },
+  {
+    label: "Inventory Dash",
+    to: "/dashboard/inventory",
+    icon: Package,
+    match: (pathname) => pathname === "/dashboard/inventory",
+    roles: ["admin", "inventory_manager"]
+  },
+  {
+    label: "Returns",
+    to: "/dashboard/returns",
+    icon: ArrowRight,
+    match: (pathname) => pathname === "/dashboard/returns",
+    roles: ["admin", "sales_executive", "fulfillment_executive"]
   },
   {
     label: "Settings",
     to: "/settings",
     icon: SettingsIcon,
-    match: (pathname) => pathname === "/settings"
+    match: (pathname) => pathname === "/settings",
+    roles: ["admin"]
+  },
+  {
+    label: "Workspace",
+    to: "/analytics",
+    icon: MessageSquare,
+    match: (pathname) => pathname === "/analytics",
+    roles: ["admin"]
   }
 ];
 
@@ -134,10 +174,11 @@ function DashboardLayout() {
     crmShellPaths.has(location.pathname);
 
   const brandName = landingContent?.brand || "Badshah";
+  const visibleCrmNavItems = crmNavItems.filter((item) => !item.roles || item.roles.includes(user?.role));
 
   if (useCrmShell) {
     return (
-      <div className="flex h-screen overflow-hidden bg-page text-primary selection:bg-accent/20">
+      <div className="flex min-h-screen lg:h-screen overflow-hidden bg-page text-primary selection:bg-accent/20">
         
         {/* Mobile menu overlay */}
         <AnimatePresence>
@@ -158,7 +199,7 @@ function DashboardLayout() {
                     </div>
                     {/* Reuse nav rendering below */}
                     <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
-                      {crmNavItems.map((item) => {
+                      {visibleCrmNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = item.match(location.pathname);
                         return (
@@ -188,7 +229,7 @@ function DashboardLayout() {
 
           <nav className="flex-1 px-4 mt-6 overflow-y-auto">
             <div className="space-y-1.5">
-              {crmNavItems.map((item) => {
+              {visibleCrmNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.match(location.pathname);
                 return (

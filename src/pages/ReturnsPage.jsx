@@ -87,51 +87,40 @@ function ReturnsPage() {
         ) : null}
 
         {returns.length ? (
-          <div className="space-y-4">
-            {returns.map((returnRequest) => (
-              <article key={returnRequest.id} className="rounded-[24px] bg-page p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="ui-eyebrow">Order {returnRequest.order_number}</p>
-                    <h2 className="mt-3 text-2xl font-semibold text-ink">{returnRequest.reason}</h2>
-                    <p className="mt-3 text-sm leading-7 text-secondary">
-                      Submitted on {formatReturnDate(returnRequest.created_at)} for {returnRequest.item_count} item(s).
-                    </p>
-                    {returnRequest.customer_notes ? (
-                      <p className="mt-3 text-sm leading-7 text-secondary">{returnRequest.customer_notes}</p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <span className="rounded-full bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-ink">
-                      {returnRequest.return_status}
-                    </span>
-                    <span className="rounded-full border border-line px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary">
-                      Refund {returnRequest.refund_status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-[20px] bg-white p-4">
-                    <p className="ui-eyebrow">Refund Amount</p>
-                    <p className="mt-3 text-xl font-semibold text-ink">
-                      {formatCatalogPrice(returnRequest.refund_amount)}
-                    </p>
-                  </div>
-                  <div className="rounded-[20px] bg-white p-4">
-                    <p className="ui-eyebrow">Payment Status</p>
-                    <p className="mt-3 text-xl font-semibold text-ink">{returnRequest.payment_status}</p>
-                  </div>
-                  <div className="rounded-[20px] bg-white p-4">
-                    <p className="ui-eyebrow">Refund Reference</p>
-                    <p className="mt-3 text-sm font-semibold text-ink">
-                      {returnRequest.refund_reference || "Pending"}
-                    </p>
-                  </div>
-                </div>
-              </article>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1080px] text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="ui-table-head">Order</th>
+                  <th className="ui-table-head">Created</th>
+                  <th className="ui-table-head">Reason</th>
+                  <th className="ui-table-head">Items</th>
+                  <th className="ui-table-head">Return Status</th>
+                  <th className="ui-table-head">Refund Status</th>
+                  <th className="ui-table-head">Refund Amount</th>
+                  <th className="ui-table-head">Reference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {returns.map((returnRequest) => (
+                  <tr key={returnRequest.id} className="border-b border-line align-top">
+                    <td className="px-5 py-4 text-ink">{returnRequest.order_number}</td>
+                    <td className="px-5 py-4 text-secondary">{formatReturnDate(returnRequest.created_at)}</td>
+                    <td className="px-5 py-4 text-ink">
+                      <p className="font-medium">{returnRequest.reason}</p>
+                      {returnRequest.customer_notes ? (
+                        <p className="mt-1 text-xs leading-5 text-secondary">{returnRequest.customer_notes}</p>
+                      ) : null}
+                    </td>
+                    <td className="px-5 py-4 text-ink">{returnRequest.item_count}</td>
+                    <td className="px-5 py-4 text-ink uppercase">{returnRequest.return_status}</td>
+                    <td className="px-5 py-4 text-secondary uppercase">{returnRequest.refund_status}</td>
+                    <td className="px-5 py-4 text-ink">{formatCatalogPrice(returnRequest.refund_amount)}</td>
+                    <td className="px-5 py-4 text-secondary">{returnRequest.refund_reference || "Pending"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : null}
       </SurfaceCard>

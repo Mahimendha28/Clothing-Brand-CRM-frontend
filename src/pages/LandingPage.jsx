@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingBag, User } from "lucide-react";
 
@@ -5,6 +6,13 @@ import Button from "../components/common/Button";
 import { landingContent } from "../data/themeContent";
 
 function LandingPage() {
+  const [activeTabs, setActiveTabs] = useState(() =>
+    landingContent.shoppingSections.reduce((acc, section) => {
+      acc[section.id] = section.tabs[0]?.label ?? "";
+      return acc;
+    }, {})
+  );
+
   return (
     <div className="ui-shell relative">
       <header className="absolute top-0 z-50 w-full">
@@ -66,32 +74,77 @@ function LandingPage() {
         </section>
 
         <section id="collections" className="ui-container py-24">
-          <div className="mb-10 flex items-end justify-between border-b border-line pb-6">
-            <h3 className="font-display text-4xl text-ink">Latest arrivals</h3>
-            <a href="#archive" className="inline-flex items-center gap-2 text-sm text-secondary transition hover:text-ink">
-              View archive <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
+          <div className="space-y-20">
+            {landingContent.shoppingSections.map((section) => {
+              const currentTabLabel = activeTabs[section.id] || section.tabs[0]?.label;
+              const activeTab =
+                section.tabs.find((tab) => tab.label === currentTabLabel) || section.tabs[0];
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {landingContent.arrivals.map((item) => (
-              <article key={item.title} className="group">
-                <div className="overflow-hidden rounded-card border border-line bg-card shadow-soft">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="aspect-[4/5] h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-                <div className="mt-4 flex items-start justify-between">
-                  <div>
-                    <h4 className="font-display text-2xl text-ink">{item.title}</h4>
-                    <p className="mt-1 text-sm text-secondary">{item.note}</p>
+              return (
+                <div key={section.id}>
+                  <div className="mb-8 flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+                        {section.subtitle}
+                      </p>
+                      <h3 className="mt-2 font-display text-4xl text-ink">{section.title}</h3>
+                    </div>
+                    <a
+                      href="#archive"
+                      className="inline-flex items-center gap-2 text-sm text-secondary transition hover:text-ink"
+                    >
+                      {section.ctaLabel} <ArrowRight className="h-4 w-4" />
+                    </a>
                   </div>
-                  <span className="text-sm font-semibold text-ink">{item.price}</span>
+
+                  <div className="mb-8 flex flex-wrap gap-3">
+                    {section.tabs.map((tab) => {
+                      const isActive = tab.label === activeTab?.label;
+                      return (
+                        <button
+                          key={`${section.id}-${tab.label}`}
+                          type="button"
+                          onClick={() =>
+                            setActiveTabs((prev) => ({
+                              ...prev,
+                              [section.id]: tab.label
+                            }))
+                          }
+                          className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                            isActive
+                              ? "border-ink bg-ink text-white"
+                              : "border-line bg-transparent text-secondary hover:border-ink hover:text-ink"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {activeTab?.items.map((item) => (
+                      <article key={item.title} className="group">
+                        <div className="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="aspect-[4/5] h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="mt-4 flex items-start justify-between">
+                          <div>
+                            <h4 className="font-display text-2xl text-ink">{item.title}</h4>
+                            <p className="mt-1 text-sm text-secondary">{item.note}</p>
+                          </div>
+                          <span className="text-sm font-semibold text-ink">{item.price}</span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
-              </article>
-            ))}
+              );
+            })}
           </div>
         </section>
 

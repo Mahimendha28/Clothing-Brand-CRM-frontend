@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
+import { useToast } from "../context/ToastContext";
 import { addCartItem } from "../services/cartService";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
 import { deleteWishlistItem, getWishlist } from "../services/wishlistService";
@@ -20,8 +21,8 @@ function WishlistPage() {
   const [wishlist, setWishlist] = useState(emptyWishlist);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [pendingProductId, setPendingProductId] = useState(null);
+  const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
     let ignore = false;
@@ -61,18 +62,16 @@ function WishlistPage() {
       setWishlist(response.wishlist || emptyWishlist);
     });
     setError("");
-    setNotice(successMessage || response.message || "Wishlist updated successfully");
+    toastSuccess(successMessage || response.message || "Wishlist updated successfully");
   };
 
   const handleRemove = async (productId) => {
     try {
       setPendingProductId(productId);
-      setNotice("");
       const response = await deleteWishlistItem(productId);
       applyWishlistResponse(response, "Removed from wishlist");
     } catch (apiError) {
-      setNotice("");
-      setError(apiError.message || "Failed to remove wishlist item");
+      toastError(apiError.message || "Failed to remove wishlist item");
     } finally {
       setPendingProductId(null);
     }
@@ -86,7 +85,6 @@ function WishlistPage() {
 
     try {
       setPendingProductId(item.product_id);
-      setNotice("");
       await addCartItem({
         productId: item.product_id,
         variantId: item.variant?.id || null,
@@ -95,8 +93,7 @@ function WishlistPage() {
       const response = await deleteWishlistItem(item.product_id);
       applyWishlistResponse(response, "Wishlist item moved to cart");
     } catch (apiError) {
-      setNotice("");
-      setError(apiError.message || "Failed to move wishlist item to cart");
+      toastError(apiError.message || "Failed to move wishlist item to cart");
     } finally {
       setPendingProductId(null);
     }
@@ -127,7 +124,6 @@ function WishlistPage() {
       </div>
 
       <StatusBanner tone="danger">{error}</StatusBanner>
-      <StatusBanner tone="success">{notice}</StatusBanner>
 
       {!wishlist.items.length ? (
         <div className="space-y-6">

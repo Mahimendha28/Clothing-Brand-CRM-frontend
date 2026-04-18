@@ -187,6 +187,15 @@ export const updateAdminUserStatus = async (userId, status) => {
   return handleResponse(response);
 };
 
+export const deleteAdminUser = async (userId) => {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders()
+  });
+
+  return handleResponse(response);
+};
+
 export const getCategories = async () => {
   const response = await fetch(`${API_BASE_URL}/categories`, {
     headers: getAuthHeaders()
@@ -367,6 +376,25 @@ export const uploadProductImage = async (productId, file) => {
   const token = getStoredToken();
   const formData = new FormData();
   formData.append("image", file);
+
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/images`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  return handleResponse(response);
+};
+
+export const uploadProductImages = async (productId, files = []) => {
+  const token = getStoredToken();
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append("images", file);
+  });
 
   const response = await fetch(`${API_BASE_URL}/products/${productId}/images`, {
     method: "POST",

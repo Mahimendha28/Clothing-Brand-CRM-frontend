@@ -73,7 +73,7 @@ function SalesDashboard() {
                 CRM Customers
               </Button>
             </Link>
-            {user?.role === "admin" || user?.role === "marketing_manager" ? (
+            {user?.role === "admin" || user?.role === "marketing_manager" || user?.role === "sales_executive" ? (
               <Link to="/admin/coupons">
                 <Button className="!px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]">
                   Coupons

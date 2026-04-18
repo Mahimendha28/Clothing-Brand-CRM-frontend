@@ -116,7 +116,7 @@ function InventoryDashboardPage() {
                         <div>
                           <p className="font-medium text-ink">{item.product_name}</p>
                           <p className="text-sm text-secondary">
-                            {item.category_name} • {item.sku} • {item.size} / {item.color}
+                            {item.category_name} | {item.sku} | {item.size} / {item.color}
                           </p>
                         </div>
                         <span className="rounded-full bg-[#fff0eb] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#a54435]">
@@ -189,7 +189,7 @@ function InventoryDashboardPage() {
                         <td className="px-5 py-4">
                           <p className="font-medium text-ink">{transaction.product_name}</p>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted">
-                            {transaction.sku} • {transaction.size} / {transaction.color}
+                            {transaction.sku} | {transaction.size} / {transaction.color}
                           </p>
                         </td>
                         <td className="px-5 py-4 text-ink">{transaction.transaction_type}</td>
@@ -217,3 +217,4 @@ function InventoryDashboardPage() {
 }
 
 export default InventoryDashboardPage;
+

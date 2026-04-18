@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { buildCatalogImageUrl, formatCatalogPrice } from "../../services/catalogService";
 import { addCartItem } from "../../services/cartService";
 import { isAuthenticated } from "../../utils/auth";
+import { useToast } from "../../context/ToastContext";
 import ProductQuickViewModal from "./ProductQuickViewModal";
 
 function ProductCard({ product }) {
@@ -15,6 +16,7 @@ function ProductCard({ product }) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartNotice, setCartNotice] = useState(false);
+  const { toastSuccess, toastError } = useToast();
 
   // 3D Tilt Effect
   const mouseX = useMotionValue(0.5);
@@ -74,11 +76,12 @@ function ProductCard({ product }) {
     }
     try {
       setAddingToCart(true);
-      await addCartItem({ productId: product.id, variantId: product.variants?.[0]?.id || null, quantity: 1 });
+      const response = await addCartItem({ productId: product.id, variantId: product.variants?.[0]?.id || null, quantity: 1 });
       setCartNotice(true);
+      toastSuccess(response.message || `${product.product_name} added to cart`);
       setTimeout(() => setCartNotice(false), 2000);
     } catch (apiError) {
-      console.error(apiError);
+      toastError(apiError.message || "Failed to add product to cart");
     } finally {
       setAddingToCart(false);
     }

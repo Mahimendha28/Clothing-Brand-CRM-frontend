@@ -1,17 +1,16 @@
 import { startTransition, useEffect, useState } from "react";
 import { ArrowLeft, CreditCard, MapPin, PackageCheck, TicketPercent } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
-import StatusBanner from "../components/common/StatusBanner";
+import { useToast } from "../context/ToastContext";
 import { getUserAddresses } from "../services/authService";
 import { getCart } from "../services/cartService";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
 import { applyCheckoutCoupon, getCheckoutPricePreview } from "../services/checkoutService";
 import { createOrder } from "../services/orderService";
-import { createPaymentIntent, verifyPayment } from "../services/paymentService";
+import { createCheckoutSession, getCheckoutSessionStatus } from "../services/paymentService";
 import { getStoredUser } from "../utils/auth";
 
 const paymentMethods = [
@@ -49,18 +48,9 @@ const emptyPreview = {
   }
 };
 
-const initialPaymentForm = {
-  cardholderName: "",
-  cardNumber: "4242424242424242",
-  expiry: "12/30",
-  cvc: "123"
-};
-
 function CheckoutPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const stripe = useStripe();
-  const elements = useElements();
   const user = getStoredUser();
   const [cart, setCart] = useState(emptyCart);
   const [addresses, setAddresses] = useState([]);
@@ -69,15 +59,15 @@ function CheckoutPage() {
   const [preview, setPreview] = useState(emptyPreview);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCouponCode, setAppliedCouponCode] = useState("");
-  const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
   const [loading, setLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [error, setError] = useState("");
-  const [previewError, setPreviewError] = useState("");
-  const [placeOrderError, setPlaceOrderError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [restoringCheckout, setRestoringCheckout] = useState(false);
+  const { toastSuccess, toastError, toastInfo } = useToast();
+  const prefilledCouponCode = new URLSearchParams(location.search).get("coupon")?.trim().toUpperCase() || "";
+  const stripeSessionId = new URLSearchParams(location.search).get("session_id")?.trim() || "";
+  const stripeReturnState = new URLSearchParams(location.search).get("stripe")?.trim() || "";
 
   const checkoutAddressState = {
     fromCheckout: true,
@@ -89,14 +79,13 @@ function CheckoutPage() {
 
     const loadCheckoutBase = async () => {
       if (!user?.id) {
-        setError("Customer session unavailable");
+        toastError("Customer session unavailable");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        setError("");
 
         const [cartResponse, addressResponse] = await Promise.all([getCart(), getUserAddresses(user.id)]);
 
@@ -118,7 +107,7 @@ function CheckoutPage() {
         });
       } catch (apiError) {
         if (!ignore) {
-          setError(apiError.message || "Failed to load checkout details");
+          toastError(apiError.message || "Failed to load checkout details");
         }
       } finally {
         if (!ignore) {
@@ -147,7 +136,6 @@ function CheckoutPage() {
 
       try {
         setPreviewLoading(true);
-        setPreviewError("");
         const response = await getCheckoutPricePreview({
           addressId: selectedAddressId,
           paymentMethod,
@@ -161,7 +149,7 @@ function CheckoutPage() {
         }
       } catch (apiError) {
         if (!ignore) {
-          setPreviewError(apiError.message || "Failed to generate checkout preview");
+          toastError(apiError.message || "Failed to generate checkout preview");
         }
       } finally {
         if (!ignore) {
@@ -177,18 +165,16 @@ function CheckoutPage() {
     };
   }, [cart.items.length, paymentMethod, selectedAddressId, appliedCouponCode]);
 
-  const handleApplyCoupon = async () => {
-    const normalizedCode = couponInput.trim();
+  const applyCouponByCode = async (couponCode) => {
+    const normalizedCode = couponCode.trim();
 
     if (!normalizedCode) {
-      setPreviewError("Enter a coupon code before applying it");
-      return;
+      toastError("Enter a coupon code before applying it");
+      return false;
     }
 
     try {
       setCouponLoading(true);
-      setPreviewError("");
-      setNotice("");
       const response = await applyCheckoutCoupon({
         addressId: selectedAddressId,
         paymentMethod,
@@ -200,86 +186,132 @@ function CheckoutPage() {
         setCouponInput(response.preview?.coupon?.code || normalizedCode.toUpperCase());
         setPreview(response.preview || emptyPreview);
       });
-      setNotice(response.message || "Coupon applied successfully");
+      toastSuccess(response.message || "Coupon applied successfully");
+      return true;
     } catch (apiError) {
-      setNotice("");
-      setPreviewError(apiError.message || "Failed to apply coupon");
+      toastError(apiError.message || "Failed to apply coupon");
+      return false;
     } finally {
       setCouponLoading(false);
     }
   };
 
+  const handleApplyCoupon = async () => {
+    await applyCouponByCode(couponInput);
+  };
+
   const handleRemoveCoupon = () => {
     setAppliedCouponCode("");
     setCouponInput("");
-    setNotice("Coupon removed from checkout");
-    setPreviewError("");
+    toastInfo("Coupon removed from checkout");
   };
 
-  const handlePaymentFormChange = (event) => {
-    const { name, value } = event.target;
-    setPaymentForm((current) => ({
-      ...current,
-      [name]: value
-    }));
-  };
+  useEffect(() => {
+    if (!prefilledCouponCode || !cart.items.length || appliedCouponCode === prefilledCouponCode || couponLoading) {
+      return;
+    }
+
+    setCouponInput(prefilledCouponCode);
+    void applyCouponByCode(prefilledCouponCode);
+  }, [prefilledCouponCode, cart.items.length, appliedCouponCode, couponLoading, paymentMethod, selectedAddressId]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const finalizeStripeCheckout = async () => {
+      if (stripeReturnState !== "success" || !stripeSessionId) {
+        if (stripeReturnState === "cancel" && !ignore) {
+          toastInfo("Stripe checkout was canceled. You can try again.");
+        }
+        return;
+      }
+
+      try {
+        setRestoringCheckout(true);
+        toastInfo("Verifying Stripe payment and creating your order...");
+        const sessionResponse = await getCheckoutSessionStatus(stripeSessionId);
+
+        if (sessionResponse.payment_status !== "paid" || !sessionResponse.payment_intent_id) {
+          throw new Error("Stripe session is not paid yet");
+        }
+
+        const orderResponse = await createOrder({
+          addressId: sessionResponse.address_id || selectedAddressId,
+          paymentMethod: "stripe",
+          couponCode: sessionResponse.coupon_code || appliedCouponCode,
+          paymentIntentId: sessionResponse.payment_intent_id
+        });
+
+        if (!ignore && orderResponse.order?.id) {
+          toastSuccess("Payment successful. Order created.");
+          navigate(`/my-orders/${orderResponse.order.id}`, { replace: true });
+        }
+      } catch (apiError) {
+        if (!ignore) {
+          const message = apiError.message || "Failed to finalize Stripe checkout";
+          toastError(message);
+        }
+      } finally {
+        if (!ignore) {
+          setRestoringCheckout(false);
+        }
+      }
+    };
+
+    void finalizeStripeCheckout();
+
+    return () => {
+      ignore = true;
+    };
+  }, [
+    stripeReturnState,
+    stripeSessionId,
+    selectedAddressId,
+    appliedCouponCode,
+    navigate
+  ]);
 
   const handlePlaceOrder = async () => {
     let createdOrder = null;
 
     if (!selectedAddressId) {
-      setPlaceOrderError("Please select a delivery address before placing the order");
+      toastError("Please select a delivery address before placing the order");
       return;
     }
 
     try {
       setPlacingOrder(true);
-      setPlaceOrderError("");
-      setNotice("");
-
-      const orderResponse = await createOrder({
-        addressId: selectedAddressId,
-        paymentMethod,
-        couponCode: appliedCouponCode
-      });
-      createdOrder = orderResponse.order;
 
       if (paymentMethod === "stripe") {
-        if (!stripe || !elements) {
-          throw new Error("Stripe is not initialized");
-        }
-
-        const intentResponse = await createPaymentIntent(createdOrder.id);
-        const clientSecret = intentResponse.client_secret;
-
-        const result = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement),
-            billing_details: {
-              name: user?.name || "Customer",
-              email: user?.email || "",
-            }
-          }
+        const sessionResponse = await createCheckoutSession({
+          addressId: selectedAddressId,
+          couponCode: appliedCouponCode
         });
 
-        if (result.error) {
-          throw new Error(result.error.message);
+        if (!sessionResponse.checkout_url) {
+          throw new Error("Stripe checkout URL could not be created");
         }
 
-        await verifyPayment({
-          orderId: createdOrder.id,
-          paymentId: intentResponse.payment.id,
-          cardNumber: ""
+        toastInfo("Redirecting to Stripe Checkout...");
+        window.location.assign(sessionResponse.checkout_url);
+        return;
+      } else {
+        const orderResponse = await createOrder({
+          addressId: selectedAddressId,
+          paymentMethod,
+          couponCode: appliedCouponCode
         });
+        createdOrder = orderResponse.order;
       }
 
+      toastSuccess("Order placed successfully");
       navigate(`/my-orders/${createdOrder.id}`, { replace: true });
     } catch (apiError) {
-      setPlaceOrderError(
+      const message =
         createdOrder?.id
-          ? `${apiError.message || "Payment could not be completed"}. The order was created and is visible in My Orders.`
-          : apiError.message || "Failed to complete checkout"
-      );
+          ? `${apiError.message || "Checkout could not be completed"}. The order was created and is visible in My Orders.`
+          : apiError.message || "Failed to complete checkout";
+      toastError(message);
     } finally {
       setPlacingOrder(false);
     }
@@ -308,11 +340,6 @@ function CheckoutPage() {
           Back to Cart
         </Link>
       </div>
-
-      <StatusBanner tone="danger">{error}</StatusBanner>
-      <StatusBanner tone="success">{notice}</StatusBanner>
-      <StatusBanner tone="danger">{previewError}</StatusBanner>
-      <StatusBanner tone="danger">{placeOrderError}</StatusBanner>
 
       {!cart.items.length ? (
         <div className="space-y-6">
@@ -541,7 +568,7 @@ function CheckoutPage() {
               </div>
 
               <div className="mt-6 grid gap-4">
-                {paymentMethods.map((method) => (
+              {paymentMethods.map((method) => (
                   <label
                     key={method.value}
                     className={`block cursor-pointer rounded-[24px] border p-5 transition ${
@@ -564,31 +591,9 @@ function CheckoutPage() {
                   </label>
                 ))}
               </div>
-
               {paymentMethod === "stripe" ? (
-                <div className="mt-6">
-                  <label className="ui-label block mb-2">Card Details</label>
-                  <div className="rounded-[16px] border border-line bg-white p-4 shadow-sm">
-                    <CardElement 
-                      options={{
-                        style: {
-                          base: {
-                            fontSize: '16px',
-                            color: '#111827',
-                            '::placeholder': {
-                              color: '#9ca3af',
-                            },
-                          },
-                          invalid: {
-                            color: '#9e2146',
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-                  <div className="mt-4 rounded-[12px] bg-sky-50 text-sky-700 p-4 text-xs">
-                    Payments are securely processed by Stripe. We do not store your full card details.
-                  </div>
+                <div className="mt-6 rounded-[12px] bg-sky-50 p-4 text-xs text-sky-700">
+                  You will be redirected to Stripe hosted checkout to complete payment securely.
                 </div>
               ) : null}
             </section>
@@ -638,15 +643,17 @@ function CheckoutPage() {
               <Button
                 type="button"
                 onClick={handlePlaceOrder}
-                disabled={placingOrder || previewLoading || !selectedAddressId}
+                disabled={placingOrder || previewLoading || restoringCheckout || !selectedAddressId}
                 className="w-full !rounded-[16px] !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em] disabled:opacity-60"
               >
                 {placingOrder
                   ? paymentMethod === "stripe"
-                    ? "Processing payment..."
+                    ? "Redirecting to Stripe..."
                     : "Placing COD order..."
+                  : restoringCheckout
+                    ? "Finalizing Stripe order..."
                   : paymentMethod === "stripe"
-                    ? "Pay and Place Order"
+                    ? "Pay via Stripe Checkout"
                     : "Place COD Order"}
               </Button>
               <Link to="/cart" className="block">

@@ -140,7 +140,7 @@ function ProductReviewsSection({ productId, productName }) {
                 <div>
                   <p className="text-lg font-semibold text-ink">{review.title || "Verified customer review"}</p>
                   <p className="mt-2 text-sm text-secondary">
-                    {review.customer_name} • {formatReviewDate(review.created_at)}
+                    {review.customer_name} | {formatReviewDate(review.created_at)}
                   </p>
                 </div>
 
@@ -245,3 +245,4 @@ function ProductReviewsSection({ productId, productName }) {
 }
 
 export default ProductReviewsSection;
+

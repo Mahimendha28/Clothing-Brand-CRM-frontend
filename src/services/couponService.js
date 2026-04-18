@@ -76,10 +76,32 @@ export const updateCouponStatus = async (couponId, status) => {
   return handleResponse(response);
 };
 
+export const deleteCoupon = async (couponId) => {
+  const response = await fetch(`${API_BASE_URL}/coupons/${couponId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders()
+  });
+
+  return handleResponse(response);
+};
+
+export const getCouponById = async (couponId) => {
+  const response = await fetch(`${API_BASE_URL}/coupons/${couponId}`, {
+    headers: getAuthHeaders()
+  });
+
+  return handleResponse(response);
+};
+
 export const getCouponUsages = async (couponId) => {
   const response = await fetch(`${API_BASE_URL}/coupons/${couponId}/usages`, {
     headers: getAuthHeaders()
   });
 
+  return handleResponse(response);
+};
+
+export const getPublicCoupons = async () => {
+  const response = await fetch(`${API_BASE_URL}/coupons/public`);
   return handleResponse(response);
 };

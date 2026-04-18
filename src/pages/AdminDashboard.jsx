@@ -60,6 +60,14 @@ function AdminDashboard() {
         description="Track revenue, customer growth, fulfillment pressure, and stock health from live operational data instead of static placeholders."
         actions={
           <div className="flex flex-wrap gap-3">
+            <Link to="/admin/users">
+              <Button
+                variant="secondary"
+                className="!rounded-[10px] !bg-white !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
+              >
+                Manage Users
+              </Button>
+            </Link>
             <Link to="/admin/coupons">
               <Button
                 variant="secondary"
@@ -141,7 +149,11 @@ function AdminDashboard() {
               </div>
 
               {monthlySales.length ? (
-                <div className="grid grid-cols-7 items-end gap-4 pt-8">
+                <div className="overflow-x-auto pb-2">
+                  <div
+                    className="grid min-w-[640px] items-end gap-4 pt-8"
+                    style={{ gridTemplateColumns: `repeat(${monthlySales.length}, minmax(0, 1fr))` }}
+                  >
                   {monthlySales.map((entry) => {
                     const height = maxRevenue ? Math.max(18, Math.round((Number(entry.revenue || 0) / maxRevenue) * 200)) : 18;
 
@@ -155,6 +167,7 @@ function AdminDashboard() {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               ) : (
                 <EmptyState

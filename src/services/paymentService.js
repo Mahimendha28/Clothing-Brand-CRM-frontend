@@ -32,11 +32,49 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-export const createPaymentIntent = async (orderId) => {
+export const createPaymentIntent = async ({ addressId = "", couponCode = "" } = {}) => {
+  const payload = {};
+
+  if (addressId) {
+    payload.addressId = Number(addressId);
+  }
+
+  if (couponCode) {
+    payload.couponCode = couponCode;
+  }
+
   const response = await fetch(`${API_BASE_URL}/payments/create-intent`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ orderId })
+    body: JSON.stringify(payload)
+  });
+
+  return handleResponse(response);
+};
+
+export const createCheckoutSession = async ({ addressId = "", couponCode = "" } = {}) => {
+  const payload = {};
+
+  if (addressId) {
+    payload.addressId = Number(addressId);
+  }
+
+  if (couponCode) {
+    payload.couponCode = couponCode;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/payments/create-checkout-session`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload)
+  });
+
+  return handleResponse(response);
+};
+
+export const getCheckoutSessionStatus = async (sessionId) => {
+  const response = await fetch(`${API_BASE_URL}/payments/checkout-session/${sessionId}`, {
+    headers: getAuthHeaders()
   });
 
   return handleResponse(response);

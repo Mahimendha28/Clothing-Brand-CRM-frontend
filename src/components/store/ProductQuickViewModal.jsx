@@ -6,12 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../../services/catalogService";
 import { addCartItem } from "../../services/cartService";
 import { isAuthenticated } from "../../utils/auth";
-import StatusBanner from "../common/StatusBanner";
+import { useToast } from "../../context/ToastContext";
 
 function ProductQuickViewModal({ product, isOpen, onClose }) {
   const [addingToCart, setAddingToCart] = useState(false);
-  const [cartNotice, setCartNotice] = useState("");
-  const [cartError, setCartError] = useState("");
+  const { toastSuccess, toastError } = useToast();
   
   if (!product) return null;
 
@@ -26,13 +25,10 @@ function ProductQuickViewModal({ product, isOpen, onClose }) {
     }
     try {
       setAddingToCart(true);
-      setCartNotice("");
-      setCartError("");
       const response = await addCartItem({ productId: product.id, variantId: product.variants?.[0]?.id || null, quantity: 1 });
-      setCartNotice(response.message || "Added to cart!");
-      setTimeout(() => setCartNotice(""), 2000);
+      toastSuccess(response.message || `${product.product_name} added to cart`);
     } catch (apiError) {
-      setCartError(apiError.message || "Failed to add.");
+      toastError(apiError.message || "Failed to add to cart");
     } finally {
       setAddingToCart(false);
     }
@@ -104,13 +100,6 @@ function ProductQuickViewModal({ product, isOpen, onClose }) {
               <p className="text-secondary text-sm leading-relaxed mb-8">
                 {product.description || "Premium quality clothing designed with careful attention to detail."}
               </p>
-
-              <div className="mb-4">
-                 <AnimatePresence>
-                   {cartNotice && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden mb-4"><StatusBanner tone="success">{cartNotice}</StatusBanner></motion.div>}
-                   {cartError && <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="overflow-hidden mb-4"><StatusBanner tone="danger">{cartError}</StatusBanner></motion.div>}
-                 </AnimatePresence>
-              </div>
 
               <div className="mt-auto flex flex-col gap-4">
                 <motion.button

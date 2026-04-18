@@ -5,8 +5,9 @@ import { Link, useParams } from "react-router-dom";
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
+import { useToast } from "../context/ToastContext";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
-import { getOrderById } from "../services/orderService";
+import { downloadOrderInvoicePdf, getOrderById } from "../services/orderService";
 
 const orderTimelineSteps = [
   { key: "placed", label: "Order Placed" },
@@ -52,6 +53,8 @@ function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
     let ignore = false;
@@ -86,6 +89,22 @@ function OrderDetailPage() {
     };
   }, [orderId]);
 
+  const handleDownloadInvoice = async () => {
+    if (!order?.id) {
+      return;
+    }
+
+    try {
+      setDownloadingInvoice(true);
+      await downloadOrderInvoicePdf(order.id);
+      toastSuccess("Invoice PDF download started");
+    } catch (apiError) {
+      toastError(apiError.message || "Failed to download invoice");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   if (loading) {
     return <p className="text-sm text-secondary">Loading order detail...</p>;
   }
@@ -115,7 +134,9 @@ function OrderDetailPage() {
             Back to my orders
           </Link>
           <p className="mt-6 ui-eyebrow">Order Detail</p>
-          <h1 className="mt-4 font-display text-6xl leading-[0.92] text-ink">{order.order_number}</h1>
+          <h1 className="mt-4 break-all font-display text-4xl leading-[0.95] text-ink sm:text-5xl xl:text-6xl">
+            {order.order_number}
+          </h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
             Placed on {formatOrderDate(order.created_at)}. This detail page shows the final COD order snapshot, item lines, delivery address, and totals.
           </p>
@@ -139,6 +160,17 @@ function OrderDetailPage() {
               </Button>
             </Link>
           ) : null}
+          {order.payment_status === "paid" ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="!px-5 !py-2.5 !text-[11px] !font-semibold !uppercase !tracking-[0.18em]"
+            >
+              {downloadingInvoice ? "Preparing Invoice" : "Invoice PDF"}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -153,75 +185,77 @@ function OrderDetailPage() {
               Follow each fulfillment milestone as the order moves from placement to delivery.
             </p>
 
-            <div className="mt-8 grid gap-5 md:grid-cols-5">
-              {orderTimelineSteps.map((step, index) => {
-                const stepState = getTimelineStepState(order.order_status, step.key);
-                const isCompleted = stepState === "completed";
-                const isCurrent = stepState === "current";
-                const isCancelled = stepState === "cancelled";
-                const isUpcoming = stepState === "upcoming";
+            <div className="mt-8 overflow-x-auto pb-2">
+              <div className="grid min-w-[920px] gap-5 md:grid-cols-5">
+                {orderTimelineSteps.map((step, index) => {
+                  const stepState = getTimelineStepState(order.order_status, step.key);
+                  const isCompleted = stepState === "completed";
+                  const isCurrent = stepState === "current";
+                  const isCancelled = stepState === "cancelled";
+                  const isUpcoming = stepState === "upcoming";
 
-                return (
-                  <div key={step.key} className="relative">
-                    {index < orderTimelineSteps.length - 1 ? (
-                      <div
-                        className={`absolute left-[calc(50%+20px)] top-5 hidden h-[2px] w-[calc(100%-8px)] md:block ${
-                          isCancelled
-                            ? "bg-line"
-                            : isCompleted
-                              ? "bg-ink"
-                              : "bg-line"
-                        }`}
-                      />
-                    ) : null}
-
-                    <div
-                      className={`relative rounded-[24px] border px-4 py-5 transition-colors ${
-                        isCancelled
-                          ? "border-line bg-page"
-                          : isCurrent
-                            ? "border-ink bg-page"
-                            : isCompleted
-                              ? "border-[#d7c29f] bg-[#fff7ea]"
-                              : "border-line bg-white"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
-                          isCancelled
-                            ? "bg-white text-muted"
-                            : isCurrent
-                              ? "bg-ink text-white"
+                  return (
+                    <div key={step.key} className="relative">
+                      {index < orderTimelineSteps.length - 1 ? (
+                        <div
+                          className={`absolute left-[calc(50%+20px)] top-5 hidden h-[2px] w-[calc(100%-8px)] md:block ${
+                            isCancelled
+                              ? "bg-line"
                               : isCompleted
-                                ? "bg-[#1b1408] text-white"
-                                : "bg-page text-muted"
+                                ? "bg-ink"
+                                : "bg-line"
+                          }`}
+                        />
+                      ) : null}
+
+                      <div
+                        className={`relative rounded-[24px] border px-4 py-5 transition-colors ${
+                          isCancelled
+                            ? "border-line bg-page"
+                            : isCurrent
+                              ? "border-ink bg-page"
+                              : isCompleted
+                                ? "border-[#d7c29f] bg-[#fff7ea]"
+                                : "border-line bg-white"
                         }`}
                       >
-                        {index + 1}
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
+                            isCancelled
+                              ? "bg-white text-muted"
+                              : isCurrent
+                                ? "bg-ink text-white"
+                                : isCompleted
+                                  ? "bg-[#1b1408] text-white"
+                                  : "bg-page text-muted"
+                          }`}
+                        >
+                          {index + 1}
+                        </div>
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted">
+                          Step {index + 1}
+                        </p>
+                        <p
+                          className={`mt-2 text-lg font-semibold ${
+                            isUpcoming || isCancelled ? "text-secondary" : "text-ink"
+                          }`}
+                        >
+                          {step.label}
+                        </p>
+                        <p className="mt-2 text-sm text-secondary">
+                          {isCancelled
+                            ? "Order cancelled before completing this milestone."
+                            : isCurrent
+                              ? "Current stage"
+                              : isCompleted
+                                ? "Completed"
+                                : "Pending"}
+                        </p>
                       </div>
-                      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted">
-                        Step {index + 1}
-                      </p>
-                      <p
-                        className={`mt-2 text-lg font-semibold ${
-                          isUpcoming || isCancelled ? "text-secondary" : "text-ink"
-                        }`}
-                      >
-                        {step.label}
-                      </p>
-                      <p className="mt-2 text-sm text-secondary">
-                        {isCancelled
-                          ? "Order cancelled before completing this milestone."
-                          : isCurrent
-                            ? "Current stage"
-                            : isCompleted
-                              ? "Completed"
-                              : "Pending"}
-                      </p>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {order.order_status === "cancelled" ? (
@@ -262,7 +296,7 @@ function OrderDetailPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">
                           {item.category_name}
                         </p>
-                        <h3 className="mt-2 font-display text-3xl leading-none text-ink">{item.product_name}</h3>
+                        <h3 className="mt-2 font-display text-2xl leading-none text-ink sm:text-3xl">{item.product_name}</h3>
                         <p className="mt-3 text-sm text-secondary">{item.brand_name}</p>
                         <p className="mt-3 text-sm leading-6 text-secondary">
                           {item.variant_id
@@ -333,7 +367,7 @@ function OrderDetailPage() {
             ) : null}
             <div className="border-t border-line pt-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">Order total</p>
-              <p className="mt-3 font-display text-5xl leading-none text-ink">
+              <p className="mt-3 font-display text-4xl leading-none text-ink sm:text-5xl">
                 {formatCatalogPrice(order.total_amount)}
               </p>
             </div>
@@ -348,6 +382,19 @@ function OrderDetailPage() {
               <span>Payment Status</span>
               <span className="font-semibold text-ink">{order.payment_status}</span>
             </div>
+            {order.stripe_receipt_url ? (
+              <div className="flex items-center justify-between text-sm text-secondary">
+                <span>Stripe Receipt</span>
+                <a
+                  href={order.stripe_receipt_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-ink underline underline-offset-4"
+                >
+                  Open
+                </a>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between text-sm text-secondary">
               <span>Order Status</span>
               <span className="font-semibold text-ink">{order.order_status}</span>
@@ -377,6 +424,16 @@ function OrderDetailPage() {
                   Start Return Request
                 </Button>
               </Link>
+            ) : null}
+            {order.stripe_receipt_url ? (
+              <a href={order.stripe_receipt_url} target="_blank" rel="noreferrer">
+                <Button
+                  variant="secondary"
+                  className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]"
+                >
+                  Download Stripe Receipt
+                </Button>
+              </a>
             ) : null}
             <Link to="/notifications">
               <Button

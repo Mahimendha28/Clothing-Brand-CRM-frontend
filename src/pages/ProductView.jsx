@@ -13,11 +13,11 @@ import {
   getProductById,
   updateVariant,
   updateVariantStatus,
-  uploadProductImage,
+  uploadProductImages,
   deleteProductImage
 } from "../services/authService";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const initialVariantForm = {
   sku: "",
@@ -185,8 +185,7 @@ function ProductView() {
       setUploadingImage(true);
       setError("");
       setMessage("");
-      // Promisified parallel uploads for speed and robustness
-      await Promise.all(selectedImages.map(file => uploadProductImage(productId, file)));
+      await uploadProductImages(productId, selectedImages);
       setSelectedImages([]);
       setMessage("Product images uploaded successfully");
       await loadProduct();

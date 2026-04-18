@@ -32,7 +32,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-export const createOrder = async ({ addressId = "", paymentMethod = "cod", couponCode = "" } = {}) => {
+export const createOrder = async ({ addressId = "", paymentMethod = "cod", couponCode = "", paymentIntentId = "" } = {}) => {
   const payload = {
     paymentMethod
   };
@@ -43,6 +43,10 @@ export const createOrder = async ({ addressId = "", paymentMethod = "cod", coupo
 
   if (couponCode) {
     payload.couponCode = couponCode;
+  }
+
+  if (paymentIntentId) {
+    payload.paymentIntentId = paymentIntentId;
   }
 
   const response = await fetch(`${API_BASE_URL}/checkout/create-order`, {
@@ -172,4 +176,41 @@ export const updateShipmentTracking = async (shipmentId, { trackingNumber, carri
   });
 
   return handleResponse(response);
+};
+
+export const downloadOrderInvoicePdf = async (orderId) => {
+  const token = getStoredToken();
+  const headers = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/invoice-pdf`, {
+    headers
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text();
+    let message = "Failed to download invoice";
+
+    try {
+      const parsed = responseText ? JSON.parse(responseText) : {};
+      message = parsed.message || message;
+    } catch (_error) {
+      // ignore parse failure
+    }
+
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = `invoice-order-${orderId}.pdf`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(blobUrl);
 };
