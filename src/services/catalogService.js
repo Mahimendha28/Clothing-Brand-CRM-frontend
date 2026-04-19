@@ -29,11 +29,22 @@ export const buildCatalogImageUrl = (imageUrl) => {
     return null;
   }
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
-    return imageUrl;
+  // Handle case where imageUrl might be an object
+  let url = imageUrl;
+  if (typeof imageUrl === 'object') {
+    // Try common property names for image URLs
+    url = imageUrl.url || imageUrl.image_url || imageUrl.path || null;
+  }
+  
+  if (!url || typeof url !== 'string') {
+    return null;
   }
 
-  return `${API_BASE_URL}${imageUrl}`;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+
+  return `${API_BASE_URL}${url}`;
 };
 
 export const getStoreFilters = async () => {

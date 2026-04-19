@@ -1,14 +1,15 @@
 import { startTransition, useDeferredValue, useEffect, useState } from "react";
-import { Search, SlidersHorizontal, ChevronDown, Filter } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, ChevronDown, Filter, X, ChevronRight } from "lucide-react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import ProductCard from "../components/store/ProductCard";
-import { formatCatalogPrice, getStoreFilters, getStoreProducts } from "../services/catalogService";
+import { formatCatalogPrice, getStoreFilters, getStoreProducts, buildCatalogImageUrl } from "../services/catalogService";
 
 function ProductListing() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filters, setFilters] = useState({
@@ -20,7 +21,7 @@ function ProductListing() {
   });
   
   const [sortOption, setSortOption] = useState(searchParams.get("sort") || "new");
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [catalogFilters, setCatalogFilters] = useState({
     categories: [], brands: [], sizes: [], price_range: { min: 0, max: 0 }
@@ -39,13 +40,13 @@ function ProductListing() {
       try {
         const response = await getStoreFilters();
         if (!ignore) {
-          setCatalogFilters(response.filters || { categories: [], brands: [], sizes: [], price_range: { min: 0, max: 0 } });
-          if (!searchParams.get("maxPrice") && response.filters?.price_range?.max) {
+          setCatalogFilters(response?.filters || { categories: [], brands: [], sizes: [], price_range: { min: 0, max: 0 } });
+          if (!searchParams.get("maxPrice") && response?.filters?.price_range?.max) {
              setSliderPrice(response.filters.price_range.max);
           }
         }
       } catch (apiError) {
-         if(!ignore) setError(apiError.message);
+         if(!ignore) setError(apiError?.message);
       }
     };
     loadFilters();
@@ -67,11 +68,11 @@ function ProductListing() {
 
         if (!ignore) {
           startTransition(() => {
-            setProducts(response.products || []);
+            setProducts(response?.products || []);
           });
         }
       } catch (apiError) {
-        if (!ignore) setError(apiError.message);
+        if (!ignore) setError(apiError?.message);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -101,16 +102,12 @@ function ProductListing() {
     setFilters({ category: "", brand: "", size: "", minPrice: "", maxPrice: "" });
     setSliderPrice(catalogFilters.price_range.max || 1000);
     setSortOption("new");
+    navigate("/products");
   };
 
-  const visibleProducts = products.filter((product) => {
-    const maxPrice = filters.maxPrice ? Number(filters.maxPrice) : null;
-    const priceFrom = Number(product.price_from || product.base_price);
-    if (maxPrice !== null && priceFrom > maxPrice) return false;
-    return true;
-  }).sort((a, b) => {
-     const priceA = Number(a.price_from || a.base_price);
-     const priceB = Number(b.price_from || b.base_price);
+  const sortedProducts = [...products].sort((a, b) => {
+     const priceA = Number(a.price_from || a.base_price || a.price);
+     const priceB = Number(b.price_from || b.base_price || b.price);
      switch(sortOption) {
         case 'price-asc': return priceA - priceB;
         case 'price-desc': return priceB - priceA;
@@ -122,142 +119,243 @@ function ProductListing() {
   });
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 py-10 md:px-10 lg:py-16 selection:bg-accent/20">
-      
-      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12 border-b border-soft pb-8">
-         <div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary">Collection</h1>
-            <p className="text-secondary mt-3">Discover the latest pieces thoughtfully crafted for you.</p>
-         </div>
-         <div className="flex items-center gap-4 w-full md:w-auto">
-            <button className="lg:hidden flex items-center gap-2 px-4 py-2 border border-soft rounded-lg bg-canvas text-sm font-semibold text-primary shadow-sm hover:bg-input" onClick={() => setShowMobileFilters(!showMobileFilters)}>
-               <Filter className="w-4 h-4" /> Filters
-            </button>
-            <div className="relative w-full md:w-64">
-               <select 
-                  value={sortOption} 
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="appearance-none w-full bg-input rounded-xl px-4 py-3 pr-10 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer border border-soft shadow-sm"
-               >
-                  <option value="new">Sort by: New Arrivals</option>
-                  <option value="popular">Sort by: Popularity</option>
-                  <option value="price-asc">Sort by: Price (Low to High)</option>
-                  <option value="price-desc">Sort by: Price (High to Low)</option>
-               </select>
-               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+    <div className="min-h-screen bg-white">
+      {/* Top Header / Breadcrumbs Area */}
+      <div className="border-b border-[var(--color-border-light)] py-4 bg-white">
+         <div className="shop-container flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-[11px] font-medium text-[var(--color-text-subtle)]">
+               <Link to="/" className="hover:text-black">Home</Link>
+               <ChevronRight className="w-3 h-3" />
+               <span className="text-black font-black uppercase tracking-widest">Clothing Archive</span>
+            </div>
+            <div className="text-sm font-medium">
+               <span className="text-[var(--color-text-main)] font-black uppercase mr-2 italic">{sortedProducts.length}</span> items found
             </div>
          </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-10">
-         
-         <aside className={`${showMobileFilters ? 'block' : 'hidden'} lg:block w-full lg:w-[280px] shrink-0 flex-col gap-8 sticky top-32 h-fit mb-10 lg:mb-0`}>
-            
-            <div className="mb-8">
-               <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input 
-                     type="text" 
-                     placeholder="Search products..." 
-                     value={searchTerm} 
-                     onChange={(e) => setSearchTerm(e.target.value)}
-                     className="w-full bg-canvas pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/30 border border-soft shadow-sm placeholder:text-muted"
-                  />
-               </div>
+      <div className="shop-container py-10">
+        <div className="flex flex-col lg:flex-row gap-12">
+          
+          {/* Sidebar Filters (Myntra Style) */}
+          <aside className="hidden lg:block w-[260px] flex-shrink-0 space-y-10">
+            <div className="flex items-center justify-between mb-4">
+               <h2 className="text-sm font-black uppercase tracking-widest">Filters</h2>
+               <button onClick={clearFilters} className="text-[var(--color-primary)] text-[10px] font-black uppercase tracking-widest hover:underline">Clear All</button>
             </div>
 
-            <div className="mb-8 bg-canvas p-6 rounded-2xl border border-soft shadow-soft">
-               <h3 className="text-sm font-bold text-primary mb-5 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-accent"></div>Price Range</h3>
-               <div className="px-1">
-                  <input 
-                     type="range" 
-                     min={catalogFilters.price_range.min || 0} 
-                     max={catalogFilters.price_range.max || 1000} 
-                     value={sliderPrice}
-                     onChange={(e) => setSliderPrice(e.target.value)}
-                     onMouseUp={(e) => handleFilterChange("maxPrice", e.target.value)}
-                     className="w-full h-1.5 bg-input rounded-full appearance-none cursor-pointer accent-primary"
-                  />
-                  <div className="flex justify-between text-xs font-semibold text-secondary mt-4 bg-input px-3 py-1.5 rounded-lg">
-                     <span>{formatCatalogPrice(catalogFilters.price_range.min || 0)}</span>
-                     <span>{formatCatalogPrice(sliderPrice)}</span>
-                  </div>
-               </div>
-            </div>
-
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Category</h3>
-               <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                     <input type="radio" name="category" checked={filters.category === ""} onChange={() => handleFilterChange("category", "")} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
-                     <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">All Categories</span>
+            {/* Categories */}
+            <div className="border-t border-[var(--color-border-light)] pt-6">
+              <h3 className="filter-section-title">Categories</h3>
+              <div className="space-y-1">
+                {['Men', 'Women', 'Kids', 'Unisex', 'Accessories'].map((cat) => (
+                  <label key={cat} className="filter-checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      className="accent-[var(--color-primary)] w-4 h-4" 
+                      checked={filters.category === cat.toLowerCase()}
+                      onChange={() => handleFilterChange("category", filters.category === cat.toLowerCase() ? "" : cat.toLowerCase())}
+                    />
+                    <span className={filters.category === cat.toLowerCase() ? "font-bold text-black" : ""}>{cat}</span>
                   </label>
-                  {catalogFilters.categories.map(cat => (
-                     <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="radio" name="category" checked={filters.category === String(cat.id)} onChange={() => handleFilterChange("category", String(cat.id))} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
-                        <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">{cat.name}</span>
-                     </label>
-                  ))}
-               </div>
+                ))}
+              </div>
             </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Size</h3>
-               <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleFilterChange("size", "")} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${filters.size === "" ? "border-primary bg-primary text-canvas" : "border-soft bg-canvas text-secondary hover:border-primary hover:text-primary shadow-sm"}`}>
-                     Any
-                  </button>
-                  {catalogFilters.sizes.map(size => (
-                     <button key={size} onClick={() => handleFilterChange("size", size)} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${filters.size === size ? "border-primary bg-primary text-canvas" : "border-soft bg-canvas text-secondary hover:border-primary hover:text-primary shadow-sm"}`}>
-                        {size}
-                     </button>
-                  ))}
-               </div>
+            {/* Brands */}
+            <div className="border-t border-[var(--color-border-light)] pt-6">
+              <h3 className="filter-section-title">Brands</h3>
+              <div className="space-y-1 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {catalogFilters.brands.map((brand) => (
+                  <label key={brand.id} className="filter-checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      className="accent-[var(--color-primary)] w-4 h-4" 
+                      checked={filters.brand === brand.name}
+                      onChange={() => handleFilterChange("brand", filters.brand === brand.name ? "" : brand.name)}
+                    />
+                    <span className={filters.brand === brand.name ? "font-bold text-black" : ""}>{brand.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Brand</h3>
-               <div className="relative">
-                 <select value={filters.brand} onChange={(e) => handleFilterChange("brand", e.target.value)} className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer">
-                    <option value="">All Brands</option>
-                    {catalogFilters.brands.map(brand => (
-                       <option key={brand.id} value={brand.id}>{brand.name}</option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+            {/* Price Range */}
+            <div className="border-t border-[var(--color-border-light)] pt-6">
+              <h3 className="filter-section-title">Price Range</h3>
+              <div className="space-y-4">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="50000" 
+                  value={sliderPrice}
+                  onChange={(e) => setSliderPrice(e.target.value)}
+                  onMouseUp={(e) => handleFilterChange("maxPrice", e.target.value)}
+                  className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[var(--color-primary)]"
+                />
+                <div className="flex items-center justify-between text-[11px] font-black uppercase text-[var(--color-text-subtle)]">
+                   <span>Min: ₹0</span>
+                   <span className="text-[var(--color-primary)]">Max: {formatCatalogPrice(sliderPrice)}</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Context */}
+          <main className="flex-1">
+            {/* Sorting & Search Subhead */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-[var(--color-border-light)] pb-8">
+               <div className="relative w-full md:w-80">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search inside category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="shop-input pl-12 rounded-full border border-[var(--color-border-light)]"
+                  />
+               </div>
+
+               <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black uppercase text-[var(--color-text-subtle)] tracking-widest">Sort By:</span>
+                  <select 
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="bg-white border border-[var(--color-border-main)] rounded-sm px-4 py-2 text-xs font-bold uppercase tracking-widest outline-none focus:border-black cursor-pointer"
+                  >
+                    <option value="new">Newest First</option>
+                    <option value="popular">Popularity</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
                </div>
             </div>
-
-            <button onClick={clearFilters} className="w-full py-3 rounded-xl bg-input border border-soft text-secondary text-sm font-bold hover:bg-page hover:text-primary shadow-sm transition-all">
-               Reset Filters
-            </button>
-         </aside>
-
-         <div className="flex-1 min-w-0">
-            {error && <StatusBanner tone="danger">{error}</StatusBanner>}
 
             {loading ? (
-               <div className="w-full h-64 flex items-center justify-center">
-                  <div className="w-10 h-10 rounded-full border-4 border-input border-t-primary animate-spin"></div>
-               </div>
-            ) : visibleProducts.length === 0 ? (
-               <EmptyState title="No items found" description="Try adjusting your filters to see more results." />
-            ) : (
-               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-                  {visibleProducts.map((product, i) => (
-                     <motion.div
-                       key={product.id}
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ duration: 0.4, delay: i * 0.05 }}
-                     >
-                       <ProductCard product={product} />
-                     </motion.div>
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="animate-pulse space-y-4">
+                       <div className="aspect-[3/4] bg-gray-100 rounded-sm" />
+                       <div className="h-4 w-3/4 bg-gray-100" />
+                       <div className="h-4 w-1/4 bg-gray-100" />
+                    </div>
                   ))}
                </div>
+            ) : error ? (
+               <div className="p-12 text-center bg-red-50 text-red-500 rounded-xl font-bold italic">{error}</div>
+            ) : sortedProducts.length === 0 ? (
+               <div className="py-32 text-center bg-[var(--color-bg-surface)] rounded-xl">
+                  <EmptyState title="No Products Found" description="Try adjusting your filters or search terms for better results." />
+                  <button onClick={clearFilters} className="btn-primary mt-8">Reset All Filters</button>
+               </div>
+            ) : (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
+                  <AnimatePresence mode="popLayout">
+                    {sortedProducts.map((product, idx) => (
+                       <motion.div
+                         key={`product-${product.id || idx}-${idx}`}
+                         layout
+                         initial={{ opacity: 0, scale: 0.95 }}
+                         animate={{ opacity: 1, scale: 1 }}
+                         exit={{ opacity: 0, scale: 0.9 }}
+                         transition={{ duration: 0.4, delay: idx * 0.02 }}
+                         className="product-card group"
+                       >
+                          <Link to={`/products/${product.slug}`}>
+                            <div className="product-card-image relative group">
+                               <img 
+                                  src={buildCatalogImageUrl(product.images?.[0])} 
+                                  alt={product.name}
+                                  className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+                                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800"; }}
+                               />
+                               {/* Add to Cart Overlay (Myntra Style) */}
+                               <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform bg-white/95 backdrop-blur-sm border-t border-gray-100 flex flex-col gap-2 shadow-2xl z-20">
+                                  <button className="w-full py-2.5 bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest rounded-sm">Quick Add</button>
+                                  <div className="flex justify-center gap-1">
+                                    {product.variants?.length > 0 
+                                      ? Array.from(new Set(product.variants.map(v => v.size))).map(s => <span key={s} className="text-[9px] w-6 h-6 flex items-center justify-center border border-gray-200 rounded-full hover:border-black cursor-pointer">{s}</span>)
+                                      : ['S','M','L','XL'].map(s => <span key={s} className="text-[9px] w-6 h-6 flex items-center justify-center border border-gray-200 rounded-full hover:border-black cursor-pointer">{s}</span>)
+                                    }
+                                  </div>
+                               </div>
+                            </div>
+                            <div className="p-4 space-y-1">
+                               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{product.brand?.name || "BADSHAH"}</p>
+                               <h3 className="text-sm font-bold truncate text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h3>
+                               <div className="flex items-center gap-2 pt-1">
+                                 <span className="text-sm font-black">
+                                   {product.variants?.length > 0 
+                                     ? formatCatalogPrice(Math.min(...product.variants.map(v => v.price || product.price))) 
+                                     : formatCatalogPrice(product.price)}
+                                 </span>
+                                 <span className="text-[10px] line-through text-gray-400 font-medium">{formatCatalogPrice((product.price || 0) * 1.5)}</span>
+                                 <span className="text-[10px] text-[var(--status-error)] font-bold italic">(30% OFF)</span>
+                               </div>
+                            </div>
+                          </Link>
+                       </motion.div>
+                    ))}
+                  </AnimatePresence>
+               </div>
             )}
-         </div>
+          </main>
+        </div>
+      </div>
 
+      {/* Mobile Filter Overlay */}
+      <AnimatePresence>
+         {isMobileFilterOpen && (
+            <>
+               <motion.div 
+                 initial={{ opacity: 0 }} 
+                 animate={{ opacity: 1 }} 
+                 exit={{ opacity: 0 }}
+                 onClick={() => setIsMobileFilterOpen(false)}
+                 className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm lg:hidden"
+               />
+               <motion.div 
+                 initial={{ y: "100%" }} 
+                 animate={{ y: 0 }} 
+                 exit={{ y: "100%" }}
+                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                 className="fixed bottom-0 left-0 right-0 h-[80vh] bg-white z-[101] rounded-t-3xl overflow-y-auto"
+               >
+                 <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
+                    <h2 className="text-sm font-black uppercase tracking-widest">Applied Filters</h2>
+                    <button onClick={() => setIsMobileFilterOpen(false)}><X className="w-6 h-6" /></button>
+                 </div>
+                 <div className="p-8 space-y-10">
+                    {/* Mobile filter content ... */}
+                    <div className="space-y-4">
+                      <h3 className="filter-section-title">Categories</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                         {['Men', 'Women', 'Kids', 'Unisex'].map(c => (
+                            <button key={c} className={`py-3 px-4 text-xs font-bold rounded-lg border ${filters.category === c.toLowerCase() ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'border-gray-200'}`} onClick={() => handleFilterChange("category", c.toLowerCase())}>{c}</button>
+                         ))}
+                      </div>
+                    </div>
+                 </div>
+                 <div className="sticky bottom-0 bg-white border-t p-6">
+                    <button className="btn-primary w-full" onClick={() => setIsMobileFilterOpen(false)}>Apply Filter</button>
+                 </div>
+               </motion.div>
+            </>
+         )}
+      </AnimatePresence>
+
+      {/* Mobile Action Buttons */}
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] flex items-center bg-black text-white rounded-full shadow-2xl overflow-hidden divide-x divide-white/20">
+         <button className="px-8 py-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-gray-900" onClick={() => setIsMobileFilterOpen(true)}>
+            <Filter className="w-3 h-3" /> Filter
+         </button>
+         <div className="relative">
+            <select className="bg-transparent px-8 py-3 text-[10px] font-black uppercase tracking-widest outline-none appearance-none" onChange={(e) => setSortOption(e.target.value)} value={sortOption}>
+               <option value="new">Latest</option>
+               <option value="price-asc">Price Index: Low</option>
+               <option value="price-desc">Price Index: High</option>
+            </select>
+         </div>
       </div>
     </div>
   );

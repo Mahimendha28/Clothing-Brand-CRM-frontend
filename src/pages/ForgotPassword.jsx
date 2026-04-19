@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowRight, Mail } from "lucide-react";
 
-import Button from "../components/common/Button";
 import StatusBanner from "../components/common/StatusBanner";
 import { requestPasswordReset } from "../services/authService";
 
@@ -29,82 +27,54 @@ function ForgotPassword() {
     }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemAnim = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    <motion.div className="w-full" variants={staggerContainer} initial="hidden" animate="show">
-      <motion.div variants={itemAnim} className="mb-8 text-center">
-        <p className="ui-eyebrow mb-2 opacity-70">Password Help</p>
-        <h2 className="font-serif text-3xl leading-tight text-ink">Reset access.</h2>
-        <p className="mt-3 mx-auto max-w-sm text-xs leading-5 text-secondary">
-          Enter your account email and we will send you a secure reset link.
-        </p>
-      </motion.div>
+    <div className="w-full">
+      <div className="mb-10">
+         <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Reset Password</h2>
+         <p className="text-gray-400 text-sm font-medium tracking-wide">
+            Enter your email address and we'll send you a link to reset your password.
+         </p>
+      </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="email"
-            name="email"
-            id="email"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-          <label
-            htmlFor="email"
-            className="pointer-events-none absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink"
-          >
-            Email Address
-          </label>
-        </motion.div>
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-1">
+           <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Email Address</label>
+           <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                 <Mail className="w-4 h-4" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="YOUR NAME @ EMAIL.COM"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+           </div>
+        </div>
 
-        {error && (
-          <motion.div variants={itemAnim}>
-            <StatusBanner tone="danger">{error}</StatusBanner>
-          </motion.div>
-        )}
+        {error && <StatusBanner tone="danger">{error}</StatusBanner>}
+        {successMessage && <StatusBanner tone="success">{successMessage}</StatusBanner>}
 
-        {successMessage && (
-          <motion.div variants={itemAnim}>
-            <StatusBanner tone="success">{successMessage}</StatusBanner>
-          </motion.div>
-        )}
-
-        <motion.div variants={itemAnim}>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full !rounded-full !py-4 font-semibold uppercase tracking-widest"
-          >
-            {loading ? "Sending..." : "Send Reset Link"}
-          </Button>
-        </motion.div>
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="btn-primary w-full py-4 rounded-xl shadow-[0_10px_20px_rgba(255,63,108,0.2)]"
+        >
+          {loading ? "SENDING LINK..." : "SEND RESET LINK"}
+        </button>
       </form>
 
-      <motion.div variants={itemAnim} className="mt-12 flex items-center justify-between gap-4 border-t border-line pt-8">
-        <span className="text-sm text-secondary">Remembered your password?</span>
-        <Link
-          to="/login"
-          className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70"
-        >
-          Back to Sign In <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>
-        </Link>
-      </motion.div>
-    </motion.div>
+      <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Remembered password?</p>
+         <Link to="/login" className="group flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-black hover:text-[var(--color-primary)] transition-all">
+            Back to Login
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+         </Link>
+      </div>
+    </div>
   );
 }
 

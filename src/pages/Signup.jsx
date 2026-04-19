@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, User, Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
 import PasswordToggleButton from "../components/PasswordToggleButton";
-import Button from "../components/common/Button";
 import StatusBanner from "../components/common/StatusBanner";
 import { setCredentials } from "../features/auth/authSlice";
 import { loginUser, registerUser } from "../services/authService";
@@ -15,7 +14,6 @@ function Signup() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -65,144 +63,118 @@ function Signup() {
     }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemAnim = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    <motion.div 
-      className="w-full"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div variants={itemAnim} className="mb-8 text-center">
-         <p className="ui-eyebrow mb-2 opacity-70">Create Profile</p>
-         <h2 className="font-serif text-3xl leading-tight text-ink">Join the brand.</h2>
-         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary transform-gpu">
-           Register for access to exclusive streetwear drops and personalized curation.
+    <div className="w-full">
+      <div className="mb-10">
+         <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Create Account</h2>
+         <p className="text-gray-400 text-sm font-medium tracking-wide">
+            Join the community for early access to drops and exclusive offers.
          </p>
-      </motion.div>
+      </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="text"
-            name="name"
-            id="name"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="name"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Full Name
-          </label>
-        </motion.div>
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="space-y-1">
+           <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Full Name</label>
+           <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                 <User className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                name="name"
+                placeholder="FIRST LAST"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+           </div>
+        </div>
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="email"
-            name="email"
-            id="email"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="email"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Email Address
-          </label>
-        </motion.div>
+        <div className="space-y-1">
+           <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Email Address</label>
+           <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                 <Mail className="w-4 h-4" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="EMAIL @ EXAMPLE.COM"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+           </div>
+        </div>
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            id="password"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="password"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Password
-          </label>
-          <PasswordToggleButton
-            visible={showPassword}
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
-          />
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Password</label>
+              <div className="relative group">
+                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                    <Lock className="w-4 h-4" />
+                 </div>
+                 <input
+                   type={showPassword ? "text" : "password"}
+                   name="password"
+                   placeholder="••••••••"
+                   className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-12 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                   value={formData.password}
+                   onChange={handleChange}
+                   required
+                 />
+                 <PasswordToggleButton
+                   visible={showPassword}
+                   onClick={() => setShowPassword((prev) => !prev)}
+                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                 />
+              </div>
+           </div>
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            name="confirmPassword"
-            id="confirmPassword"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="confirmPassword"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Confirm Password
-          </label>
-          <PasswordToggleButton
-            visible={showConfirmPassword}
-            onClick={() => setShowConfirmPassword((prev) => !prev)}
-            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
-          />
-        </motion.div>
+           <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Confirm</label>
+              <div className="relative group">
+                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                    <Lock className="w-4 h-4" />
+                 </div>
+                 <input
+                   type={showPassword ? "text" : "password"}
+                   name="confirmPassword"
+                   placeholder="••••••••"
+                   className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                   value={formData.confirmPassword}
+                   onChange={handleChange}
+                   required
+                 />
+              </div>
+           </div>
+        </div>
 
-        {error && (
-           <motion.div variants={itemAnim} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <StatusBanner tone="danger">{error}</StatusBanner>
-           </motion.div>
-        )}
+        {error && <StatusBanner tone="danger">{error}</StatusBanner>}
 
-        {/* Empty space matching Login 'Forgot password' to retain identical structural height/layout flow if needed, but not necessary if we just match spacing. Let's maintain spacing. */}
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+           By creating an account, you agree to our <span className="underline">Terms of Service</span> and <span className="underline">Privacy Policy</span>.
+        </p>
 
-        <motion.div variants={itemAnim}>
-           <Button type="submit" disabled={loading} className="w-full !mt-4 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
-             <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Registering..." : "Create Account"}</span>
-             <div className="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-300 group-hover:scale-y-100 z-0"></div>
-           </Button>
-        </motion.div>
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="btn-primary w-full py-4 rounded-xl shadow-[0_10px_20px_rgba(255,63,108,0.2)]"
+        >
+          {loading ? "CREATING ACCOUNT..." : "JOIN THE TRIBE"}
+        </button>
       </form>
 
-      <motion.div variants={itemAnim} className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-8">
-        <span className="text-sm text-secondary">Already hold access?</span>
-        <Link to="/login" className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70">
-          Sign In <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>
-        </Link>
-      </motion.div>
-    </motion.div>
+      <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Already a member?</p>
+         <Link to="/login" className="group flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-black hover:text-[var(--color-primary)] transition-all">
+            Login to Profile
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+         </Link>
+      </div>
+    </div>
   );
 }
 

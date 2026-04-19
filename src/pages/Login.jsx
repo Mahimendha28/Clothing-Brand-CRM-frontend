@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Lock, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 
 import PasswordToggleButton from "../components/PasswordToggleButton";
-import Button from "../components/common/Button";
 import StatusBanner from "../components/common/StatusBanner";
 import { setCredentials } from "../features/auth/authSlice";
 import { loginUser } from "../services/authService";
@@ -51,108 +50,79 @@ function Login() {
     }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemAnim = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    <motion.div 
-      className="w-full"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div variants={itemAnim} className="mb-8 text-center">
-         <p className="ui-eyebrow mb-2 opacity-70">Client Access</p>
-         <h2 className="font-serif text-3xl leading-tight text-ink">Welcome back.</h2>
-         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary transform-gpu">
-           Sign in to your Badshah Clothing profile to manage orders, fast-track checkout, and discover exclusive drops.
+    <div className="w-full">
+      <div className="mb-10">
+         <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Welcome Back</h2>
+         <p className="text-gray-400 text-sm font-medium tracking-wide">
+            Manage your orders, wishlist, and recommendations.
          </p>
-      </motion.div>
+      </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="email"
-            name="email"
-            id="email"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="email"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Email Address
-          </label>
-        </motion.div>
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-1">
+           <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Email Address</label>
+           <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                 <Mail className="w-4 h-4" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="YOUR NAME @ EMAIL.COM"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+           </div>
+        </div>
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            id="password"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="password"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Password
-          </label>
-          <PasswordToggleButton
-            visible={showPassword}
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
-          />
-        </motion.div>
+        <div className="space-y-1">
+           <div className="flex justify-between items-end mb-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Password</label>
+              <Link to="/forgot-password" size="xs" className="text-[9px] font-black uppercase tracking-widest text-[var(--color-primary)]">Forgot?</Link>
+           </div>
+           <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--color-primary)] transition-colors">
+                 <Lock className="w-4 h-4" />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="••••••••"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-4 pl-12 pr-12 text-xs font-bold uppercase tracking-widest outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <PasswordToggleButton
+                visible={showPassword}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+              />
+           </div>
+        </div>
 
-        {error && (
-           <motion.div variants={itemAnim} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <StatusBanner tone="danger">{error}</StatusBanner>
-           </motion.div>
-        )}
+        {error && <StatusBanner tone="danger">{error}</StatusBanner>}
 
-        <motion.div variants={itemAnim} className="flex justify-end">
-          <Link
-            to="/forgot-password"
-            className="text-xs font-bold uppercase tracking-[0.14em] text-secondary transition hover:text-ink"
-          >
-            Forgot password?
-          </Link>
-        </motion.div>
-
-        <motion.div variants={itemAnim}>
-           <Button type="submit" disabled={loading} className="w-full !mt-4 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
-             <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Authenticating..." : "Sign In"}</span>
-             <div className="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-300 group-hover:scale-y-100 z-0"></div>
-           </Button>
-        </motion.div>
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="btn-primary w-full py-4 rounded-xl shadow-[0_10px_20px_rgba(255,63,108,0.2)]"
+        >
+          {loading ? "AUTHENTICATING..." : "SIGN IN"}
+        </button>
       </form>
 
-      <motion.div variants={itemAnim} className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-8">
-        <span className="text-sm text-secondary">New to the brand?</span>
-        <Link to="/signup" className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70">
-          Create Account <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>
-        </Link>
-      </motion.div>
-    </motion.div>
+      <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">New to Badshah?</p>
+         <Link to="/signup" className="group flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-black hover:text-[var(--color-primary)] transition-all">
+            Create an Account
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+         </Link>
+      </div>
+    </div>
   );
 }
 
