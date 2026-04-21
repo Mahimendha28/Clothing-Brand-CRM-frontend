@@ -98,8 +98,8 @@ function Products() {
                 <tr>
                   <th>Product</th>
                   <th>Category</th>
-                  <th>Brand</th>
-                  <th>Base Price</th>
+                  <th>Hierarchy</th>
+                  <th>Price</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -114,7 +114,10 @@ function Products() {
                       </div>
                     </td>
                     <td>{product.category_name}</td>
-                    <td>{product.brand_name}</td>
+                    <td>
+                      <p className="text-sm text-ink">{product.subcategory_name || "-"}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted">{product.type_name || "-"}</p>
+                    </td>
                     <td>Rs. {Number(product.base_price).toFixed(2)}</td>
                     <td>
                       <span

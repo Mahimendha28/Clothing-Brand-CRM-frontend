@@ -43,6 +43,8 @@ export const getStoreFilters = async () => {
 
 export const getStoreProducts = async ({
   category = "",
+  subcategory = "",
+  type = "",
   brand = "",
   size = "",
   color = "",
@@ -57,6 +59,14 @@ export const getStoreProducts = async ({
 
   if (brand) {
     params.append("brand", brand);
+  }
+
+  if (subcategory) {
+    params.append("subcategory", subcategory);
+  }
+
+  if (type) {
+    params.append("type", type);
   }
 
   if (size) {

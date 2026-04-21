@@ -13,6 +13,7 @@ const navItems = [
   { label: "Home", to: "/", end: true },
   { label: "Men", to: "/products?category=men" },
   { label: "Women", to: "/products?category=women" },
+  { label: "Kids", to: "/products?category=kids" },
   { label: "New Arrivals", to: "/products?sort=new" }
 ];
 
@@ -200,10 +201,10 @@ function StorefrontLayout() {
       </div>
 
       {/* Main Navbar */}
-      <header className={`sticky top-0 z-50 transition-all duration-300 border-b ${
+      <header className={`sticky top-0 z-[80] transition-all duration-300 border-b pointer-events-auto ${
         scrolled ? "bg-canvas/80 backdrop-blur-xl border-soft shadow-sm py-3" : "bg-canvas/50 backdrop-blur-md py-5 border-transparent"
       }`}>
-        <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex items-center justify-between relative z-[81] pointer-events-auto">
           
           {/* Left: Mobile Menu Toggle & Brand */}
           <div className="flex items-center gap-6">
@@ -222,12 +223,12 @@ function StorefrontLayout() {
           </div>
 
           {/* Center: Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-8 relative z-[82] pointer-events-auto">
              {navItems.map((item) => (
                 <NavLink 
                   key={item.label} 
                   to={item.to} 
-                  className={({isActive}) => `text-sm font-medium transition-colors hover:text-accent ${isActive ? 'text-accent' : 'text-secondary'}`}
+                  className={({isActive}) => `relative z-[83] pointer-events-auto text-sm font-medium transition-colors hover:text-accent ${isActive ? 'text-accent' : 'text-secondary'}`}
                 >
                   {item.label}
                 </NavLink>
@@ -419,6 +420,7 @@ function StorefrontLayout() {
             <ul className="space-y-4">
               <li><Link to="/products?category=men" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Men's Collection</Link></li>
               <li><Link to="/products?category=women" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Women's Collection</Link></li>
+              <li><Link to="/products?category=kids" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Kids Collection</Link></li>
               <li><Link to="/products?sort=new" className="text-secondary hover:text-accent transition-colors text-sm font-medium">New Arrivals</Link></li>
               <li><Link to="/products?sort=popular" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Best Sellers</Link></li>
             </ul>

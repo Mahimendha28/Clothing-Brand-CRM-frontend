@@ -16,6 +16,11 @@ import {
   uploadProductImages,
   deleteProductImage
 } from "../services/authService";
+import {
+  getHierarchyCategories,
+  getHierarchySubcategories,
+  getHierarchyTypes
+} from "../services/hierarchyService";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -37,6 +42,9 @@ function ProductView() {
   const [variantForm, setVariantForm] = useState(initialVariantForm);
   const [editingVariantId, setEditingVariantId] = useState(null);
   const [savingVariant, setSavingVariant] = useState(false);
+  const [categoryLabel, setCategoryLabel] = useState("");
+  const [subcategoryLabel, setSubcategoryLabel] = useState("");
+  const [typeLabel, setTypeLabel] = useState("");
   
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -46,7 +54,34 @@ function ProductView() {
     try {
       setLoading(true);
       const response = await getProductById(productId);
-      setProduct(response.product);
+      const nextProduct = response.product;
+      setProduct(nextProduct);
+
+      const categoriesResponse = await getHierarchyCategories();
+      const selectedCategory = (categoriesResponse.categories || []).find(
+        (category) => Number(category.id) === Number(nextProduct?.category_id)
+      );
+      setCategoryLabel(selectedCategory?.name || "");
+
+      if (nextProduct?.category_id) {
+        const subcategoriesResponse = await getHierarchySubcategories(nextProduct.category_id);
+        const selectedSubcategory = (subcategoriesResponse.subcategories || []).find(
+          (subcategory) => Number(subcategory.id) === Number(nextProduct?.subcategory_id)
+        );
+        setSubcategoryLabel(selectedSubcategory?.name || "");
+      } else {
+        setSubcategoryLabel("");
+      }
+
+      if (nextProduct?.subcategory_id) {
+        const typesResponse = await getHierarchyTypes(nextProduct.subcategory_id);
+        const selectedType = (typesResponse.types || []).find(
+          (itemType) => Number(itemType.id) === Number(nextProduct?.type_id)
+        );
+        setTypeLabel(selectedType?.name || "");
+      } else {
+        setTypeLabel("");
+      }
     } catch (apiError) {
       setError(apiError.message || "Failed to load product");
     } finally {
@@ -230,8 +265,9 @@ function ProductView() {
   }
 
   const detailItems = [
-    { label: "Category", value: product.category_name },
-    { label: "Brand", value: product.brand_name },
+    { label: "Category", value: categoryLabel || "-" },
+    { label: "Subcategory", value: subcategoryLabel || "-" },
+    { label: "Type", value: typeLabel || "-" },
     { label: "Name", value: product.product_name },
     { label: "Slug", value: product.slug },
     { label: "Base Price", value: `Rs. ${Number(product.base_price).toFixed(2)}` },

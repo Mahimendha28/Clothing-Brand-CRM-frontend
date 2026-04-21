@@ -13,6 +13,8 @@ function ProductListing() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
+    subcategory: searchParams.get("subcategory") || "",
+    type: searchParams.get("type") || "",
     brand: searchParams.get("brand") || "",
     size: searchParams.get("size") || "",
     minPrice: searchParams.get("minPrice") || "",
@@ -23,7 +25,7 @@ function ProductListing() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [catalogFilters, setCatalogFilters] = useState({
-    categories: [], brands: [], sizes: [], price_range: { min: 0, max: 0 }
+    categories: [], subcategories: [], types: [], brands: [], sizes: [], price_range: { min: 0, max: 0 }
   });
   
   const [products, setProducts] = useState([]);
@@ -39,7 +41,21 @@ function ProductListing() {
       try {
         const response = await getStoreFilters();
         if (!ignore) {
-          setCatalogFilters(response.filters || { categories: [], brands: [], sizes: [], price_range: { min: 0, max: 0 } });
+          const nextFilters = response.filters || { categories: [], subcategories: [], types: [], brands: [], sizes: [], colors: [], price_range: { min: 0, max: 0 } };
+          setCatalogFilters(nextFilters);
+          const requestedCategory = searchParams.get("category") || "";
+          const isNumericCategory = requestedCategory && !Number.isNaN(Number(requestedCategory));
+
+          if (requestedCategory && !isNumericCategory) {
+            const matchedCategory = (nextFilters.categories || []).find((category) =>
+              category.name?.toLowerCase().replace(/\s+/g, "-") === requestedCategory.toLowerCase()
+            );
+
+            if (matchedCategory) {
+              setFilters((prev) => ({ ...prev, category: String(matchedCategory.id) }));
+            }
+          }
+
           if (!searchParams.get("maxPrice") && response.filters?.price_range?.max) {
              setSliderPrice(response.filters.price_range.max);
           }
@@ -60,6 +76,8 @@ function ProductListing() {
         setError("");
         const response = await getStoreProducts({
           category: filters.category,
+          subcategory: filters.subcategory,
+          type: filters.type,
           brand: filters.brand,
           size: filters.size,
           search: deferredSearchTerm.trim()
@@ -78,12 +96,14 @@ function ProductListing() {
     };
     loadProducts();
     return () => { ignore = true; };
-  }, [filters.brand, filters.category, filters.size, deferredSearchTerm]);
+  }, [filters.brand, filters.category, filters.subcategory, filters.type, filters.size, deferredSearchTerm]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (filters.category) params.set("category", filters.category);
+    if (filters.subcategory) params.set("subcategory", filters.subcategory);
+    if (filters.type) params.set("type", filters.type);
     if (filters.brand) params.set("brand", filters.brand);
     if (filters.size) params.set("size", filters.size);
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
@@ -93,12 +113,22 @@ function ProductListing() {
   }, [filters, searchTerm, sortOption, setSearchParams]);
 
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => {
+      if (name === "category") {
+        return { ...prev, category: value, subcategory: "", type: "" };
+      }
+
+      if (name === "subcategory") {
+        return { ...prev, subcategory: value, type: "" };
+      }
+
+      return { ...prev, [name]: value };
+    });
   };
 
   const clearFilters = () => {
     setSearchTerm("");
-    setFilters({ category: "", brand: "", size: "", minPrice: "", maxPrice: "" });
+    setFilters({ category: "", subcategory: "", type: "", brand: "", size: "", minPrice: "", maxPrice: "" });
     setSliderPrice(catalogFilters.price_range.max || 1000);
     setSortOption("new");
   };
@@ -119,6 +149,20 @@ function ProductListing() {
         default: 
            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
      }
+  });
+
+  const visibleSubcategories = (catalogFilters.subcategories || []).filter((subcategory) => {
+    if (!filters.category) {
+      return true;
+    }
+    return Number(subcategory.category_id) === Number(filters.category);
+  });
+
+  const visibleTypes = (catalogFilters.types || []).filter((itemType) => {
+    if (!filters.subcategory) {
+      return true;
+    }
+    return Number(itemType.subcategory_id) === Number(filters.subcategory);
   });
 
   return (
@@ -198,6 +242,40 @@ function ProductListing() {
                         <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">{cat.name}</span>
                      </label>
                   ))}
+               </div>
+            </div>
+
+            <div className="mb-8">
+               <h3 className="text-sm font-bold text-primary mb-4">Subcategory</h3>
+               <div className="relative">
+                 <select
+                    value={filters.subcategory}
+                    onChange={(e) => handleFilterChange("subcategory", e.target.value)}
+                    className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
+                 >
+                    <option value="">All Subcategories</option>
+                    {visibleSubcategories.map((subcategory) => (
+                      <option key={subcategory.id} value={subcategory.id}>{subcategory.name}</option>
+                    ))}
+                 </select>
+                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+               </div>
+            </div>
+
+            <div className="mb-8">
+               <h3 className="text-sm font-bold text-primary mb-4">Type</h3>
+               <div className="relative">
+                 <select
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange("type", e.target.value)}
+                    className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
+                 >
+                    <option value="">All Types</option>
+                    {visibleTypes.map((itemType) => (
+                      <option key={itemType.id} value={itemType.id}>{itemType.name}</option>
+                    ))}
+                 </select>
+                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                </div>
             </div>
 
