@@ -45,6 +45,7 @@ import CouponManagementPage from "../pages/CouponManagementPage";
 import CouponFormPage from "../pages/CouponFormPage";
 import SalesDashboard from "../pages/SalesDashboard";
 import InventoryDashboardPage from "../pages/InventoryDashboardPage";
+import AdminProductForm from "../pages/AdminProductForm";
 
 function AppRoutes() {
   return (
@@ -151,6 +152,7 @@ function AppRoutes() {
             <Route path="/admin/products/create" element={<AddProduct />} />
             <Route path="/admin/products/:productId/edit" element={<EditProduct />} />
             <Route path="/admin/products/:productId" element={<ProductView />} />
+            <Route path="/admin/products/v2/create" element={<AdminProductForm />} />
           </Route>
         </Route>
       </Route>

@@ -7,7 +7,7 @@ import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import { useToast } from "../context/ToastContext";
 import { formatCatalogPrice } from "../services/catalogService";
-import { downloadOrderInvoicePdf, getMyOrders } from "../services/orderService";
+import { cancelOrder, downloadOrderInvoicePdf, getMyOrders } from "../services/orderService";
 
 const formatOrderDate = (value) =>
   new Intl.DateTimeFormat("en-US", {
@@ -65,6 +65,22 @@ function MyOrdersPage() {
       toastError(apiError.message || "Failed to download invoice");
     } finally {
       setPendingInvoiceOrderId(null);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    try {
+      await cancelOrder(orderId);
+      toastSuccess("Order cancelled successfully");
+      // Refresh list
+      const response = await getMyOrders();
+      setOrders(response.orders || []);
+    } catch (apiError) {
+      toastError(apiError.message || "Failed to cancel order");
     }
   };
 
@@ -132,12 +148,25 @@ function MyOrdersPage() {
                       <td className="px-5 py-4 text-ink">{formatCatalogPrice(order.total_amount)}</td>
                       <td className="px-5 py-4">
                         <p className="font-medium text-ink uppercase">{order.payment_method}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-secondary">{order.payment_status}</p>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="rounded-full bg-page px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink">
-                          {order.order_status}
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                          order.order_status === 'cancelled' 
+                            ? 'bg-red-50 text-red-600' 
+                            : 'bg-page text-ink'
+                        }`}>
+                          {order.status || order.order_status}
                         </span>
+                        <div className="mt-2 flex flex-col gap-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Payment</p>
+                          <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                            order.payment_status === 'paid' ? 'bg-green-50 text-green-700' :
+                            order.payment_status === 'refunded' ? 'bg-orange-50 text-orange-700' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>
+                            {order.payment_status}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-2">
@@ -155,6 +184,15 @@ function MyOrdersPage() {
                                 Return
                               </Button>
                             </Link>
+                          ) : null}
+                          {["placed", "confirmed", "packed"].includes(order.order_status) ? (
+                            <Button
+                              variant="outline"
+                              onClick={() => handleCancelOrder(order.id)}
+                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em] !text-red-500 border-red-100 hover:!bg-red-50"
+                            >
+                              Cancel
+                            </Button>
                           ) : null}
                           {canDownloadInvoice ? (
                             <Button

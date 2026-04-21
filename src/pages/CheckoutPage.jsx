@@ -72,8 +72,13 @@ function CheckoutPage() {
 
   useEffect(() => {
     let ignore = false;
+    const processedSessions = window._processedStripeSessions || new Set();
     const handleStripeReturn = async () => {
        if (stripeReturnState === "success" && stripeSessionId) {
+          if (processedSessions.has(stripeSessionId)) return;
+          processedSessions.add(stripeSessionId);
+          window._processedStripeSessions = processedSessions;
+
           try {
              setRestoringCheckout(true);
              const sessionStatus = await getCheckoutSessionStatus(stripeSessionId);
@@ -81,13 +86,19 @@ function CheckoutPage() {
                 const orderRes = await createOrder({ 
                    addressId: sessionStatus.address_id || selectedAddressId, 
                    paymentMethod: "stripe", 
-                   paymentIntentId: sessionStatus.payment_intent_id 
+                   paymentIntentId: sessionStatus.payment_intent_id,
+                   couponCode: sessionStatus.coupon_code || appliedCouponCode,
+                   stripeSessionId: stripeSessionId
                 });
                 toastSuccess("Payment Successful! Order Confirmed.");
                 navigate(`/my-orders/${orderRes.order.id}`, { replace: true });
              }
           } catch (err) {
-             toastError("Payment verification failed: " + err.message);
+             console.error("Verification error:", err);
+             // Skip 409 errors as they usually mean the order was already handled by a previous attempt or webhook
+             if (!err.message.includes("409")) {
+                toastError("Payment verification failed: " + err.message);
+             }
           } finally {
              setRestoringCheckout(false);
           }

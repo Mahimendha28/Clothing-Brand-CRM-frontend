@@ -10,9 +10,8 @@ import { getOrders } from "../services/orderService";
 
 const statusFilters = [
   { value: "", label: "All" },
-  { value: "placed", label: "Placed" },
+  { value: "placed", label: "Pending" },
   { value: "confirmed", label: "Confirmed" },
-  { value: "packed", label: "Packed" },
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" }
@@ -110,7 +109,7 @@ function OrderQueuePage() {
                     </div>
                     <div>
                       <p className="ui-eyebrow">Status</p>
-                      <p className="mt-3 text-xl font-semibold text-ink">{order.order_status}</p>
+                      <p className="mt-3 text-xl font-semibold text-ink uppercase">{order.status || order.order_status}</p>
                       <p className="mt-2 text-sm text-secondary">{order.payment_status}</p>
                     </div>
                     <div>

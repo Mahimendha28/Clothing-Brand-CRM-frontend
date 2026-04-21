@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ChevronRight, Package, RefreshCw, HelpCircle, User, CreditCard } from "lucide-react";
+import { ChevronRight, Package, RefreshCw, HelpCircle, User, CreditCard, ShoppingBag } from "lucide-react";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -110,6 +110,9 @@ function UserDashboard() {
                     <Link to="/products" className="luxury-button bg-white text-black hover:bg-[var(--color-accent)] hover:text-white">
                        Explore Archive
                     </Link>
+                    <Link to="/my-orders" className="luxury-button bg-[var(--color-accent)] text-white hover:bg-white hover:text-black">
+                       Order History
+                    </Link>
                     <Link to="/profile" className="luxury-button-outline border-white/20 text-white hover:border-white">
                        Identity Settings
                     </Link>
@@ -146,7 +149,38 @@ function UserDashboard() {
               <h3 className="text-4xl font-luxury italic">{formatCatalogPrice(cart.subtotal || 0)}</h3>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/30">{cart.item_count || 0} Pieces secured</p>
            </div>
-        </div>
+                {/* QUICK ACTIONS BAR */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+           <Link to="/my-orders" className="luxury-card p-8 group hover:bg-black transition-all duration-500">
+              <div className="flex items-center justify-between">
+                 <div>
+                    <p className="luxury-eyebrow group-hover:text-[var(--color-accent)]">Track Acquisitions</p>
+                    <h4 className="text-xl font-luxury italic mt-2 group-hover:text-white">Order History</h4>
+                 </div>
+                 <Package className="w-8 h-8 text-gray-200 group-hover:text-[var(--color-accent)] transition-colors" />
+              </div>
+           </Link>
+           <Link to="/wishlist" className="luxury-card p-8 group hover:bg-black transition-all duration-500">
+              <div className="flex items-center justify-between">
+                 <div>
+                    <p className="luxury-eyebrow group-hover:text-[var(--color-accent)]">Curated List</p>
+                    <h4 className="text-xl font-luxury italic mt-2 group-hover:text-white">Saved Items</h4>
+                 </div>
+                 <ShoppingBag className="w-8 h-8 text-gray-200 group-hover:text-[var(--color-accent)] transition-colors" />
+              </div>
+           </Link>
+           <Link to="/addresses" className="luxury-card p-8 group hover:bg-black transition-all duration-500">
+              <div className="flex items-center justify-between">
+                 <div>
+                    <p className="luxury-eyebrow group-hover:text-[var(--color-accent)]">Shipping Nodes</p>
+                    <h4 className="text-xl font-luxury italic mt-2 group-hover:text-white">Address Book</h4>
+                 </div>
+                 <User className="w-8 h-8 text-gray-200 group-hover:text-[var(--color-accent)] transition-colors" />
+              </div>
+           </Link>
+        </section>
+
+</div>
 
         {/* MAIN DISPLAY */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-20">
@@ -155,10 +189,10 @@ function UserDashboard() {
            <div className="xl:col-span-8 space-y-12">
               <div className="flex items-center justify-between pb-8 border-b border-black/5">
                  <div>
-                    <h2 className="text-3xl luxury-heading italic">Acquisition History</h2>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-2">Historical Stream</p>
+                    <h2 className="text-3xl luxury-heading italic">Order History</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-2">Recent Acquisitions</p>
                  </div>
-                 <Link to="/my-orders" className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-accent)] hover:underline">Full Archive</Link>
+                 <Link to="/my-orders" className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-accent)] hover:underline">View All Orders</Link>
               </div>
 
               {recentOrders.length ? (
@@ -186,8 +220,8 @@ function UserDashboard() {
                              </div>
                              <div className="text-right">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-gray-300 mb-1">Status</p>
-                                <span className={`text-[10px] font-black uppercase tracking-widest px-5 py-2 border ${order.order_status === 'delivered' ? 'border-green-100 text-green-700 bg-green-50/30' : 'border-gray-200 text-black'}`}>
-                                   {order.order_status}
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-5 py-2 border ${order.order_status === 'delivered' ? 'border-green-100 text-green-700 bg-green-50/30' : order.order_status === 'cancelled' ? 'border-red-100 text-red-600 bg-red-50/30' : 'border-gray-200 text-black'}`}>
+                                   {order.status || order.order_status}
                                 </span>
                              </div>
                              <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-black group-hover:translate-x-2 transition-all" />

@@ -164,16 +164,19 @@ function DashboardLayout() {
     navigate("/");
   };
 
+  const isStaff = user?.role && user.role !== "customer";
   const useCrmShell =
-    user?.role === "admin" ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/dashboard") ||
-    location.pathname.startsWith("/inventory") ||
-    location.pathname.startsWith("/orders") ||
-    location.pathname.startsWith("/customers") ||
-    crmShellPaths.has(location.pathname);
+    isStaff &&
+    (user?.role === "admin" ||
+      location.pathname.startsWith("/admin") ||
+      location.pathname.startsWith("/dashboard") ||
+      location.pathname.startsWith("/inventory") ||
+      location.pathname.startsWith("/orders") ||
+      location.pathname.startsWith("/customers") ||
+      crmShellPaths.has(location.pathname));
 
   const brandName = landingContent?.brand || "Badshah";
+  const brandSubtext = isStaff ? "Administration" : "Member Portal";
   const visibleCrmNavItems = crmNavItems.filter((item) => !item.roles || item.roles.includes(user?.role));
 
   if (useCrmShell) {
@@ -224,7 +227,7 @@ function DashboardLayout() {
                </div>
                <span>{brandName}</span>
             </Link>
-            <p className="text-xs text-muted font-medium ml-10">Administration</p>
+            <p className="text-xs text-muted font-medium ml-10">{brandSubtext}</p>
           </div>
 
           <nav className="flex-1 px-4 mt-6 overflow-y-auto">
@@ -291,9 +294,11 @@ function DashboardLayout() {
              </div>
              
              <div className="flex items-center gap-3">
-                <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-canvas text-sm font-medium rounded-full shadow-sm hover:scale-105 transition-transform" onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}>
-                   <span className="text-lg leading-none">+</span> New Product
-                </button>
+                {isStaff && (
+                  <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-canvas text-sm font-medium rounded-full shadow-sm hover:scale-105 transition-transform" onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}>
+                    <span className="text-lg leading-none">+</span> New Product
+                  </button>
+                )}
                 <div className="h-6 w-px bg-strong mx-1 hidden md:block" />
                 <Link to={notificationsPath} className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
                    <Bell className="w-5 h-5" />
