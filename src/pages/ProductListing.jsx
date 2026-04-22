@@ -1,14 +1,15 @@
-import { startTransition, useDeferredValue, useEffect, useState } from "react";
-import { Search, SlidersHorizontal, ChevronDown, Filter } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { Search, ChevronDown, Filter } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import ProductCard from "../components/store/ProductCard";
-import { formatCatalogPrice, getStoreFilters, getStoreProducts } from "../services/catalogService";
+import { buildCatalogImageUrl, formatCatalogPrice, getStoreFilters, getStoreProducts } from "../services/catalogService";
 
 const normalizeOptionValue = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, "-");
+const featureCategoryKeys = new Set(["men", "women", "kids"]);
 
 function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -201,13 +202,147 @@ function ProductListing() {
     return Number(itemType.subcategory_id) === Number(filters.subcategory);
   });
 
+  const selectedCategory = useMemo(
+    () => (catalogFilters.categories || []).find((category) => String(category.id) === String(filters.category)) || null,
+    [catalogFilters.categories, filters.category]
+  );
+
+  const selectedCategoryKey = selectedCategory ? normalizeOptionValue(selectedCategory.name) : "";
+  const showCategoryShowcase = featureCategoryKeys.has(selectedCategoryKey);
+
+  const selectedSubcategory = useMemo(() => {
+    if (!filters.subcategory) {
+      return null;
+    }
+
+    return (
+      (catalogFilters.subcategories || []).find((subcategory) => String(subcategory.id) === String(filters.subcategory)) || null
+    );
+  }, [catalogFilters.subcategories, filters.subcategory]);
+
+  const showcaseTypes = useMemo(() => {
+    const scopedTypes = selectedSubcategory
+      ? (catalogFilters.types || []).filter((itemType) => Number(itemType.subcategory_id) === Number(selectedSubcategory.id))
+      : visibleTypes;
+
+    return scopedTypes.slice(0, 8);
+  }, [catalogFilters.types, selectedSubcategory, visibleTypes]);
+
+  const showcaseProducts = useMemo(() => visibleProducts.slice(0, 4), [visibleProducts]);
+
   return (
     <div className="max-w-[1440px] mx-auto px-6 py-10 md:px-10 lg:py-16 selection:bg-accent/20">
+      {showCategoryShowcase ? (
+        <section className="mb-12 overflow-hidden border border-[#e8e0d4] bg-[#f7f3ec]">
+          <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="border-b border-[#e8e0d4] bg-[#fbf8f2] px-6 py-10 lg:border-b-0 lg:border-r">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b746a]">
+                {selectedCategory?.name} Filter
+              </p>
+              <div className="mt-8 space-y-5">
+                <button
+                  type="button"
+                  onClick={() => handleFilterChange("subcategory", "")}
+                  className={`block text-left text-[17px] transition-colors ${
+                    !filters.subcategory ? "font-semibold text-[#102741] underline underline-offset-8" : "text-[#5f5a53] hover:text-[#102741]"
+                  }`}
+                >
+                  All {selectedCategory?.name}
+                </button>
+                {visibleSubcategories.map((subcategory) => (
+                  <button
+                    key={subcategory.id}
+                    type="button"
+                    onClick={() => handleFilterChange("subcategory", String(subcategory.id))}
+                    className={`block text-left text-[17px] transition-colors ${
+                      String(filters.subcategory) === String(subcategory.id)
+                        ? "font-semibold text-[#102741] underline underline-offset-8"
+                        : "text-[#5f5a53] hover:text-[#102741]"
+                    }`}
+                  >
+                    {subcategory.name}
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <div className="px-6 py-8 md:px-8 lg:px-10">
+              <div className="flex flex-col gap-4 border-b border-[#c9c0b4] pb-5 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b746a]">
+                    {selectedCategory?.name} Collection
+                  </p>
+                  <h2 className="mt-3 text-3xl font-semibold text-[#102741]">
+                    {selectedSubcategory?.name || `${selectedCategory?.name} Essentials`}
+                  </h2>
+                </div>
+                <p className="max-w-2xl text-sm leading-7 text-[#5f5a53]">
+                  Browse category-first shopping with quick jumps into subcategories, types, and featured pieces without losing your current filter state.
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                {showcaseTypes.length ? (
+                  showcaseTypes.map((itemType) => (
+                    <button
+                      key={itemType.id}
+                      type="button"
+                      onClick={() => handleFilterChange("type", String(itemType.id))}
+                      className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-colors ${
+                        String(filters.type) === String(itemType.id)
+                          ? "border-[#102741] bg-[#102741] text-white"
+                          : "border-[#d5cec3] bg-white text-[#102741] hover:border-[#102741]"
+                      }`}
+                    >
+                      {itemType.name}
+                    </button>
+                  ))
+                ) : (
+                  <span className="text-sm text-[#6b645b]">No type filters available in this section yet.</span>
+                )}
+              </div>
+
+              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {showcaseProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.slug}`}
+                    className="group overflow-hidden bg-white shadow-sm ring-1 ring-[#e6e0d6] transition-transform hover:-translate-y-1"
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-[#ece7de]">
+                      <img
+                        src={buildCatalogImageUrl(product.hero_image) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80"}
+                        alt={product.product_name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7b746a]">
+                        {product.brand_name || product.category_name}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-[#102741]">{product.product_name}</h3>
+                      <p className="mt-3 text-sm font-medium text-[#3d3a35]">
+                        {formatCatalogPrice(product.price_from || product.base_price)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
       
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12 border-b border-soft pb-8">
          <div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary">Collection</h1>
-            <p className="text-secondary mt-3">Discover the latest pieces thoughtfully crafted for you.</p>
+            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary">
+              {selectedCategory?.name ? `${selectedCategory.name} Collection` : "Collection"}
+            </h1>
+            <p className="text-secondary mt-3">
+              {selectedSubcategory?.name
+                ? `Filtered by ${selectedSubcategory.name}. Explore the latest pieces without losing your selected category flow.`
+                : "Discover the latest pieces thoughtfully crafted for you."}
+            </p>
          </div>
          <div className="flex items-center gap-4 w-full md:w-auto">
             <button className="lg:hidden flex items-center gap-2 px-4 py-2 border border-soft rounded-lg bg-canvas text-sm font-semibold text-primary shadow-sm hover:bg-input" onClick={() => setShowMobileFilters(!showMobileFilters)}>

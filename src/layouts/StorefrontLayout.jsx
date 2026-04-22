@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Heart, LogOut, MapPin, Search, ShoppingBag, UserCircle2, Menu, X, ChevronRight, Package } from "lucide-react";
+import { Bell, Heart, LogOut, MapPin, Search, ShoppingBag, UserCircle2, Menu, X, ChevronRight, Package, Globe, MapPin as StorePin } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getCart } from "../services/cartService";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,10 +11,10 @@ import { getPublicCoupons } from "../services/couponService";
 
 const navItems = [
   { label: "Home", to: "/", end: true },
-  { label: "Men", to: "/men" },
-  { label: "Women", to: "/women" },
-  { label: "Kids", to: "/kids" },
-  { label: "New Arrivals", to: "/products?sort=new" }
+  { label: "Men", to: "/products?category=men", category: "men" },
+  { label: "Women", to: "/products?category=women", category: "women" },
+  { label: "Kids", to: "/products?category=kids", category: "kids" },
+  { label: "New Arrival", to: "/products?sort=new", sort: "new" }
 ];
 
 const customerAccountLinks = [
@@ -36,6 +36,14 @@ function StorefrontLayout() {
   const accountPath = loggedIn ? (isCustomer ? "/profile" : "/dashboard") : "/login";
   const accountLabel = loggedIn ? (isCustomer ? "Profile" : "Dashboard") : "Sign In";
   const notificationsPath = isCustomer ? "/notifications" : "/dashboard/notifications";
+  const currentCategory = useMemo(
+    () => (location.pathname === "/products" ? new URLSearchParams(location.search).get("category") || "" : ""),
+    [location.pathname, location.search]
+  );
+  const currentSort = useMemo(
+    () => (location.pathname === "/products" ? new URLSearchParams(location.search).get("sort") || "" : ""),
+    [location.pathname, location.search]
+  );
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -175,60 +183,96 @@ function StorefrontLayout() {
     navigate("/products");
   };
 
+  const isNavItemActive = (item, isActivePath) => {
+    if (item.end) {
+      return isActivePath;
+    }
+
+    if (item.category) {
+      return location.pathname === "/products" && currentCategory.toLowerCase() === item.category.toLowerCase();
+    }
+
+    if (item.sort) {
+      return location.pathname === "/products" && currentSort.toLowerCase() === item.sort.toLowerCase();
+    }
+
+    return isActivePath;
+  };
+
   return (
     <div className="min-h-screen bg-page font-sans text-primary relative selection:bg-accent/20 flex flex-col">
       
-      {/* Top Notification Bar */}
-      <div className="bg-primary text-page text-xs font-medium py-2 px-4 text-center tracking-wide">
-        {activeCoupon ? (
-          <div className="mx-auto flex max-w-[1440px] items-center justify-center gap-2 text-center">
-            <span>{activeCoupon.banner_text || activeCoupon.title}</span>
-            <span className="font-bold">Code: {activeCoupon.code}</span>
-            <button
-              type="button"
-              onClick={handleUseCoupon}
-              className="underline underline-offset-2 hover:text-accent transition-colors"
-            >
-              Use This Coupon
-            </button>
+      {/* Utility Bar */}
+      <div className="border-b border-[#102741] bg-[#0d2741] px-4 py-2 text-[10px] font-medium tracking-[0.08em] text-white">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3">
+          <div className="hidden flex-1 md:block" />
+          <div className="min-w-0 flex-1 text-center">
+            {activeCoupon ? (
+              <div className="flex items-center justify-center gap-2 text-center">
+                <span className="truncate">{activeCoupon.banner_text || activeCoupon.title}</span>
+                <button
+                  type="button"
+                  onClick={handleUseCoupon}
+                  className="underline underline-offset-2 transition-colors hover:text-white/80"
+                >
+                  Details
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 text-center">
+                <span>Free Standard Delivery</span>
+                <Link to="/products" className="underline underline-offset-2 transition-colors hover:text-white/80">
+                  Details
+                </Link>
+              </div>
+            )}
           </div>
-        ) : (
-          <>
-            Free shipping on all orders over $150.
-            <Link to="/products" className="underline underline-offset-2 ml-2 hover:text-accent transition-colors">Shop Now</Link>
-          </>
-        )}
+          <div className="hidden items-center gap-6 md:flex">
+            <div className="flex items-center gap-2">
+              <Globe className="h-3.5 w-3.5" />
+              <span>IN English</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <StorePin className="h-3.5 w-3.5" />
+              <span>Find a store</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Navbar */}
       <header className={`sticky top-0 z-[80] transition-all duration-300 border-b pointer-events-auto ${
-        scrolled ? "bg-canvas/80 backdrop-blur-xl border-soft shadow-sm py-3" : "bg-canvas/50 backdrop-blur-md py-5 border-transparent"
+        scrolled ? "bg-canvas/95 backdrop-blur-xl border-soft shadow-sm py-1.5" : "bg-canvas py-2 border-soft"
       }`}>
-        <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex items-center justify-between relative z-[81] pointer-events-auto">
+        <div className="max-w-[1440px] mx-auto px-5 md:px-8 flex items-center justify-between gap-4 relative z-[81] pointer-events-auto lg:grid lg:grid-cols-[minmax(220px,1fr)_auto_minmax(220px,1fr)] lg:gap-6">
           
           {/* Left: Mobile Menu Toggle & Brand */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 lg:min-w-0">
             <button 
               className="lg:hidden text-primary hover:text-accent transition-colors"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="h-6 w-6" />
             </button>
-            <Link to="/" className="font-display text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
-                 <span className="text-canvas text-xl leading-none font-bold">B</span>
-              </div>
-              <span className="hidden sm:block">{landingContent?.brand || "Badshah"}</span>
+            <Link to="/" className="font-display text-[18px] font-semibold uppercase tracking-[0.14em] text-[#102741] sm:text-[20px] lg:text-[22px]">
+              <span className="hidden sm:block leading-none">{(landingContent?.brand || "Badshah").toUpperCase()}</span>
+              <span className="sm:hidden text-lg tracking-[0.1em] leading-none">BADSHAH</span>
             </Link>
           </div>
 
           {/* Center: Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8 relative z-[82] pointer-events-auto">
+          <nav className="hidden lg:flex items-center justify-center gap-7 xl:gap-8 relative z-[82] pointer-events-auto whitespace-nowrap">
              {navItems.map((item) => (
                 <NavLink 
                   key={item.label} 
                   to={item.to} 
-                  className={({isActive}) => `relative z-[83] pointer-events-auto text-sm font-medium transition-colors hover:text-accent ${isActive ? 'text-accent' : 'text-secondary'}`}
+                  end={Boolean(item.end)}
+                  className={({ isActive }) => {
+                    const active = isNavItemActive(item, isActive);
+                    return `relative z-[83] pointer-events-auto border-b pb-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors ${
+                      active ? "border-[#102741] text-[#102741]" : "border-transparent text-[#1f2937] hover:border-[#102741] hover:text-[#102741]"
+                    }`;
+                  }}
                 >
                   {item.label}
                 </NavLink>
@@ -236,16 +280,16 @@ function StorefrontLayout() {
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center justify-end gap-1.5 md:gap-2 lg:min-w-0">
             <div className="relative hidden md:block">
                {searchOpen ? (
-                  <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 240, opacity: 1 }} className="flex items-center">
-                     <input autoFocus type="text" placeholder="Search products..." className="w-full bg-input rounded-full py-2 pl-4 pr-10 text-sm outline-none border border-transparent focus:border-accent/30 transition-all" />
+                  <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 210, opacity: 1 }} className="flex items-center">
+                     <input autoFocus type="text" placeholder="Search products..." className="w-full bg-input rounded-full py-1.5 pl-4 pr-10 text-sm outline-none border border-transparent focus:border-accent/30 transition-all" />
                      <button onClick={() => setSearchOpen(false)} className="absolute right-3 text-muted hover:text-primary"><X className="h-4 w-4" /></button>
                   </motion.div>
                ) : (
-                  <button onClick={() => setSearchOpen(true)} className="text-secondary hover:text-primary transition-colors p-2">
-                    <Search className="h-5 w-5" />
+                  <button onClick={() => setSearchOpen(true)} className="text-[#102741] transition-colors p-1.5 hover:text-accent">
+                    <Search className="h-4.5 w-4.5" />
                   </button>
                )}
             </div>
@@ -253,15 +297,15 @@ function StorefrontLayout() {
             {!searchOpen && (
               <button
                 onClick={() => navigate("/products")}
-                className="text-secondary hover:text-primary transition-colors p-2 md:hidden"
+                className="p-1.5 text-[#102741] transition-colors hover:text-accent md:hidden"
                 title="Search Products"
               >
                  <Search className="h-5 w-5" />
               </button>
             )}
 
-            <Link to={loggedIn ? notificationsPath : "/login"} className="text-secondary hover:text-primary transition-colors p-2 hidden sm:block relative">
-              <Bell className="h-5 w-5" />
+            <Link to={loggedIn ? notificationsPath : "/login"} className="hidden relative p-1.5 text-[#102741] transition-colors hover:text-accent sm:block">
+              <Bell className="h-[22px] w-[22px]" />
               {loggedIn && unreadCount > 0 ? (
                 <span className="absolute -top-0.5 -right-1 min-w-[18px] rounded-full bg-accent px-1.5 text-center text-[10px] font-bold leading-[18px] text-canvas">
                   {unreadCount > 99 ? "99+" : unreadCount}
@@ -269,13 +313,16 @@ function StorefrontLayout() {
               ) : null}
             </Link>
 
-            <Link to={accountPath} className="text-secondary hover:text-primary transition-colors p-2 flex items-center gap-2">
-              <UserCircle2 className="h-5 w-5" />
-              <span className="hidden xl:block text-sm font-medium">{accountLabel}</span>
+            <Link to={accountPath} className="flex items-center gap-2 p-1.5 text-[#102741] transition-colors hover:text-accent">
+              <UserCircle2 className="h-[22px] w-[22px]" />
             </Link>
             
-            <Link to="/cart" className="text-secondary hover:text-primary transition-colors p-2 relative">
-              <ShoppingBag className="h-5 w-5" />
+            <Link to="/wishlist" className="hidden p-1.5 text-[#102741] transition-colors hover:text-accent sm:block">
+              <Heart className="h-[22px] w-[22px]" />
+            </Link>
+
+            <Link to="/cart" className="relative p-1.5 text-[#102741] transition-colors hover:text-accent">
+              <ShoppingBag className="h-[22px] w-[22px]" />
               {cartCount > 0 && (
                 <span className="absolute top-[2px] right-0 w-4 h-4 bg-primary text-canvas text-[9px] items-center justify-center flex font-bold rounded-full">
                   {cartCount > 9 ? "9+" : cartCount}
@@ -286,7 +333,7 @@ function StorefrontLayout() {
             {loggedIn && (
               <button 
                 onClick={handleLogout} 
-                className="hidden items-center gap-2 rounded-full border border-soft px-4 py-2 text-sm font-medium text-secondary transition-colors hover:text-danger sm:inline-flex"
+                className="hidden items-center gap-2 rounded-full border border-soft px-4 py-2 text-sm font-medium text-secondary transition-colors hover:text-danger xl:inline-flex"
                 title="Logout"
               >
                 <LogOut className="h-5 w-5" />
@@ -327,10 +374,16 @@ function StorefrontLayout() {
                   <NavLink
                     key={item.label}
                     to={item.to}
-                    className="flex justify-between items-center px-4 py-3 text-lg font-medium text-primary rounded-lg hover:bg-input transition-colors"
+                    end={Boolean(item.end)}
+                    className={({ isActive }) => {
+                      const active = isNavItemActive(item, isActive);
+                      return `flex justify-between items-center px-4 py-3 text-base font-medium rounded-lg transition-colors ${
+                        active ? "bg-[#102741] text-white" : "text-primary hover:bg-input"
+                      }`;
+                    }}
                   >
                     {item.label}
-                    <ChevronRight className="h-5 w-5 text-muted" />
+                    <ChevronRight className="h-5 w-5 opacity-70" />
                   </NavLink>
                 ))}
                 

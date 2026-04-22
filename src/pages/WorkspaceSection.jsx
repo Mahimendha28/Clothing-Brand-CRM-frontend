@@ -77,7 +77,7 @@ const sectionContent = {
       { label: "Repeat Rate", value: "38%", note: "Customers returning for an additional purchase cycle." }
     ],
     highlights: [
-      "Outerwear and leather goods remain the strongest growth drivers this month.",
+      "Men and Women collections remain the strongest growth drivers this month.",
       "High-value repeat customers continue to outperform first-time conversions.",
       "Archive sale activity is lifting traffic without compressing core price bands."
     ],

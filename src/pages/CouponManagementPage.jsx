@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
+import { Eye, EyeOff, Pencil, Power, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
+import IconActionButton from "../components/common/IconActionButton";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { formatCatalogPrice } from "../services/catalogService";
 import {
   deleteCoupon,
-  getCouponUsages,
   getCoupons,
   updateCoupon,
   updateCouponStatus
@@ -18,11 +19,8 @@ import {
 function CouponManagementPage() {
   const navigate = useNavigate();
   const [coupons, setCoupons] = useState([]);
-  const [usages, setUsages] = useState([]);
-  const [selectedCouponId, setSelectedCouponId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadingUsages, setLoadingUsages] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -85,30 +83,9 @@ function CouponManagementPage() {
       setMessage("");
       const response = await deleteCoupon(coupon.id);
       setMessage(response.message || "Coupon deleted successfully");
-
-      if (selectedCouponId === coupon.id) {
-        setSelectedCouponId(null);
-        setUsages([]);
-      }
-
       await loadCoupons();
     } catch (apiError) {
       setError(apiError.message || "Failed to delete coupon");
-    }
-  };
-
-  const handleLoadUsages = async (couponId) => {
-    try {
-      setLoadingUsages(true);
-      setError("");
-      const response = await getCouponUsages(couponId);
-      setSelectedCouponId(couponId);
-      setUsages(response.usages || []);
-    } catch (apiError) {
-      setError(apiError.message || "Failed to load coupon usages");
-      setUsages([]);
-    } finally {
-      setLoadingUsages(false);
     }
   };
 
@@ -117,7 +94,7 @@ function CouponManagementPage() {
       <PageHeader
         eyebrow="Promotion Desk"
         title="Coupon management"
-        description="Manage campaigns in table view and open create or edit forms on a separate page."
+        description="Manage campaigns in a cleaner table view and open create or edit forms on a separate page."
         actions={
           <Link to="/admin/coupons/create">
             <Button>+ Add Coupon</Button>
@@ -153,7 +130,7 @@ function CouponManagementPage() {
 
         {coupons.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1180px] text-left text-sm">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead>
                 <tr>
                   <th className="ui-table-head">Code</th>
@@ -206,100 +183,31 @@ function CouponManagementPage() {
                     <td className="px-5 py-4 text-ink">{coupon.usage_count} uses</td>
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
+                        <IconActionButton
+                          icon={Pencil}
+                          label="Edit coupon"
                           variant="secondary"
                           onClick={() => navigate(`/admin/coupons/${coupon.id}/edit`)}
-                          className="!px-3 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => handleLoadUsages(coupon.id)}
-                          className="!px-3 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                        >
-                          Usages
-                        </Button>
-                        <Button
-                          type="button"
+                        />
+                        <IconActionButton
+                          icon={coupon.show_in_banner ? Eye : EyeOff}
+                          label={coupon.show_in_banner ? "Hide banner" : "Show banner"}
                           variant="secondary"
                           onClick={() => handleBannerToggle(coupon)}
-                          className="!px-3 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                        >
-                          {coupon.show_in_banner ? "Hide Banner" : "Show Banner"}
-                        </Button>
-                        <Button
-                          type="button"
+                        />
+                        <IconActionButton
+                          icon={Power}
+                          label={coupon.status === "active" ? "Deactivate coupon" : "Activate coupon"}
                           onClick={() => handleStatusToggle(coupon)}
-                          className="!px-3 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                        >
-                          {coupon.status === "active" ? "Deactivate" : "Activate"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
+                        />
+                        <IconActionButton
+                          icon={Trash2}
+                          label="Delete coupon"
                           onClick={() => handleDelete(coupon)}
-                          className="!px-3 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                        >
-                          Delete
-                        </Button>
+                          className="!border-danger/30 !text-danger hover:!bg-danger/5"
+                        />
                       </div>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </SurfaceCard>
-
-      <SurfaceCard className="space-y-5">
-        <div>
-          <p className="ui-eyebrow">Coupon Usages</p>
-          <h2 className="mt-3 font-display text-3xl text-ink">Campaign performance</h2>
-        </div>
-
-        {loadingUsages ? <p className="text-sm text-secondary">Loading coupon usages...</p> : null}
-
-        {!loadingUsages && !selectedCouponId ? (
-          <EmptyState
-            title="Select a coupon"
-            description="Click Usages from any row in the coupons table to inspect customer usage and order impact."
-          />
-        ) : null}
-
-        {!loadingUsages && selectedCouponId && !usages.length ? (
-          <EmptyState
-            title="No usage yet"
-            description="This coupon has not been applied to any completed checkout flow yet."
-          />
-        ) : null}
-
-        {usages.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[920px] text-left text-sm">
-              <thead>
-                <tr>
-                  <th className="ui-table-head">Customer</th>
-                  <th className="ui-table-head">Order</th>
-                  <th className="ui-table-head">Discount</th>
-                  <th className="ui-table-head">Order Total</th>
-                  <th className="ui-table-head">Used At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usages.map((usage) => (
-                  <tr key={usage.id} className="border-b border-line">
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-ink">{usage.customer_name}</p>
-                      <p className="text-sm text-secondary">{usage.customer_email}</p>
-                    </td>
-                    <td className="px-5 py-4 text-ink">{usage.order_number}</td>
-                    <td className="px-5 py-4 text-ink">{formatCatalogPrice(usage.discount_amount)}</td>
-                    <td className="px-5 py-4 text-ink">{formatCatalogPrice(usage.order_total)}</td>
-                    <td className="px-5 py-4 text-secondary">{new Date(usage.used_at).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

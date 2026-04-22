@@ -1,15 +1,16 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import CancelOrderDialog from "../components/common/CancelOrderDialog";
 import CursorPagination from "../components/common/CursorPagination";
 import CustomerTableToolbar from "../components/common/CustomerTableToolbar";
 import EmptyState from "../components/common/EmptyState";
+import IconActionButton from "../components/common/IconActionButton";
 import StatusBanner from "../components/common/StatusBanner";
-import { useToast } from "../context/ToastContext";
+import Button from "../components/common/Button";
 import { formatCatalogPrice } from "../services/catalogService";
-import { cancelOrder, downloadOrderInvoicePdf, getMyOrders } from "../services/orderService";
+import { getMyOrders } from "../services/orderService";
 
 const formatOrderDate = (value) =>
   new Intl.DateTimeFormat("en-US", {
@@ -24,42 +25,15 @@ const formatStatusLabel = (value) =>
     .replace(/\b\w/g, (character) => character.toUpperCase());
 
 const PAGE_SIZE = 5;
-const cleanCancelReason = (value) =>
-  String(value || "")
-    .replace(/^Customer Cancel:\s*/i, "")
-    .replace(/^Admin Cancel:\s*/i, "")
-    .replace(/^Reason not provided$/i, "")
-    .trim();
-
-const getVisibleCancelReason = (value) => {
-  const cleanedReason = cleanCancelReason(value);
-
-  if (!cleanedReason) {
-    return "";
-  }
-
-  if (["no", "n/a", "na"].includes(cleanedReason.toLowerCase())) {
-    return "";
-  }
-
-  return cleanedReason;
-};
 
 function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pendingInvoiceOrderId, setPendingInvoiceOrderId] = useState(null);
-  const [pendingCancelOrderId, setPendingCancelOrderId] = useState(null);
-  const [cancelTarget, setCancelTarget] = useState(null);
-  const [cancelReason, setCancelReason] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
   const [cursor, setCursor] = useState(0);
-  const { toastError, toastSuccess } = useToast();
-  const secondaryActionClass =
-    "inline-flex items-center justify-center rounded-[10px] border border-line bg-white px-2.5 py-1.5 text-[12px] font-medium text-secondary transition hover:border-ink hover:text-ink disabled:cursor-not-allowed disabled:opacity-50";
   const orderLinkClass =
     "inline-flex items-center gap-2 text-sm font-semibold text-ink underline-offset-4 transition hover:text-accent hover:underline";
 
@@ -128,44 +102,6 @@ function MyOrdersPage() {
     }
   }, [cursor, filteredOrders.length]);
 
-  const handleDownloadInvoice = async (orderId) => {
-    try {
-      setPendingInvoiceOrderId(orderId);
-      await downloadOrderInvoicePdf(orderId);
-      toastSuccess("Invoice PDF download started");
-    } catch (apiError) {
-      toastError(apiError.message || "Failed to download invoice");
-    } finally {
-      setPendingInvoiceOrderId(null);
-    }
-  };
-
-  const applyUpdatedOrder = (updatedOrder) => {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) => (Number(order.id) === Number(updatedOrder.id) ? updatedOrder : order))
-    );
-  };
-
-  const handleCancelOrder = async () => {
-    if (!cancelTarget) {
-      return;
-    }
-    try {
-      setPendingCancelOrderId(cancelTarget.id);
-      const response = await cancelOrder(cancelTarget.id, cancelReason.trim());
-      if (response.order) {
-        applyUpdatedOrder(response.order);
-      }
-      toastSuccess("Order cancelled successfully");
-      setCancelTarget(null);
-      setCancelReason("");
-    } catch (apiError) {
-      toastError(apiError.message || "Failed to cancel order");
-    } finally {
-      setPendingCancelOrderId(null);
-    }
-  };
-
   if (loading) {
     return <p className="text-sm text-secondary">Loading your orders...</p>;
   }
@@ -177,7 +113,7 @@ function MyOrdersPage() {
           <p className="ui-eyebrow">My Orders</p>
           <h1 className="ui-page-title mt-3">Order history.</h1>
           <p className="ui-page-copy mt-3 max-w-2xl">
-            Review every order in one clean table, filter by status, search quickly, request returns, and download invoices when payment is complete.
+            Review every order in one clean table. Open any row to see full order details, then manage invoice, Stripe receipt, cancel, and return actions from the detail page.
           </p>
         </div>
 
@@ -246,100 +182,51 @@ function MyOrdersPage() {
           ) : (
             <>
               <div className="overflow-x-auto rounded-[18px] border border-line">
-                <table className="w-full min-w-[980px] text-left text-sm">
+                <table className="w-full min-w-[760px] text-left text-sm">
                   <thead className="bg-page">
                     <tr>
-                      <th className="ui-table-head">Order</th>
+                      <th className="ui-table-head">Order ID</th>
                       <th className="ui-table-head">Placed On</th>
+                      <th className="ui-table-head">Items</th>
                       <th className="ui-table-head">Total</th>
                       <th className="ui-table-head">Payment</th>
                       <th className="ui-table-head">Status</th>
-                      <th className="ui-table-head">Actions</th>
+                      <th className="ui-table-head text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedOrders.map((order) => {
-                      const canDownloadInvoice = order.payment_status === "paid";
-                      const hasStripeReceipt = order.payment_method === "stripe" && !!order.stripe_receipt_url;
-                      const canCancelOrder =
-                        !order.is_cancelled && ["placed", "confirmed", "packed"].includes(order.order_status);
-                      const visibleCancelReason = getVisibleCancelReason(order.cancel_reason);
-                      const availableActions = [
-                        canCancelOrder,
-                        order.order_status === "delivered",
-                        canDownloadInvoice,
-                        hasStripeReceipt
-                      ].filter(Boolean).length;
-
                       return (
-                        <tr key={order.id} className="border-b border-line align-top last:border-b-0">
+                        <tr key={order.id} className="border-b border-line align-top transition-colors hover:bg-page/70 last:border-b-0">
                           <td className="ui-table-cell">
                             <Link to={`/my-orders/${order.id}`} className={orderLinkClass}>
                               {order.order_number}
                             </Link>
-                            <p className="mt-1 text-xs text-secondary">
-                              {order.item_count} {order.item_count === 1 ? "item" : "items"}
-                            </p>
-                            <p className="mt-1 text-xs text-secondary">Click order ID to open full details.</p>
                           </td>
                           <td className="ui-table-cell text-secondary">{formatOrderDate(order.created_at)}</td>
+                          <td className="ui-table-cell">
+                            <p className="font-medium text-ink">
+                              {order.item_count} {order.item_count === 1 ? "item" : "items"}
+                            </p>
+                          </td>
                           <td className="ui-table-cell font-medium">{formatCatalogPrice(order.total_amount)}</td>
                           <td className="ui-table-cell">
-                            <p className="font-medium uppercase text-ink">{order.payment_method}</p>
-                            <p className="mt-1 text-xs text-secondary">{formatStatusLabel(order.payment_status)}</p>
-                          </td>
-                          <td className="ui-table-cell">
-                            <p className="font-medium text-ink">{formatStatusLabel(order.order_status)}</p>
-                            {visibleCancelReason ? (
-                              <p className="mt-1 max-w-[180px] text-[12px] leading-5 text-secondary">
-                                {visibleCancelReason}
-                              </p>
-                            ) : null}
-                          </td>
-                          <td className="ui-table-cell">
-                            <div className="flex min-w-[220px] flex-wrap gap-2">
-                              {canCancelOrder ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCancelTarget(order);
-                                    setCancelReason("");
-                                  }}
-                                  disabled={pendingCancelOrderId === order.id}
-                                  className={secondaryActionClass}
-                                >
-                                  {pendingCancelOrderId === order.id ? "Cancelling..." : "Cancel Order"}
-                                </button>
-                              ) : null}
-                              {order.order_status === "delivered" ? (
-                                <Link to={`/returns/new/${order.id}`} className={secondaryActionClass}>
-                                  Return
-                                </Link>
-                              ) : null}
-                              {canDownloadInvoice ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownloadInvoice(order.id)}
-                                  disabled={pendingInvoiceOrderId === order.id}
-                                  className={secondaryActionClass}
-                                >
-                                  {pendingInvoiceOrderId === order.id ? "Preparing..." : "Invoice PDF"}
-                                </button>
-                              ) : null}
-                              {hasStripeReceipt ? (
-                                <a
-                                  href={order.stripe_receipt_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className={secondaryActionClass}
-                                >
-                                  Stripe Receipt
-                                </a>
-                              ) : null}
+                            <div className="space-y-1.5">
+                              <span className="inline-flex rounded-full bg-page px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink">
+                                {order.payment_method}
+                              </span>
+                              <p className="text-xs text-secondary">{formatStatusLabel(order.payment_status)}</p>
                             </div>
-                            {!availableActions ? (
-                              <p className="mt-2 text-xs text-secondary">Open the order ID to manage this order.</p>
-                            ) : null}
+                          </td>
+                          <td className="ui-table-cell">
+                            <span className="inline-flex rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-secondary">
+                              {formatStatusLabel(order.order_status)}
+                            </span>
+                          </td>
+                          <td className="ui-table-cell text-right">
+                            <Link to={`/my-orders/${order.id}`}>
+                              <IconActionButton icon={Eye} label="View order" variant="secondary" />
+                            </Link>
                           </td>
                         </tr>
                       );
@@ -360,19 +247,6 @@ function MyOrdersPage() {
         </div>
       )}
 
-      <CancelOrderDialog
-        order={cancelTarget}
-        reason={cancelReason}
-        onReasonChange={setCancelReason}
-        onClose={() => {
-          if (!pendingCancelOrderId) {
-            setCancelTarget(null);
-            setCancelReason("");
-          }
-        }}
-        onConfirm={handleCancelOrder}
-        loading={Boolean(pendingCancelOrderId)}
-      />
     </div>
   );
 }

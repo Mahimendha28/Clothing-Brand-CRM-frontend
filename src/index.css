@@ -103,7 +103,7 @@
   }
 
   .ui-page-title {
-    @apply font-display text-3xl leading-tight text-ink md:text-[2.35rem];
+    @apply font-display text-lg font-semibold leading-snug text-ink;
   }
 
   .ui-page-copy {
@@ -111,7 +111,7 @@
   }
 
   .ui-surface {
-    @apply rounded-[var(--radius-md)] border border-soft bg-canvas shadow-soft backdrop-blur-md p-6 md:p-8 transition-shadow duration-200 hover:shadow-float;
+    @apply rounded-[var(--radius-md)] border border-soft bg-canvas p-4 shadow-soft backdrop-blur-md transition-shadow duration-200 hover:shadow-float md:p-5;
   }
 
   .ui-panel-dark {
@@ -119,7 +119,7 @@
   }
 
   .ui-label {
-    @apply block text-xs font-semibold tracking-wide text-secondary mb-1.5;
+    @apply mb-1.5 block text-sm font-medium text-secondary;
   }
 
   .ui-input {
@@ -131,7 +131,7 @@
   }
 
   .ui-eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.38em] text-accent;
+    @apply text-sm font-medium uppercase tracking-[0.22em] text-accent;
   }
 
   .ui-divider {
@@ -143,27 +143,27 @@
   }
 
   .ui-table thead th {
-    @apply border-b border-line px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted;
+    @apply border-b border-line px-4 py-2.5 text-sm font-medium uppercase tracking-[0.12em] text-muted;
   }
 
   .ui-table tbody td {
-    @apply border-b border-line px-4 py-3.5 text-[13px] text-ink;
+    @apply border-b border-line px-4 py-2.5 text-sm text-ink;
   }
 
   .ui-table-head {
-    @apply border-b border-line px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted;
+    @apply border-b border-line px-4 py-2.5 text-sm font-medium uppercase tracking-[0.12em] text-muted;
   }
 
   .ui-table-cell {
-    @apply px-4 py-3.5 text-[13px] text-ink;
+    @apply px-4 py-2.5 text-sm text-ink;
   }
 
   .ui-compact-button {
-    @apply rounded-[10px] px-3.5 py-2 text-[13px] font-medium normal-case tracking-[0.01em];
+    @apply rounded-[10px] px-3 py-1.5 text-sm font-medium normal-case tracking-[0.01em];
   }
 
   .ui-text-action {
-    @apply text-[12px] font-medium text-secondary transition-colors hover:text-ink;
+    @apply text-sm font-medium text-secondary transition-colors hover:text-ink;
   }
 
   .auth-slide {

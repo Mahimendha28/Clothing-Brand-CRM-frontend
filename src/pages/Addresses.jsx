@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Edit3, MapPin, Phone, Star, Trash2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import Button from "../components/common/Button";
@@ -28,6 +29,27 @@ const initialFormState = {
   is_default: false
 };
 
+const formatAddressDetails = (address) =>
+  [
+    address.address_line_1,
+    address.address_line_2,
+    [address.city, address.state].filter(Boolean).join(", "),
+    [address.postal_code, address.country].filter(Boolean).join(", ")
+  ].filter(Boolean);
+
+const buildAddressPayload = (address) => ({
+  address_type: address.address_type || "home",
+  full_name: address.full_name || "",
+  phone: address.phone || "",
+  address_line_1: address.address_line_1 || "",
+  address_line_2: address.address_line_2 || "",
+  city: address.city || "",
+  state: address.state || "",
+  postal_code: address.postal_code || "",
+  country: address.country || "India",
+  is_default: Boolean(address.is_default)
+});
+
 function Addresses() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,6 +63,7 @@ function Addresses() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const formCardRef = useRef(null);
   const returnTo = location.state?.returnTo || "";
   const isFromCheckout = Boolean(location.state?.fromCheckout && returnTo);
   const compactButtonClass = "ui-compact-button !min-w-0 !px-4";
@@ -56,18 +79,7 @@ function Addresses() {
 
         if (addressToEdit) {
           setEditingId(addressToEdit.id);
-          setFormData({
-            address_type: addressToEdit.address_type || "home",
-            full_name: addressToEdit.full_name || "",
-            phone: addressToEdit.phone || "",
-            address_line_1: addressToEdit.address_line_1 || "",
-            address_line_2: addressToEdit.address_line_2 || "",
-            city: addressToEdit.city || "",
-            state: addressToEdit.state || "",
-            postal_code: addressToEdit.postal_code || "",
-            country: addressToEdit.country || "India",
-            is_default: Boolean(addressToEdit.is_default)
-          });
+          setFormData(buildAddressPayload(addressToEdit));
         }
       }
     } catch (apiError) {
@@ -120,17 +132,11 @@ function Addresses() {
 
   const handleEdit = (address) => {
     setEditingId(address.id);
-    setFormData({
-      address_type: address.address_type || "home",
-      full_name: address.full_name || "",
-      phone: address.phone || "",
-      address_line_1: address.address_line_1 || "",
-      address_line_2: address.address_line_2 || "",
-      city: address.city || "",
-      state: address.state || "",
-      postal_code: address.postal_code || "",
-      country: address.country || "India",
-      is_default: Boolean(address.is_default)
+    setFormData(buildAddressPayload(address));
+    setError("");
+    setMessage("Editing address details below");
+    window.requestAnimationFrame(() => {
+      formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
 
@@ -157,21 +163,19 @@ function Addresses() {
   };
 
   const handleSetDefault = async (address) => {
+    if (address.is_default) {
+      setMessage("This address is already your default address");
+      setError("");
+      return;
+    }
+
     setError("");
     setMessage("");
     setDefaultingId(address.id);
 
     try {
       await updateUserAddress(address.id, {
-        address_type: address.address_type || "home",
-        full_name: address.full_name || "",
-        phone: address.phone || "",
-        address_line_1: address.address_line_1 || "",
-        address_line_2: address.address_line_2 || "",
-        city: address.city || "",
-        state: address.state || "",
-        postal_code: address.postal_code || "",
-        country: address.country || "India",
+        ...buildAddressPayload(address),
         is_default: true
       });
       setMessage("Default address updated successfully");
@@ -215,8 +219,11 @@ function Addresses() {
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <SurfaceCard className="!p-5">
+        <SurfaceCard className="!p-5" ref={formCardRef}>
           <h2 className="text-xl font-semibold text-ink">{editingId ? "Edit address" : "Add address"}</h2>
+          <p className="mt-2 text-sm leading-6 text-secondary">
+            Save complete delivery details here. The form stays on the left, while your saved addresses remain visible on the right for quick editing.
+          </p>
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <FormField label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} />
             <FormField label="Phone" name="phone" value={formData.phone} onChange={handleChange} />
@@ -285,10 +292,20 @@ function Addresses() {
         </SurfaceCard>
 
         <SurfaceCard className="!p-5">
-          <h2 className="text-xl font-semibold text-ink">Saved addresses</h2>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-ink">Saved addresses</h2>
+              <p className="mt-2 text-sm leading-6 text-secondary">
+                Every card shows the full delivery information with cleaner action placement for edit, default, checkout, and delete.
+              </p>
+            </div>
+            <div className="rounded-[16px] bg-page px-4 py-3 text-sm text-secondary">
+              {addresses.length} saved {addresses.length === 1 ? "address" : "addresses"}
+            </div>
+          </div>
           {loading ? <p className="mt-4 text-sm text-secondary">Loading addresses...</p> : null}
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
             {!loading && addresses.length === 0 ? (
               <EmptyState
                 title="No saved addresses"
@@ -297,76 +314,118 @@ function Addresses() {
             ) : null}
 
             {addresses.map((address) => (
-              <div key={address.id} className="rounded-[16px] border border-line bg-page p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-semibold text-ink">{address.full_name}</p>
-                      <span className="rounded-full bg-white px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-accent">
-                        {address.address_type}
-                      </span>
-                      {address.is_default ? (
-                        <span className="rounded-full border border-line px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-secondary">
-                          Default
+              <article key={address.id} className="rounded-[20px] border border-line bg-page p-5">
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-semibold text-ink">{address.full_name}</p>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-accent">
+                          {address.address_type}
                         </span>
-                      ) : null}
+                        {address.is_default ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-secondary">
+                            <Star className="h-3.5 w-3.5" />
+                            Default
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-secondary">
+                        <span className="inline-flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          {address.phone}
+                        </span>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-secondary">
-                      {address.address_line_1}
-                      {address.address_line_2 ? `, ${address.address_line_2}` : ""}
-                      {`, ${address.city}, ${address.state} - ${address.postal_code}, ${address.country}`}
-                    </p>
-                    <p className="mt-2 text-sm text-secondary">Phone: {address.phone}</p>
-                  </div>
 
-                  <div className="flex flex-wrap items-center justify-start gap-2 md:max-w-[240px] md:justify-end">
-                    {isFromCheckout ? (
+                    <div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
+                      {isFromCheckout ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className={compactButtonClass}
+                          onClick={() =>
+                            navigate(returnTo, {
+                              state: {
+                                preferredAddressId: address.id
+                              }
+                            })
+                          }
+                        >
+                          Use in Checkout
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         variant="secondary"
-                        className={compactButtonClass}
-                        onClick={() =>
-                          navigate(returnTo, {
-                            state: {
-                              preferredAddressId: address.id
-                            }
-                          })
-                        }
+                        className={`${compactButtonClass} gap-2`}
+                        onClick={() => handleEdit(address)}
                       >
-                        Use in Checkout
+                        <Edit3 className="h-4 w-4" />
+                        Edit
                       </Button>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className={compactButtonClass}
-                      onClick={() => handleEdit(address)}
-                    >
-                      Edit
-                    </Button>
-                    {!address.is_default ? (
+                      {!address.is_default ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={`${compactButtonClass} gap-2`}
+                          onClick={() => handleSetDefault(address)}
+                          disabled={defaultingId === address.id}
+                        >
+                          <Star className="h-4 w-4" />
+                          {defaultingId === address.id ? "Updating..." : "Set Default"}
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         variant="outline"
-                        className={compactButtonClass}
-                        onClick={() => handleSetDefault(address)}
-                        disabled={defaultingId === address.id}
+                        className={`${compactButtonClass} gap-2`}
+                        onClick={() => handleDelete(address.id)}
+                        disabled={deletingId === address.id}
                       >
-                        {defaultingId === address.id ? "Updating..." : "Set Default"}
+                        <Trash2 className="h-4 w-4" />
+                        {deletingId === address.id ? "Deleting..." : "Delete"}
                       </Button>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={compactButtonClass}
-                      onClick={() => handleDelete(address.id)}
-                      disabled={deletingId === address.id}
-                    >
-                      {deletingId === address.id ? "Deleting..." : "Delete"}
-                    </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div className="rounded-[18px] border border-white/70 bg-white px-4 py-4">
+                      <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                        <MapPin className="h-3.5 w-3.5" />
+                        Address details
+                      </p>
+                      <div className="mt-3 space-y-1 text-sm leading-6 text-secondary">
+                        {formatAddressDetails(address).map((line) => (
+                          <p key={line}>{line}</p>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-white/70 bg-white px-4 py-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Address summary</p>
+                      <div className="mt-3 space-y-3 text-sm text-secondary">
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Type</span>
+                          <span className="font-medium text-ink capitalize">{address.address_type}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Country</span>
+                          <span className="font-medium text-ink">{address.country}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Postal Code</span>
+                          <span className="font-medium text-ink">{address.postal_code}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Status</span>
+                          <span className="font-medium text-ink">{address.is_default ? "Default address" : "Saved address"}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </SurfaceCard>

@@ -1,11 +1,14 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
+import { Eye } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import CursorPagination from "../components/common/CursorPagination";
 import CustomerTableToolbar from "../components/common/CustomerTableToolbar";
 import EmptyState from "../components/common/EmptyState";
+import IconActionButton from "../components/common/IconActionButton";
 import PageHeader from "../components/common/PageHeader";
+import StatusPill from "../components/common/StatusPill";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { formatCatalogPrice } from "../services/catalogService";
@@ -139,20 +142,6 @@ function OrderQueuePage() {
         eyebrow="Order Desk"
         title="Orders"
         description="A cleaner table view with search, filters, and direct actions placed where the team expects them."
-        actions={
-          <>
-            <Link to="/customers">
-              <Button variant="secondary" className="ui-compact-button !min-w-[108px]">
-                Customers
-              </Button>
-            </Link>
-            <Link to="/dashboard/returns">
-              <Button className="ui-compact-button !min-w-[108px]">
-                Returns
-              </Button>
-            </Link>
-          </>
-        }
       />
 
       <StatusBanner tone="danger">{error}</StatusBanner>
@@ -271,22 +260,18 @@ function OrderQueuePage() {
                       <td className="ui-table-cell text-secondary">{formatDate(order.created_at)}</td>
                       <td className="ui-table-cell font-medium">{formatCatalogPrice(order.total_amount)}</td>
                       <td className="ui-table-cell">
-                        <p className="font-medium text-ink">{formatStatusLabel(order.payment_status)}</p>
+                        <StatusPill value={formatStatusLabel(order.payment_status)} />
                       </td>
                       <td className="ui-table-cell">
-                        <p className="font-medium text-ink">{formatStatusLabel(order.order_status)}</p>
+                        <StatusPill value={formatStatusLabel(order.order_status)} />
                       </td>
                       <td className="ui-table-cell">
-                        <p className="font-medium text-ink">
-                          {formatStatusLabel(order.shipment_status || "not_created")}
-                        </p>
+                        <StatusPill value={formatStatusLabel(order.shipment_status || "not_created")} />
                         <p className="mt-1 text-xs text-secondary">{order.tracking_number || "No tracking yet"}</p>
                       </td>
                       <td className="ui-table-cell">
                         <Link to={`/orders/${order.id}`}>
-                          <Button variant="secondary" className="ui-compact-button">
-                            Open
-                          </Button>
+                          <IconActionButton icon={Eye} label="View order" variant="secondary" />
                         </Link>
                       </td>
                     </tr>

@@ -3,12 +3,13 @@ function FormField({
   as = "input",
   options = [],
   hint,
+  error,
   className = "",
   wrapperClassName = "",
   ...props
 }) {
   const Component = as;
-  const baseClassName = `ui-input ${className}`.trim();
+  const baseClassName = `ui-input ${error ? "!border-danger focus:!shadow-[0_0_0_4px_rgba(220,38,38,0.08)]" : ""} ${className}`.trim();
 
   return (
     <div className={`space-y-2 ${wrapperClassName}`.trim()}>
@@ -24,6 +25,7 @@ function FormField({
       ) : (
         <Component className={baseClassName} {...props} />
       )}
+      {error ? <p className="text-xs font-medium text-danger">{error}</p> : null}
       {hint ? <p className="text-xs text-muted">{hint}</p> : null}
     </div>
   );

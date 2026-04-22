@@ -108,35 +108,35 @@ export const landingContent = {
           ]
         },
         {
-          label: "Accessories",
+          label: "Kids",
           items: [
             {
-              title: "Leather Crossbody",
-              note: "Coffee",
-              price: "$190",
+              title: "Play Knit Set",
+              note: "Soft Blue",
+              price: "$88",
               image:
-                "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80"
+                "https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=900&q=80"
             },
             {
-              title: "Statement Chain",
-              note: "Polished Gold",
-              price: "$95",
+              title: "Mini Denim Jacket",
+              note: "Sky Wash",
+              price: "$74",
               image:
-                "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=900&q=80"
+                "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80"
             },
             {
-              title: "Classic Sneaker",
-              note: "Cream White",
-              price: "$160",
-              image:
-                "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80"
-            },
-            {
-              title: "Canvas Tote",
+              title: "Weekend Hoodie",
               note: "Sand",
-              price: "$85",
+              price: "$52",
               image:
-                "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80"
+                "https://images.unsplash.com/photo-1503919545889-aef636e10ad4?auto=format&fit=crop&w=900&q=80"
+            },
+            {
+              title: "Printed Tee Pack",
+              note: "Mixed Colors",
+              price: "$39",
+              image:
+                "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80"
             }
           ]
         }
@@ -273,7 +273,7 @@ export const landingContent = {
         "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=1200&q=80"
     },
     {
-      title: "Core Essentials",
+      title: "Daily Icons",
       eyebrow: "Daily Rotation",
       description: "Foundational garments crafted from heavy-weight cottons and precision-milled fabrics.",
       image:

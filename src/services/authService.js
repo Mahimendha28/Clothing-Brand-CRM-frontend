@@ -90,6 +90,16 @@ export const resetPassword = async (payload) => {
   return handleResponse(response);
 };
 
+export const changePassword = async (payload) => {
+  const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload)
+  });
+
+  return handleResponse(response);
+};
+
 export const getUserProfile = async (userId) => {
   const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     headers: getAuthHeaders()

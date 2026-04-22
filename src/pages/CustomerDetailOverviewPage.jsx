@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -11,6 +11,7 @@ const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 function CustomerDetailOverviewPage() {
   const { customer } = useOutletContext();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,11 +58,11 @@ function CustomerDetailOverviewPage() {
       <StatusBanner tone="danger">{error}</StatusBanner>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <SurfaceCard className="space-y-4">
+        <SurfaceCard className="space-y-4 !p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="ui-eyebrow">Address Selection</p>
-              <h2 className="mt-3 font-display text-3xl text-ink">Default address</h2>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Default address</h2>
             </div>
             <span className="rounded-full bg-page px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink">
               {customer.address_count} saved
@@ -69,7 +70,7 @@ function CustomerDetailOverviewPage() {
           </div>
 
           {customer.default_address ? (
-            <div className="rounded-card bg-canvas p-5 text-sm leading-7 text-secondary">
+            <div className="rounded-[16px] border border-line bg-page p-4 text-sm leading-7 text-secondary">
               <p className="font-medium text-ink">{customer.default_address.full_name}</p>
               <p>{customer.default_address.phone}</p>
               <p>{customer.default_address.address_line_1}</p>
@@ -87,60 +88,60 @@ function CustomerDetailOverviewPage() {
           )}
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-4">
+        <SurfaceCard className="space-y-4 !p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="ui-eyebrow">CRM Snapshot</p>
-              <h2 className="mt-3 font-display text-3xl text-ink">Relationship health</h2>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Relationship health</h2>
             </div>
-            <Link to={`/customers/${customer.id}/notes`}>
-              <Button
-                variant="secondary"
-                className="!px-4 !py-2.5 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-              >
-                Open Notes
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate(`/customers/${customer.id}/notes`)}
+              className="ui-compact-button !px-4 !py-2.5"
+            >
+              Open Notes
+            </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-card bg-canvas p-5">
-              <p className="ui-eyebrow">Lifetime Spend</p>
-              <p className="mt-3 text-3xl font-semibold text-ink">{formatCurrency(customer.total_spent)}</p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-[16px] border border-line bg-page p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Lifetime Spend</p>
+              <p className="mt-2 text-2xl font-semibold text-ink">{formatCurrency(customer.total_spent)}</p>
             </div>
-            <div className="rounded-card bg-canvas p-5">
-              <p className="ui-eyebrow">Last Order</p>
-              <p className="mt-3 text-lg font-semibold text-ink">
+            <div className="rounded-[16px] border border-line bg-page p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Last Order</p>
+              <p className="mt-2 text-base font-semibold text-ink">
                 {customer.last_order_at ? new Date(customer.last_order_at).toLocaleDateString() : "No orders yet"}
               </p>
             </div>
-            <div className="rounded-card bg-canvas p-5">
-              <p className="ui-eyebrow">Delivered Orders</p>
-              <p className="mt-3 text-3xl font-semibold text-ink">{customer.delivered_order_count}</p>
+            <div className="rounded-[16px] border border-line bg-page p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Delivered Orders</p>
+              <p className="mt-2 text-2xl font-semibold text-ink">{customer.delivered_order_count}</p>
             </div>
-            <div className="rounded-card bg-canvas p-5">
-              <p className="ui-eyebrow">Account Status</p>
-              <p className="mt-3 text-2xl font-semibold text-ink">{customer.status}</p>
+            <div className="rounded-[16px] border border-line bg-page p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Account Status</p>
+              <p className="mt-2 text-xl font-semibold text-ink">{customer.status}</p>
             </div>
           </div>
         </SurfaceCard>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <SurfaceCard className="space-y-4">
+        <SurfaceCard className="space-y-4 !p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="ui-eyebrow">Customer Order History</p>
-              <h2 className="mt-3 font-display text-3xl text-ink">Recent orders</h2>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Recent orders</h2>
             </div>
-            <Link to={`/customers/${customer.id}/orders`}>
-              <Button
-                variant="secondary"
-                className="!px-4 !py-2.5 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-              >
-                View All Orders
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate(`/customers/${customer.id}/orders`)}
+              className="ui-compact-button !px-4 !py-2.5"
+            >
+              View All Orders
+            </Button>
           </div>
 
           {loading ? <p className="text-sm text-secondary">Loading order preview...</p> : null}
@@ -155,12 +156,12 @@ function CustomerDetailOverviewPage() {
           {orders.length ? (
             <div className="space-y-3">
               {orders.map((order) => (
-                <div key={order.id} className="rounded-card bg-canvas p-4">
+                <div key={order.id} className="rounded-[16px] border border-line bg-page p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-medium text-ink">{order.order_number}</p>
                       <p className="mt-1 text-sm text-secondary">
-                        {order.item_count} items • {order.order_status} • {new Date(order.created_at).toLocaleDateString()}
+                        {order.item_count} items | {order.order_status} | {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-ink">{formatCurrency(order.total_amount)}</p>
@@ -171,17 +172,19 @@ function CustomerDetailOverviewPage() {
           ) : null}
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-4">
+        <SurfaceCard className="space-y-4 !p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="ui-eyebrow">Customer Notes</p>
-              <h2 className="mt-3 font-display text-3xl text-ink">Latest notes</h2>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Latest notes</h2>
             </div>
-            <Link to={`/customers/${customer.id}/notes`}>
-              <Button className="!px-4 !py-2.5 !text-sm !font-medium !normal-case !tracking-[0.02em]">
-                Add Note
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              onClick={() => navigate(`/customers/${customer.id}/notes`)}
+              className="ui-compact-button !px-4 !py-2.5"
+            >
+              Add Note
+            </Button>
           </div>
 
           {loading ? <p className="text-sm text-secondary">Loading notes...</p> : null}
@@ -196,10 +199,10 @@ function CustomerDetailOverviewPage() {
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((note) => (
-                <div key={note.id} className="rounded-card bg-canvas p-4">
+                <div key={note.id} className="rounded-[16px] border border-line bg-page p-4">
                   <p className="text-sm leading-7 text-secondary">{note.note_text}</p>
                   <p className="mt-3 text-xs uppercase tracking-[0.18em] text-muted">
-                    {note.author_name} • {new Date(note.created_at).toLocaleDateString()}
+                    {note.author_name} | {new Date(note.created_at).toLocaleDateString()}
                   </p>
                 </div>
               ))}

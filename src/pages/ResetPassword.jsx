@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -8,11 +8,41 @@ import Button from "../components/common/Button";
 import StatusBanner from "../components/common/StatusBanner";
 import { resetPassword } from "../services/authService";
 
+const extractResetToken = (value) => {
+  const rawValue = String(value || "").trim();
+
+  if (!rawValue) {
+    return "";
+  }
+
+  try {
+    const url = new URL(rawValue);
+    const tokenFromQuery = url.searchParams.get("token");
+
+    if (tokenFromQuery) {
+      return String(tokenFromQuery).trim();
+    }
+
+    const pathnameParts = url.pathname.split("/").filter(Boolean);
+    const resetPasswordIndex = pathnameParts.findIndex((segment) => segment === "reset-password");
+
+    if (resetPasswordIndex >= 0 && pathnameParts[resetPasswordIndex + 1]) {
+      return String(pathnameParts[resetPasswordIndex + 1]).trim();
+    }
+  } catch (error) {
+    // Treat non-URL input as a raw token.
+  }
+
+  return rawValue;
+};
+
 function ResetPassword() {
+  const { token: routeToken = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const initialToken = extractResetToken(searchParams.get("token") || routeToken || "");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [tokenValue, setTokenValue] = useState(initialToken);
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: ""
@@ -20,6 +50,10 @@ function ResetPassword() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setTokenValue(initialToken);
+  }, [initialToken]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -34,8 +68,10 @@ function ResetPassword() {
     setError("");
     setSuccessMessage("");
 
-    if (!token) {
-      setError("Reset token is missing. Please use the latest link from your email.");
+    const normalizedToken = extractResetToken(tokenValue);
+
+    if (!normalizedToken) {
+      setError("Reset token is missing. Paste the token from your email or open the latest reset link.");
       return;
     }
 
@@ -48,7 +84,7 @@ function ResetPassword() {
 
     try {
       const response = await resetPassword({
-        token,
+        token: normalizedToken,
         password: formData.password
       });
       setSuccessMessage(response.message || "Password reset successfully. You can sign in now.");
@@ -82,17 +118,36 @@ function ResetPassword() {
         <p className="ui-eyebrow mb-2 opacity-70">New Password</p>
         <h2 className="font-serif text-3xl leading-tight text-ink">Secure your account.</h2>
         <p className="mt-3 mx-auto max-w-sm text-xs leading-5 text-secondary">
-          Choose a new password for your account using the secure email link.
+          Paste your reset token or use the secure link from your email, then choose a new password.
         </p>
       </motion.div>
 
-      {!token && (
+      {!tokenValue && (
         <motion.div variants={itemAnim} className="mb-6">
-          <StatusBanner tone="danger">Reset token is missing. Open the latest password reset email and try again.</StatusBanner>
+          <StatusBanner tone="danger">Reset token is missing. Paste the token from your email or open the latest password reset link.</StatusBanner>
         </motion.div>
       )}
 
       <form className="space-y-8" onSubmit={handleSubmit}>
+        <motion.div variants={itemAnim} className="relative">
+          <input
+            type="text"
+            name="token"
+            id="token"
+            placeholder=" "
+            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
+            value={tokenValue}
+            onChange={(event) => setTokenValue(extractResetToken(event.target.value))}
+            required
+          />
+          <label
+            htmlFor="token"
+            className="pointer-events-none absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink"
+          >
+            Reset Token
+          </label>
+        </motion.div>
+
         <motion.div variants={itemAnim} className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -156,7 +211,7 @@ function ResetPassword() {
         <motion.div variants={itemAnim}>
           <Button
             type="submit"
-            disabled={loading || !token}
+            disabled={loading || !String(tokenValue || "").trim()}
             className="w-full !rounded-full !py-4 font-semibold uppercase tracking-widest"
           >
             {loading ? "Updating..." : "Update Password"}

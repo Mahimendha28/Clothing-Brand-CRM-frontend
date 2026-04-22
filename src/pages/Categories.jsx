@@ -6,6 +6,7 @@ import FormField from "../components/common/FormField";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
+import { ALLOWED_TOP_LEVEL_CATEGORIES, isAllowedTopLevelCategory } from "../constants/categories";
 import {
   createCategory,
   deleteCategory,
@@ -24,6 +25,7 @@ function Categories() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const visibleCategories = categories.filter((category) => isAllowedTopLevelCategory(category.name));
 
   const loadCategories = async () => {
     try {
@@ -62,6 +64,12 @@ function Categories() {
     setSaving(true);
     setError("");
     setMessage("");
+
+    if (!isAllowedTopLevelCategory(formData.name)) {
+      setError("Only Men, Women, and Kids categories are allowed.");
+      setSaving(false);
+      return;
+    }
 
     try {
       if (editingId) {
@@ -108,18 +116,31 @@ function Categories() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         eyebrow="Category Master"
         title="Categories"
-        description="Maintain category master data with the same form and list patterns used across the rest of the CRM."
+        description="Maintain the three storefront categories used across the admin workspace."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">{editingId ? "Edit category" : "Add category"}</h2>
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <FormField label="Category Name" name="name" value={formData.name} onChange={handleChange} />
+          <h2 className="text-base font-semibold text-ink">{editingId ? "Edit category" : "Add category"}</h2>
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <FormField
+              label="Category Name"
+              as="select"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select category" },
+                ...ALLOWED_TOP_LEVEL_CATEGORIES.map((category) => ({
+                  value: category,
+                  label: category
+                }))
+              ]}
+            />
             <FormField
               as="textarea"
               label="Description"
@@ -146,23 +167,23 @@ function Categories() {
         </SurfaceCard>
 
         <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">Category list</h2>
+          <h2 className="text-base font-semibold text-ink">Category list</h2>
           {loading ? <p className="mt-4 text-sm text-secondary">Loading categories...</p> : null}
 
-          <div className="mt-5 space-y-4">
-            {!loading && categories.length === 0 ? (
+          <div className="mt-4 space-y-3">
+            {!loading && visibleCategories.length === 0 ? (
               <EmptyState
                 title="No categories yet"
-                description="Create your first category to start structuring the catalog."
+                description="Create Men, Women, or Kids to structure the catalog."
               />
             ) : null}
 
-            {categories.map((category) => (
-              <div key={category.id} className="rounded-card bg-canvas p-5">
+            {visibleCategories.map((category) => (
+              <div key={category.id} className="rounded-card bg-canvas p-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold text-ink">{category.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-secondary">
+                    <h3 className="text-base font-semibold text-ink">{category.name}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-secondary">
                       {category.description || "No description added yet."}
                     </p>
                   </div>

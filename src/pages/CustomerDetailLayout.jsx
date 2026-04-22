@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import PageHeader from "../components/common/PageHeader";
@@ -19,6 +19,7 @@ const formatDateTime = (value) => {
 
 function CustomerDetailLayout() {
   const { customerId } = useParams();
+  const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,19 +65,21 @@ function CustomerDetailLayout() {
         description="Review the customer profile, follow order history, and keep internal CRM notes attached to the same record."
         actions={
           <div className="flex flex-wrap gap-3">
-            <Link to="/customers">
-              <Button
-                variant="secondary"
-                className="!rounded-[12px] !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-              >
-                Back to List
-              </Button>
-            </Link>
-            <Link to={`/customers/${customer.id}/notes`}>
-              <Button className="!rounded-[12px] !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]">
-                Add CRM Note
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate("/customers")}
+              className="ui-compact-button !px-4 !py-2.5"
+            >
+              Back to List
+            </Button>
+            <Button
+              type="button"
+              onClick={() => navigate(`/customers/${customer.id}/notes`)}
+              className="ui-compact-button !px-4 !py-2.5"
+            >
+              Add CRM Note
+            </Button>
           </div>
         }
       />

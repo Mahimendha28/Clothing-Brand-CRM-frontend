@@ -185,7 +185,7 @@ function LandingPage() {
                 Explore the visual archive.
               </h3>
               <ul className="space-y-6">
-                {["Women", "Men", "Accessories", "Fragrance"].map((cat) => (
+                {["Women", "Men", "Kids"].map((cat) => (
                   <li key={cat} className="group flex items-center gap-4">
                     <span className="text-2xl font-display text-secondary transition-colors group-hover:text-ink">
                       {cat}

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import PasswordToggleButton from "../components/PasswordToggleButton";
 import Button from "../components/common/Button";
 import FormField from "../components/common/FormField";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { getStoredUser, updateStoredUser } from "../utils/auth";
-import { getUserProfile, updateUserProfile } from "../services/authService";
+import { changePassword, getUserProfile, updateUserProfile } from "../services/authService";
 
 function Profile() {
   const { userId } = useParams();
@@ -20,8 +21,21 @@ function Profile() {
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [showPasswords, setShowPasswords] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  });
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -50,6 +64,21 @@ function Profile() {
     }));
   };
 
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const togglePasswordVisibility = (fieldName) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -73,6 +102,37 @@ function Profile() {
       setError(apiError.message || "Failed to update profile");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (event) => {
+    event.preventDefault();
+    setPasswordMessage("");
+    setPasswordError("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New password and confirm password must match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      const response = await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+
+      setPasswordMessage(response.message || "Password changed successfully");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (apiError) {
+      setPasswordError(apiError.message || "Failed to change password");
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -106,6 +166,83 @@ function Profile() {
 
           <Button type="submit" disabled={saving}>
             {saving ? "Saving..." : "Save Profile"}
+          </Button>
+        </form>
+      </SurfaceCard>
+
+      <SurfaceCard>
+        <form onSubmit={handlePasswordSubmit} className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-ink">Change password</h2>
+            <p className="mt-1 text-sm text-secondary">
+              Update your password securely from the same dashboard profile screen.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="relative">
+              <label className="ui-label" htmlFor="currentPassword">Current Password</label>
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type={showPasswords.currentPassword ? "text" : "password"}
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+                className="ui-input pr-12"
+                autoComplete="current-password"
+                required
+              />
+              <PasswordToggleButton
+                visible={showPasswords.currentPassword}
+                onClick={() => togglePasswordVisibility("currentPassword")}
+                className="absolute right-3 top-[38px] h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink"
+              />
+            </div>
+
+            <div className="relative">
+              <label className="ui-label" htmlFor="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                name="newPassword"
+                type={showPasswords.newPassword ? "text" : "password"}
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                className="ui-input pr-12"
+                autoComplete="new-password"
+                required
+              />
+              <PasswordToggleButton
+                visible={showPasswords.newPassword}
+                onClick={() => togglePasswordVisibility("newPassword")}
+                className="absolute right-3 top-[38px] h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink"
+              />
+            </div>
+          </div>
+
+          <div className="relative md:max-w-[50%]">
+            <label className="ui-label" htmlFor="confirmPassword">Confirm New Password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showPasswords.confirmPassword ? "text" : "password"}
+              value={passwordForm.confirmPassword}
+              onChange={handlePasswordChange}
+              className="ui-input pr-12"
+              autoComplete="new-password"
+              required
+            />
+            <PasswordToggleButton
+              visible={showPasswords.confirmPassword}
+              onClick={() => togglePasswordVisibility("confirmPassword")}
+              className="absolute right-3 top-[38px] h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink"
+            />
+          </div>
+
+          <StatusBanner tone="success">{passwordMessage}</StatusBanner>
+          <StatusBanner tone="danger">{passwordError}</StatusBanner>
+
+          <Button type="submit" disabled={passwordSaving}>
+            {passwordSaving ? "Updating Password..." : "Change Password"}
           </Button>
         </form>
       </SurfaceCard>

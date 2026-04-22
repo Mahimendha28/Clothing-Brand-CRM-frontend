@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import Button from "../components/common/Button";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import PageHeader from "../components/common/PageHeader";
+import StatusPill from "../components/common/StatusPill";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
+import { useToast } from "../context/ToastContext";
 import {
   cancelOrder,
   confirmOrder,
@@ -30,6 +33,8 @@ function StaffOrderDetailPage() {
   const [message, setMessage] = useState("");
   const [shipmentForm, setShipmentForm] = useState(initialShipmentForm);
   const [pendingAction, setPendingAction] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const { toastError, toastSuccess } = useToast();
 
   const loadOrder = async () => {
     try {
@@ -67,12 +72,16 @@ function StaffOrderDetailPage() {
       return;
     }
 
+    if (actionKey === "cancel") {
+      setShowCancelConfirm(true);
+      return;
+    }
+
     const actionMap = {
       confirm: confirmOrder,
       pack: packOrder,
       ship: shipOrder,
-      deliver: deliverOrder,
-      cancel: cancelOrder
+      deliver: deliverOrder
     };
 
     try {
@@ -82,8 +91,32 @@ function StaffOrderDetailPage() {
       const response = await actionMap[actionKey](order.id);
       setOrder(response.order || null);
       setMessage(`Order ${actionKey} action completed successfully`);
+      toastSuccess(`Order ${actionKey} action completed successfully`);
     } catch (apiError) {
       setError(apiError.message || "Failed to update order status");
+      toastError(apiError.message || "Failed to update order status");
+    } finally {
+      setPendingAction("");
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!order) {
+      return;
+    }
+
+    try {
+      setPendingAction("cancel");
+      setError("");
+      setMessage("");
+      const response = await cancelOrder(order.id);
+      setOrder(response.order || null);
+      setMessage("Order cancelled successfully");
+      toastSuccess("Order cancelled successfully");
+      setShowCancelConfirm(false);
+    } catch (apiError) {
+      setError(apiError.message || "Failed to cancel order");
+      toastError(apiError.message || "Failed to cancel order");
     } finally {
       setPendingAction("");
     }
@@ -194,12 +227,16 @@ function StaffOrderDetailPage() {
             </div>
             <div className="rounded-card bg-canvas p-4">
               <p className="ui-eyebrow">Order Status</p>
-              <p className="mt-3 text-xl font-semibold text-ink">{order.order_status}</p>
+              <div className="mt-3">
+                <StatusPill value={order.order_status} />
+              </div>
               <p className="mt-2 text-sm text-secondary">{order.payment_method}</p>
             </div>
             <div className="rounded-card bg-canvas p-4">
               <p className="ui-eyebrow">Shipment</p>
-              <p className="mt-3 text-xl font-semibold text-ink">{order.shipment?.shipment_status || "Not created"}</p>
+              <div className="mt-3">
+                <StatusPill value={order.shipment?.shipment_status || "Not created"} />
+              </div>
               <p className="mt-2 text-sm text-secondary">{order.shipment?.tracking_number || "No tracking number"}</p>
             </div>
           </div>
@@ -281,6 +318,20 @@ function StaffOrderDetailPage() {
           </div>
         </SurfaceCard>
       </div>
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        title="Cancel order"
+        description="This will stop fulfilment for the current order. Please confirm before cancelling."
+        confirmLabel="Cancel Order"
+        loading={pendingAction === "cancel"}
+        onConfirm={handleConfirmCancel}
+        onClose={() => {
+          if (pendingAction !== "cancel") {
+            setShowCancelConfirm(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Trash2, UploadCloud, X } from "lucide-react";
+import { Pencil, Power, Trash2, UploadCloud, X } from "lucide-react";
 
 import Button from "../components/common/Button";
 import FormField from "../components/common/FormField";
+import IconActionButton from "../components/common/IconActionButton";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
@@ -402,15 +403,18 @@ function ProductView() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-soft hover:bg-input text-primary transition-colors" onClick={() => handleEditVariant(variant)}>
-                      Edit
-                    </button>
-                    <button type="button" className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-soft hover:bg-input text-primary transition-colors" onClick={() => handleVariantStatusToggle(variant)}>
-                      {variant.status === "active" ? "Disable" : "Enable"}
-                    </button>
-                    <button type="button" className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-soft hover:bg-red-50 text-red-600 transition-colors" onClick={() => handleDeleteVariant(variant.id)}>
-                      Delete
-                    </button>
+                    <IconActionButton icon={Pencil} label="Edit variant" onClick={() => handleEditVariant(variant)} />
+                    <IconActionButton
+                      icon={Power}
+                      label={variant.status === "active" ? "Disable variant" : "Enable variant"}
+                      onClick={() => handleVariantStatusToggle(variant)}
+                    />
+                    <IconActionButton
+                      icon={Trash2}
+                      label="Delete variant"
+                      onClick={() => handleDeleteVariant(variant.id)}
+                      className="!border-danger/30 !text-danger hover:!bg-danger/5"
+                    />
                   </div>
                 </div>
               </div>
