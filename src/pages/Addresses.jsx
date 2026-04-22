@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -43,6 +43,7 @@ function Addresses() {
   const [message, setMessage] = useState("");
   const returnTo = location.state?.returnTo || "";
   const isFromCheckout = Boolean(location.state?.fromCheckout && returnTo);
+  const compactButtonClass = "ui-compact-button !min-w-0 !px-4";
 
   const loadAddresses = async () => {
     try {
@@ -188,10 +189,17 @@ function Addresses() {
         eyebrow="Addresses"
         title="Address management"
         description="Add, edit, and remove saved delivery addresses. The layout keeps forms and saved records in one easy-to-scan workspace."
+        actions={
+          <Link to="/dashboard">
+            <Button variant="secondary" className={compactButtonClass}>
+              Dashboard
+            </Button>
+          </Link>
+        }
       />
 
       {isFromCheckout ? (
-        <SurfaceCard>
+        <SurfaceCard className="!p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-ink">Managing addresses for checkout</p>
@@ -199,7 +207,7 @@ function Addresses() {
                 Add or update a delivery address, then return to checkout to continue placing the order.
               </p>
             </div>
-            <Button type="button" variant="secondary" onClick={() => navigate(returnTo)}>
+            <Button type="button" variant="secondary" onClick={() => navigate(returnTo)} className={compactButtonClass}>
               Back to Checkout
             </Button>
           </div>
@@ -207,9 +215,9 @@ function Addresses() {
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">{editingId ? "Edit address" : "Add address"}</h2>
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <SurfaceCard className="!p-5">
+          <h2 className="text-xl font-semibold text-ink">{editingId ? "Edit address" : "Add address"}</h2>
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <FormField label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} />
             <FormField label="Phone" name="phone" value={formData.phone} onChange={handleChange} />
             <FormField label="Address Line 1" name="address_line_1" value={formData.address_line_1} onChange={handleChange} />
@@ -238,7 +246,7 @@ function Addresses() {
                   { value: "other", label: "Other" }
                 ]}
               />
-              <label className="flex items-center gap-3 rounded-[20px] border border-line bg-input px-4 py-3.5 text-sm text-ink">
+              <label className="flex items-center gap-3 rounded-[14px] border border-line bg-input px-4 py-3 text-sm text-ink">
                 <input type="checkbox" name="is_default" checked={formData.is_default} onChange={handleChange} />
                 Set as default
               </label>
@@ -247,12 +255,12 @@ function Addresses() {
             <StatusBanner tone="success">{message}</StatusBanner>
             <StatusBanner tone="danger">{error}</StatusBanner>
 
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={saving}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="submit" disabled={saving} className={compactButtonClass}>
                 {saving ? "Saving..." : editingId ? "Update Address" : "Add Address"}
               </Button>
               {editingId ? (
-                <Button type="button" variant="secondary" onClick={resetForm}>
+                <Button type="button" variant="secondary" onClick={resetForm} className={compactButtonClass}>
                   Cancel
                 </Button>
               ) : null}
@@ -260,6 +268,7 @@ function Addresses() {
                 <Button
                   type="button"
                   variant="outline"
+                  className={compactButtonClass}
                   onClick={() =>
                     navigate(returnTo, {
                       state: {
@@ -275,11 +284,11 @@ function Addresses() {
           </form>
         </SurfaceCard>
 
-        <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">Saved addresses</h2>
+        <SurfaceCard className="!p-5">
+          <h2 className="text-xl font-semibold text-ink">Saved addresses</h2>
           {loading ? <p className="mt-4 text-sm text-secondary">Loading addresses...</p> : null}
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-4 space-y-3">
             {!loading && addresses.length === 0 ? (
               <EmptyState
                 title="No saved addresses"
@@ -288,21 +297,21 @@ function Addresses() {
             ) : null}
 
             {addresses.map((address) => (
-              <div key={address.id} className="rounded-card bg-canvas p-5">
+              <div key={address.id} className="rounded-[16px] border border-line bg-page p-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-lg font-semibold text-ink">{address.full_name}</p>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-accent">
+                      <p className="text-base font-semibold text-ink">{address.full_name}</p>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-accent">
                         {address.address_type}
                       </span>
                       {address.is_default ? (
-                        <span className="rounded-full border border-line px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-secondary">
+                        <span className="rounded-full border border-line px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-secondary">
                           Default
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-secondary">
+                    <p className="mt-2 text-sm leading-6 text-secondary">
                       {address.address_line_1}
                       {address.address_line_2 ? `, ${address.address_line_2}` : ""}
                       {`, ${address.city}, ${address.state} - ${address.postal_code}, ${address.country}`}
@@ -310,24 +319,12 @@ function Addresses() {
                     <p className="mt-2 text-sm text-secondary">Phone: {address.phone}</p>
                   </div>
 
-                  <div className="flex gap-3">
-                    {!address.is_default ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleSetDefault(address)}
-                        disabled={defaultingId === address.id}
-                      >
-                        {defaultingId === address.id ? "Updating..." : "Set Default"}
-                      </Button>
-                    ) : null}
-                    <Button type="button" variant="secondary" onClick={() => handleEdit(address)}>
-                      Edit
-                    </Button>
+                  <div className="flex flex-wrap items-center justify-start gap-2 md:max-w-[240px] md:justify-end">
                     {isFromCheckout ? (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="secondary"
+                        className={compactButtonClass}
                         onClick={() =>
                           navigate(returnTo, {
                             state: {
@@ -341,7 +338,27 @@ function Addresses() {
                     ) : null}
                     <Button
                       type="button"
+                      variant="secondary"
+                      className={compactButtonClass}
+                      onClick={() => handleEdit(address)}
+                    >
+                      Edit
+                    </Button>
+                    {!address.is_default ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={compactButtonClass}
+                        onClick={() => handleSetDefault(address)}
+                        disabled={defaultingId === address.id}
+                      >
+                        {defaultingId === address.id ? "Updating..." : "Set Default"}
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
                       variant="outline"
+                      className={compactButtonClass}
                       onClick={() => handleDelete(address.id)}
                       disabled={deletingId === address.id}
                     >

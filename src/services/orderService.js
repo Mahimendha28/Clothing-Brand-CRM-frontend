@@ -115,7 +115,15 @@ export const confirmOrder = async (orderId, notes = "") => postOrderAction(order
 export const packOrder = async (orderId, notes = "") => postOrderAction(orderId, "pack", notes);
 export const shipOrder = async (orderId, notes = "") => postOrderAction(orderId, "ship", notes);
 export const deliverOrder = async (orderId, notes = "") => postOrderAction(orderId, "deliver", notes);
-export const cancelOrder = async (orderId, notes = "") => postOrderAction(orderId, "cancel", notes);
+export const cancelOrder = async (orderId, reason = "") => {
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ reason })
+  });
+
+  return handleResponse(response);
+};
 
 export const getShipments = async ({ status = "" } = {}) => {
   const params = new URLSearchParams();

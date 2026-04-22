@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import PageHeader from "../components/common/PageHeader";
@@ -112,14 +113,21 @@ function Inventory() {
         eyebrow="Inventory Desk"
         title="Inventory management"
         description="Review live stock health, check low-stock variants, and record opening stock or manual adjustments from one workspace."
+        actions={
+          <Link to="/dashboard/inventory">
+            <Button variant="secondary" className="ui-compact-button !min-w-[148px]">
+              Inventory Report
+            </Button>
+          </Link>
+        }
       />
 
       <StatusBanner tone="success">{message}</StatusBanner>
       <StatusBanner tone="danger">{error}</StatusBanner>
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-        <SurfaceCard className="space-y-6">
-          <div className="flex flex-wrap gap-3 border-b border-line pb-4">
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
+        <SurfaceCard className="space-y-5 !p-5">
+          <div className="flex flex-wrap gap-2 border-b border-line pb-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -137,30 +145,30 @@ function Inventory() {
           {loading ? <p className="text-sm text-secondary">Loading inventory data...</p> : null}
 
           {!loading && activeTab === "summary" && summary ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-card bg-canvas p-5">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-[16px] border border-line bg-page px-4 py-4">
                 <p className="ui-eyebrow">Total Products</p>
-                <p className="mt-3 text-3xl font-semibold text-ink">{summary.totalProducts}</p>
+                <p className="mt-2 text-[1.55rem] font-semibold leading-none text-ink">{summary.totalProducts}</p>
               </div>
-              <div className="rounded-card bg-canvas p-5">
+              <div className="rounded-[16px] border border-line bg-page px-4 py-4">
                 <p className="ui-eyebrow">Total Variants</p>
-                <p className="mt-3 text-3xl font-semibold text-ink">{summary.totalVariants}</p>
+                <p className="mt-2 text-[1.55rem] font-semibold leading-none text-ink">{summary.totalVariants}</p>
               </div>
-              <div className="rounded-card bg-canvas p-5">
+              <div className="rounded-[16px] border border-line bg-page px-4 py-4">
                 <p className="ui-eyebrow">Units In Stock</p>
-                <p className="mt-3 text-3xl font-semibold text-ink">{summary.totalStock}</p>
+                <p className="mt-2 text-[1.55rem] font-semibold leading-none text-ink">{summary.totalStock}</p>
               </div>
-              <div className="rounded-card bg-[#fff3f0] p-5">
-                <p className="ui-eyebrow !text-[#b44b3a]">Low Stock Variants</p>
-                <p className="mt-3 text-3xl font-semibold text-[#9b3f32]">{summary.lowStockItems}</p>
+              <div className="rounded-[16px] border border-[#f3d7cf] bg-[#fff7f3] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#b44b3a]">Low Stock Variants</p>
+                <p className="mt-2 text-[1.55rem] font-semibold leading-none text-[#9b3f32]">{summary.lowStockItems}</p>
               </div>
             </div>
           ) : null}
 
           {!loading && activeTab === "low-stock" ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-[18px] border border-line">
               <table className="w-full min-w-[640px] text-left text-sm">
-                <thead>
+                <thead className="bg-page">
                   <tr>
                     <th className="ui-table-head">Product</th>
                     <th className="ui-table-head">SKU</th>
@@ -171,11 +179,11 @@ function Inventory() {
                 <tbody>
                   {lowStockItems.length ? (
                     lowStockItems.map((item) => (
-                      <tr key={item.variant_id} className="border-b border-line">
-                        <td className="px-5 py-4 text-ink">{item.product_name}</td>
-                        <td className="px-5 py-4 text-secondary">{item.sku}</td>
-                        <td className="px-5 py-4 text-secondary">{item.size} / {item.color}</td>
-                        <td className="px-5 py-4">
+                      <tr key={item.variant_id} className="border-b border-line last:border-b-0">
+                        <td className="ui-table-cell text-ink">{item.product_name}</td>
+                        <td className="ui-table-cell text-secondary">{item.sku}</td>
+                        <td className="ui-table-cell text-secondary">{item.size} / {item.color}</td>
+                        <td className="ui-table-cell">
                           <span className="rounded-full bg-[#fff0eb] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#a54435]">
                             {item.stock} left
                           </span>
@@ -195,9 +203,9 @@ function Inventory() {
           ) : null}
 
           {!loading && activeTab === "transactions" ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-[18px] border border-line">
               <table className="w-full min-w-[820px] text-left text-sm">
-                <thead>
+                <thead className="bg-page">
                   <tr>
                     <th className="ui-table-head">Date</th>
                     <th className="ui-table-head">Product</th>
@@ -210,24 +218,24 @@ function Inventory() {
                 <tbody>
                   {transactions.length ? (
                     transactions.map((transaction) => (
-                      <tr key={transaction.id} className="border-b border-line">
-                        <td className="px-5 py-4 text-secondary">
+                      <tr key={transaction.id} className="border-b border-line last:border-b-0">
+                        <td className="ui-table-cell text-secondary">
                           {new Date(transaction.created_at).toLocaleString()}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="ui-table-cell">
                           <p className="font-medium text-ink">{transaction.product_name}</p>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted">{transaction.sku}</p>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="ui-table-cell">
                           <span className="rounded-full bg-page px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink">
                             {transaction.transaction_type.replace("_", " ")}
                           </span>
                         </td>
-                        <td className={`px-5 py-4 font-semibold ${transaction.quantity_changed > 0 ? "text-success" : "text-danger"}`}>
+                        <td className={`ui-table-cell font-semibold ${transaction.quantity_changed > 0 ? "text-success" : "text-danger"}`}>
                           {transaction.quantity_changed > 0 ? `+${transaction.quantity_changed}` : transaction.quantity_changed}
                         </td>
-                        <td className="px-5 py-4 text-ink">{transaction.stock_after}</td>
-                        <td className="px-5 py-4 text-secondary">{transaction.notes || "-"}</td>
+                        <td className="ui-table-cell text-ink">{transaction.stock_after}</td>
+                        <td className="ui-table-cell text-secondary">{transaction.notes || "-"}</td>
                       </tr>
                     ))
                   ) : (
@@ -243,11 +251,11 @@ function Inventory() {
           ) : null}
         </SurfaceCard>
 
-        <SurfaceCard>
+        <SurfaceCard className="!p-5">
           <p className="ui-eyebrow">Stock Adjustment Form</p>
-          <h2 className="mt-3 font-display text-3xl text-ink">Record stock movement</h2>
+          <h2 className="mt-2 text-xl font-semibold text-ink">Record stock movement</h2>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div>
               <label className="ui-label">Variant ID</label>
               <input
@@ -297,7 +305,7 @@ function Inventory() {
               />
             </div>
 
-            <Button type="submit" disabled={saving} className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]">
+            <Button type="submit" disabled={saving} className="ui-compact-button w-full">
               {saving ? "Saving..." : "Apply Inventory Update"}
             </Button>
           </form>

@@ -8,6 +8,8 @@ import StatusBanner from "../components/common/StatusBanner";
 import ProductCard from "../components/store/ProductCard";
 import { formatCatalogPrice, getStoreFilters, getStoreProducts } from "../services/catalogService";
 
+const normalizeOptionValue = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, "-");
+
 function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
@@ -43,18 +45,6 @@ function ProductListing() {
         if (!ignore) {
           const nextFilters = response.filters || { categories: [], subcategories: [], types: [], brands: [], sizes: [], colors: [], price_range: { min: 0, max: 0 } };
           setCatalogFilters(nextFilters);
-          const requestedCategory = searchParams.get("category") || "";
-          const isNumericCategory = requestedCategory && !Number.isNaN(Number(requestedCategory));
-
-          if (requestedCategory && !isNumericCategory) {
-            const matchedCategory = (nextFilters.categories || []).find((category) =>
-              category.name?.toLowerCase().replace(/\s+/g, "-") === requestedCategory.toLowerCase()
-            );
-
-            if (matchedCategory) {
-              setFilters((prev) => ({ ...prev, category: String(matchedCategory.id) }));
-            }
-          }
 
           if (!searchParams.get("maxPrice") && response.filters?.price_range?.max) {
              setSliderPrice(response.filters.price_range.max);
@@ -67,6 +57,52 @@ function ProductListing() {
     loadFilters();
     return () => { ignore = true; };
   }, []);
+
+  useEffect(() => {
+    const resolveOptionId = (options, rawValue) => {
+      if (!rawValue) {
+        return "";
+      }
+
+      if (!Number.isNaN(Number(rawValue))) {
+        return String(rawValue);
+      }
+
+      const matchedOption = (options || []).find((option) => normalizeOptionValue(option.name) === normalizeOptionValue(rawValue));
+      return matchedOption ? String(matchedOption.id) : String(rawValue);
+    };
+
+    const nextSearchTerm = searchParams.get("search") || "";
+    const nextSortOption = searchParams.get("sort") || "new";
+    const nextCategory = resolveOptionId(catalogFilters.categories, searchParams.get("category") || "");
+    const nextSubcategory = resolveOptionId(catalogFilters.subcategories, searchParams.get("subcategory") || "");
+    const nextType = resolveOptionId(catalogFilters.types, searchParams.get("type") || "");
+    const nextBrand = resolveOptionId(catalogFilters.brands, searchParams.get("brand") || "");
+    const nextSize = searchParams.get("size") || "";
+    const nextMinPrice = searchParams.get("minPrice") || "";
+    const nextMaxPrice = searchParams.get("maxPrice") || "";
+
+    setSearchTerm((current) => (current === nextSearchTerm ? current : nextSearchTerm));
+    setSortOption((current) => (current === nextSortOption ? current : nextSortOption));
+    setSliderPrice((current) => {
+      const fallbackMaxPrice = String(catalogFilters.price_range.max || 0);
+      const targetValue = nextMaxPrice || fallbackMaxPrice;
+      return String(current) === String(targetValue) ? current : targetValue;
+    });
+    setFilters((current) => {
+      const nextState = {
+        category: nextCategory,
+        subcategory: nextSubcategory,
+        type: nextType,
+        brand: nextBrand,
+        size: nextSize,
+        minPrice: nextMinPrice,
+        maxPrice: nextMaxPrice
+      };
+
+      return JSON.stringify(current) === JSON.stringify(nextState) ? current : nextState;
+    });
+  }, [searchParams, catalogFilters]);
 
   useEffect(() => {
     let ignore = false;

@@ -11,9 +11,9 @@ import { getPublicCoupons } from "../services/couponService";
 
 const navItems = [
   { label: "Home", to: "/", end: true },
-  { label: "Men", to: "/products?category=men" },
-  { label: "Women", to: "/products?category=women" },
-  { label: "Kids", to: "/products?category=kids" },
+  { label: "Men", to: "/men" },
+  { label: "Women", to: "/women" },
+  { label: "Kids", to: "/kids" },
   { label: "New Arrivals", to: "/products?sort=new" }
 ];
 
@@ -418,9 +418,9 @@ function StorefrontLayout() {
           <div>
             <h4 className="font-bold text-primary mb-6">Shop</h4>
             <ul className="space-y-4">
-              <li><Link to="/products?category=men" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Men's Collection</Link></li>
-              <li><Link to="/products?category=women" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Women's Collection</Link></li>
-              <li><Link to="/products?category=kids" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Kids Collection</Link></li>
+              <li><Link to="/men" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Men's Collection</Link></li>
+              <li><Link to="/women" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Women's Collection</Link></li>
+              <li><Link to="/kids" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Kids Collection</Link></li>
               <li><Link to="/products?sort=new" className="text-secondary hover:text-accent transition-colors text-sm font-medium">New Arrivals</Link></li>
               <li><Link to="/products?sort=popular" className="text-secondary hover:text-accent transition-colors text-sm font-medium">Best Sellers</Link></li>
             </ul>

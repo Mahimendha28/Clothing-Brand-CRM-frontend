@@ -133,7 +133,7 @@ function Home() {
               return (
                 <Link
                   key={category.id}
-                  to={`/products?category=${encodeURIComponent(key)}`}
+                  to={`/${encodeURIComponent(key)}`}
                   className="group relative h-[360px] overflow-hidden rounded-3xl border border-white/20 shadow-2xl"
                 >
                   <img
@@ -171,7 +171,7 @@ function Home() {
             const key = category.name.toLowerCase();
             return (
               <article key={category.id} className="rounded-2xl border border-[#e8e8e1] bg-white p-5 shadow-sm">
-                <Link to={`/products?category=${encodeURIComponent(key)}`} className="text-2xl font-black uppercase">
+                <Link to={`/${encodeURIComponent(key)}`} className="text-2xl font-black uppercase">
                   {category.name}
                 </Link>
                 <div className="mt-4 space-y-3">

@@ -126,15 +126,10 @@ function WishlistPage() {
       <StatusBanner tone="danger">{error}</StatusBanner>
 
       {!wishlist.items.length ? (
-        <div className="space-y-6">
-          <EmptyState
-            title="Your wishlist is empty"
-            description="Save products from the product detail page to revisit them later or move them into the cart."
-          />
-          <Link to="/products">
-            <Button className="!text-sm !font-medium !normal-case !tracking-[0.02em]">Browse Products</Button>
-          </Link>
-        </div>
+        <EmptyState
+          title="Your wishlist is empty"
+          description="Save products from the product detail page to revisit them later or move them into the cart."
+        />
       ) : (
         <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
           <div className="space-y-5">

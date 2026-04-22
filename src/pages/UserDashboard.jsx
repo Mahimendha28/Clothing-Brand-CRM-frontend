@@ -20,6 +20,11 @@ const formatDate = (value) =>
     year: "numeric"
   }).format(new Date(value));
 
+const formatStatusLabel = (value) =>
+  String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
 function UserDashboard() {
   const user = getStoredUser();
   const [loading, setLoading] = useState(true);
@@ -81,45 +86,44 @@ function UserDashboard() {
 
   const dashboardMetrics = useMemo(() => {
     const totalOrders = orders.length;
-    const paidOrders = orders.filter((order) => order.payment_status === "paid").length;
     const activeOrders = orders.filter((order) => !["delivered", "cancelled"].includes(order.order_status)).length;
     const deliveredOrders = orders.filter((order) => order.order_status === "delivered").length;
     const openReturns = returns.filter((entry) => !["refunded", "rejected"].includes(entry.refund_status)).length;
 
     return {
       totalOrders,
-      paidOrders,
       activeOrders,
       deliveredOrders,
       openReturns
     };
   }, [orders, returns]);
 
-  const recentOrders = useMemo(() => orders.slice(0, 6), [orders]);
+  const recentOrders = useMemo(() => orders.slice(0, 5), [orders]);
   const recentReturns = useMemo(() => returns.slice(0, 5), [returns]);
+  const latestOrder = orders[0] || null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <PageHeader
         eyebrow="Customer Dashboard"
         title={`Welcome back, ${user?.name || "Customer"}`}
-        description="Track orders, payment progress, cart totals, and return activity from one dashboard with the same table-driven UI style as admin."
+        description="Track your recent orders, active returns, and cart progress from one polished customer workspace."
         actions={
-          <div className="flex flex-wrap gap-3">
+          <>
             <Link to="/products">
               <Button
                 variant="secondary"
-                className="!rounded-[10px] !bg-white !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
+                className="ui-compact-button !min-w-[136px] !bg-white"
               >
                 Browse Products
               </Button>
             </Link>
             <Link to="/my-orders">
-              <Button className="!rounded-[10px] !px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]">
+              <Button className="ui-compact-button !min-w-[136px]">
                 Open My Orders
               </Button>
             </Link>
-          </div>
+          </>
         }
       />
 
@@ -127,8 +131,8 @@ function UserDashboard() {
 
       {loading ? (
         <div className="space-y-8 animate-pulse">
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-            {[1, 2, 3, 4, 5].map((idx) => (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((idx) => (
               <div key={idx} className="h-[120px] rounded-[24px] border border-soft bg-canvas shadow-sm" />
             ))}
           </div>
@@ -137,50 +141,88 @@ function UserDashboard() {
             <div className="h-[360px] rounded-[32px] border border-soft bg-canvas shadow-sm" />
           </div>
         </div>
-      ) : null}
-
-      {!loading ? (
+      ) : (
         <>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
+              compact
               label="Total Orders"
               value={String(dashboardMetrics.totalOrders)}
               note={`${dashboardMetrics.activeOrders} currently active`}
             />
             <MetricCard
+              compact
+              label="Active Orders"
+              value={String(dashboardMetrics.activeOrders)}
+              note="Orders still in progress"
+            />
+            <MetricCard
+              compact
               label="Delivered"
               value={String(dashboardMetrics.deliveredOrders)}
               note="Completed fulfillment orders"
             />
             <MetricCard
-              label="Paid Orders"
-              value={String(dashboardMetrics.paidOrders)}
-              note="Orders with confirmed payment"
-            />
-            <MetricCard
+              compact
               label="Open Returns"
               value={String(dashboardMetrics.openReturns)}
               note="Return or refund flow in progress"
             />
-            <MetricCard
-              label="Cart Snapshot"
-              value={`${cart.item_count || 0} item(s)`}
-              note={`Subtotal ${formatCatalogPrice(cart.subtotal || 0)}`}
-            />
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-2">
-            <SurfaceCard className="space-y-5">
+          <SurfaceCard className="space-y-4 !p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="ui-eyebrow">Latest Activity</p>
+                <h2 className="mt-2 text-xl font-semibold leading-tight text-ink">Current snapshot</h2>
+              </div>
+              <Link to={latestOrder ? `/my-orders/${latestOrder.id}` : "/my-orders"}>
+                <Button variant="secondary" className="ui-compact-button !min-w-[108px]">
+                  View Latest
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Recent order</p>
+                <p className="mt-2 text-base font-semibold text-ink">
+                  {latestOrder ? latestOrder.order_number : "No orders yet"}
+                </p>
+                <p className="mt-1 text-sm text-secondary">
+                  {latestOrder ? formatStatusLabel(latestOrder.order_status) : "Your first order will appear here."}
+                </p>
+              </div>
+              <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Order total</p>
+                <p className="mt-2 text-base font-semibold text-ink">
+                  {latestOrder ? formatCatalogPrice(latestOrder.total_amount) : formatCatalogPrice(0)}
+                </p>
+                <p className="mt-1 text-sm text-secondary">
+                  {latestOrder ? `Placed ${formatDate(latestOrder.created_at)}` : "Checkout summary will appear here."}
+                </p>
+              </div>
+              <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Cart snapshot</p>
+                <p className="mt-2 text-base font-semibold text-ink">
+                  {cart.item_count || 0} item(s)
+                </p>
+                <p className="mt-1 text-sm text-secondary">
+                  Subtotal {formatCatalogPrice(cart.subtotal || 0)}
+                </p>
+              </div>
+            </div>
+          </SurfaceCard>
+
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <SurfaceCard className="space-y-4 !p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="ui-eyebrow">Recent Orders</p>
-                  <h2 className="mt-3 font-display text-3xl text-ink">Latest purchases</h2>
+                  <h2 className="mt-2 text-xl font-semibold leading-tight text-ink">Latest purchases</h2>
                 </div>
                 <Link to="/my-orders">
-                  <Button
-                    variant="secondary"
-                    className="!px-4 !py-2.5 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                  >
+                  <Button variant="secondary" className="ui-compact-button !min-w-[96px]">
                     View All
                   </Button>
                 </Link>
@@ -201,15 +243,15 @@ function UserDashboard() {
                     <tbody>
                       {recentOrders.map((order) => (
                         <tr key={order.id} className="border-b border-line">
-                          <td className="px-5 py-4 text-ink">
+                          <td className="ui-table-cell">
                             <Link to={`/my-orders/${order.id}`} className="font-semibold hover:underline">
                               {order.order_number}
                             </Link>
                           </td>
-                          <td className="px-5 py-4 text-secondary">{formatDate(order.created_at)}</td>
-                          <td className="px-5 py-4 text-ink">{formatCatalogPrice(order.total_amount)}</td>
-                          <td className="px-5 py-4 text-ink uppercase">{order.order_status}</td>
-                          <td className="px-5 py-4 text-secondary uppercase">{order.payment_status}</td>
+                          <td className="ui-table-cell text-secondary">{formatDate(order.created_at)}</td>
+                          <td className="ui-table-cell">{formatCatalogPrice(order.total_amount)}</td>
+                          <td className="ui-table-cell uppercase">{order.order_status}</td>
+                          <td className="ui-table-cell uppercase text-secondary">{order.payment_status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -223,57 +265,86 @@ function UserDashboard() {
               )}
             </SurfaceCard>
 
-            <SurfaceCard className="space-y-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="ui-eyebrow">Return Requests</p>
-                  <h2 className="mt-3 font-display text-3xl text-ink">Recent returns</h2>
+            <div className="grid gap-5">
+              <SurfaceCard className="space-y-4 !p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="ui-eyebrow">Return Requests</p>
+                    <h2 className="mt-2 text-xl font-semibold leading-tight text-ink">Recent returns</h2>
+                  </div>
+                  <Link to="/returns">
+                    <Button variant="secondary" className="ui-compact-button !min-w-[132px]">
+                      Manage Returns
+                    </Button>
+                  </Link>
                 </div>
-                <Link to="/returns">
-                  <Button
-                    variant="secondary"
-                    className="!px-4 !py-2.5 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                  >
-                    Manage Returns
-                  </Button>
-                </Link>
-              </div>
 
-              {recentReturns.length ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] text-left text-sm">
-                    <thead>
-                      <tr>
-                        <th className="ui-table-head">Order</th>
-                        <th className="ui-table-head">Submitted</th>
-                        <th className="ui-table-head">Reason</th>
-                        <th className="ui-table-head">Return</th>
-                        <th className="ui-table-head">Refund</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentReturns.map((entry) => (
-                        <tr key={entry.id} className="border-b border-line">
-                          <td className="px-5 py-4 text-ink">{entry.order_number}</td>
-                          <td className="px-5 py-4 text-secondary">{formatDate(entry.created_at)}</td>
-                          <td className="px-5 py-4 text-ink">{entry.reason}</td>
-                          <td className="px-5 py-4 text-ink uppercase">{entry.return_status}</td>
-                          <td className="px-5 py-4 text-secondary uppercase">{entry.refund_status}</td>
+                {recentReturns.length ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-left text-sm">
+                      <thead>
+                        <tr>
+                          <th className="ui-table-head">Order</th>
+                          <th className="ui-table-head">Submitted</th>
+                          <th className="ui-table-head">Reason</th>
+                          <th className="ui-table-head">Return</th>
+                          <th className="ui-table-head">Refund</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {recentReturns.map((entry) => (
+                          <tr key={entry.id} className="border-b border-line">
+                            <td className="ui-table-cell">{entry.order_number}</td>
+                            <td className="ui-table-cell text-secondary">{formatDate(entry.created_at)}</td>
+                            <td className="ui-table-cell">{entry.reason}</td>
+                            <td className="ui-table-cell uppercase">{entry.return_status}</td>
+                            <td className="ui-table-cell uppercase text-secondary">{entry.refund_status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No return requests"
+                    description="When you submit return requests they will appear in this table."
+                  />
+                )}
+              </SurfaceCard>
+
+              <SurfaceCard className="space-y-4 !p-5">
+                <p className="ui-eyebrow">Quick Actions</p>
+                <h2 className="text-xl font-semibold leading-tight text-ink">Keep things moving</h2>
+                <p className="text-[13px] leading-6 text-secondary">
+                  Shortcuts to the account pages you use most often.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Link to="/addresses">
+                    <Button variant="secondary" className="ui-compact-button w-full">
+                      Manage Addresses
+                    </Button>
+                  </Link>
+                  <Link to="/wishlist">
+                    <Button variant="secondary" className="ui-compact-button w-full">
+                      Open Wishlist
+                    </Button>
+                  </Link>
+                  <Link to="/notifications">
+                    <Button variant="secondary" className="ui-compact-button w-full">
+                      Notifications
+                    </Button>
+                  </Link>
+                  <Link to="/profile">
+                    <Button variant="secondary" className="ui-compact-button w-full">
+                      Edit Profile
+                    </Button>
+                  </Link>
                 </div>
-              ) : (
-                <EmptyState
-                  title="No return requests"
-                  description="When you submit return requests they will appear in this table."
-                />
-              )}
-            </SurfaceCard>
+              </SurfaceCard>
+            </div>
           </div>
         </>
-      ) : null}
+      )}
     </div>
   );
 }

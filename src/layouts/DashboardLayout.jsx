@@ -1,6 +1,5 @@
 import { NavLink, Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { clearAuth, getStoredUser } from "../utils/auth";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,8 +20,7 @@ import {
   UserCircle2,
   Users,
   Menu,
-  X,
-  ChevronRight
+  X
 } from "lucide-react";
 import { landingContent } from "../data/themeContent";
 
@@ -139,6 +137,11 @@ const customerNavItems = [
     match: (pathname) => pathname === "/my-orders" || pathname.startsWith("/my-orders/")
   },
   {
+    label: "Returns",
+    to: "/returns",
+    match: (pathname) => pathname === "/returns" || pathname.startsWith("/returns/")
+  },
+  {
     label: "Saved Items",
     to: "/wishlist",
     match: (pathname) => pathname === "/wishlist"
@@ -150,6 +153,30 @@ const customerNavItems = [
   }
 ];
 
+const resolveCrmSearchTarget = (role, pathname) => {
+  if (pathname.startsWith("/orders")) {
+    return "/orders";
+  }
+
+  if (pathname.startsWith("/customers")) {
+    return "/customers";
+  }
+
+  if (role === "sales_executive" || role === "fulfillment_executive") {
+    return "/orders";
+  }
+
+  if (role === "marketing_manager") {
+    return "/customers";
+  }
+
+  if (role === "admin") {
+    return "/orders";
+  }
+
+  return "/dashboard";
+};
+
 function DashboardLayout() {
   const { user } = useSelector((state) => state.auth);
   const { unreadCount } = useNotificationSummary(Boolean(user));
@@ -157,7 +184,29 @@ function DashboardLayout() {
   const dispatch = useDispatch();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [crmSearchValue, setCrmSearchValue] = useState("");
   const notificationsPath = user?.role === "customer" ? "/notifications" : "/dashboard/notifications";
+  const isCustomer = user?.role === "customer";
+  const crmPrimaryAction =
+    user?.role === "admin"
+      ? { label: "New Product", path: "/admin/products/create" }
+      : user?.role === "sales_executive"
+        ? { label: "Open Orders", path: "/orders" }
+        : user?.role === "marketing_manager"
+          ? { label: "View Coupons", path: "/admin/coupons" }
+          : user?.role === "inventory_manager"
+            ? { label: "Inventory Desk", path: "/inventory" }
+            : user?.role === "fulfillment_executive"
+              ? { label: "Open Orders", path: "/orders" }
+              : null;
+  const crmSearchPlaceholder =
+    user?.role === "sales_executive"
+      ? "Search orders or customers..."
+      : user?.role === "inventory_manager"
+        ? "Search products or stock..."
+        : user?.role === "marketing_manager"
+          ? "Search coupons or customers..."
+          : "Search records, users, or products...";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -165,16 +214,32 @@ function DashboardLayout() {
   };
 
   const useCrmShell =
-    user?.role === "admin" ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/dashboard") ||
-    location.pathname.startsWith("/inventory") ||
-    location.pathname.startsWith("/orders") ||
-    location.pathname.startsWith("/customers") ||
-    crmShellPaths.has(location.pathname);
+    !isCustomer &&
+    (
+      user?.role === "admin" ||
+      location.pathname.startsWith("/admin") ||
+      location.pathname.startsWith("/dashboard") ||
+      location.pathname.startsWith("/inventory") ||
+      location.pathname.startsWith("/orders") ||
+      location.pathname.startsWith("/customers") ||
+      crmShellPaths.has(location.pathname)
+    );
 
   const brandName = landingContent?.brand || "Badshah";
   const visibleCrmNavItems = crmNavItems.filter((item) => !item.roles || item.roles.includes(user?.role));
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setCrmSearchValue(params.get("q") || "");
+  }, [location.search]);
+
+  const handleCrmSearchSubmit = (event) => {
+    event.preventDefault();
+    const targetPath = resolveCrmSearchTarget(user?.role, location.pathname);
+    const query = crmSearchValue.trim();
+
+    navigate(query ? `${targetPath}?q=${encodeURIComponent(query)}` : targetPath);
+  };
 
   if (useCrmShell) {
     return (
@@ -253,20 +318,27 @@ function DashboardLayout() {
             </div>
           </nav>
 
-          <div className="p-4 border-t border-soft">
-            <div className="bg-canvas border border-strong rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+          <div className="border-t border-soft p-4">
+            <div className="rounded-[16px] border border-soft bg-page px-3.5 py-3 shadow-sm">
                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-input text-primary border border-strong flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-                     <UserCircle2 className="w-6 h-6 text-muted" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-strong bg-white text-primary">
+                     <UserCircle2 className="h-5 w-5 text-muted" />
                   </div>
-                  <div className="overflow-hidden w-full">
-                     <p className="text-sm font-semibold truncate text-primary">{user?.name || "Admin User"}</p>
-                     <p className="text-[11px] font-medium tracking-wide text-secondary truncate">{user?.role || "System Admin"}</p>
+                  <div className="min-w-0 flex-1">
+                     <p className="truncate text-sm font-semibold text-primary">{user?.name || "Admin User"}</p>
+                     <p className="truncate text-[11px] font-medium capitalize text-secondary">
+                       {(user?.role || "System Admin").replace(/_/g, " ")}
+                     </p>
                   </div>
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center justify-center rounded-full p-2 text-secondary transition-colors hover:bg-danger/10 hover:text-danger"
+                    title="Sign Out"
+                    aria-label="Sign Out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
                </div>
-               <button onClick={handleLogout} className="w-full py-2.5 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
-                  <LogOut className="w-4 h-4" /> Sign Out
-               </button>
             </div>
           </div>
         </aside>
@@ -280,20 +352,29 @@ function DashboardLayout() {
                 <button className="lg:hidden p-2 text-secondary hover:bg-input rounded-lg transition-colors" onClick={() => setMobileMenuOpen(true)}>
                    <Menu className="w-5 h-5" />
                 </button>
-                <div className="relative hidden md:block w-72 lg:w-96">
-                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                  <input
-                     type="text"
-                     placeholder="Search records, users, or products..."
-                     className="w-full rounded-full bg-input py-2.5 pl-10 pr-4 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:bg-canvas transition-all shadow-sm inset-shadow-sm"
-                  />
-                </div>
+                <form onSubmit={handleCrmSearchSubmit} className="hidden md:block w-72 lg:w-96">
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                    <input
+                       type="search"
+                       value={crmSearchValue}
+                       onChange={(event) => setCrmSearchValue(event.target.value)}
+                       placeholder={crmSearchPlaceholder}
+                       className="w-full rounded-full bg-input py-2.5 pl-10 pr-4 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:bg-canvas transition-all shadow-sm inset-shadow-sm"
+                    />
+                  </div>
+                </form>
              </div>
              
              <div className="flex items-center gap-3">
-                <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-canvas text-sm font-medium rounded-full shadow-sm hover:scale-105 transition-transform" onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}>
-                   <span className="text-lg leading-none">+</span> New Product
-                </button>
+                {crmPrimaryAction ? (
+                  <button
+                    className="hidden md:flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-canvas shadow-sm transition-transform hover:scale-105"
+                    onClick={() => navigate(crmPrimaryAction.path)}
+                  >
+                    <span className="text-lg leading-none">+</span> {crmPrimaryAction.label}
+                  </button>
+                ) : null}
                 <div className="h-6 w-px bg-strong mx-1 hidden md:block" />
                 <Link to={notificationsPath} className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
                    <Bell className="w-5 h-5" />
@@ -356,20 +437,13 @@ function DashboardLayout() {
            <Link to="/cart" className="p-2 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
               <ShoppingBag className="h-5 w-5" />
            </Link>
-           <button
-            type="button"
-            onClick={handleLogout}
-            className="ml-4 hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-danger transition-colors border-l border-soft pl-4"
-          >
-            Sign Out
-          </button>
         </div>
       </header>
 
-      <div className="flex-1 flex w-full max-w-[1440px] mx-auto px-6 py-10 gap-10">
+      <div className="flex-1 flex w-full max-w-[1440px] mx-auto px-6 py-8 md:py-10 gap-10">
          {/* User Account Sidebar */}
-         <aside className="hidden md:flex w-64 flex-col gap-6 shrink-0">
-            <div className="bg-canvas rounded-3xl p-6 border border-soft shadow-soft">
+         <aside className="hidden md:flex w-72 flex-col gap-6 shrink-0">
+            <div className="sticky top-28 bg-canvas rounded-3xl p-6 border border-soft shadow-soft">
                <div className="flex items-center gap-4 mb-6">
                   <div className="w-12 h-12 bg-primary text-canvas rounded-full flex items-center justify-center shadow-md">
                      <span className="text-xl font-display font-medium">{user?.name?.charAt(0) || "U"}</span>
@@ -398,6 +472,22 @@ function DashboardLayout() {
                     </NavLink>
                   ))}
                 </nav>
+
+               <div className="mt-6 rounded-2xl border border-soft bg-page p-4">
+                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Need help?</p>
+                 <p className="mt-2 text-sm leading-6 text-secondary">
+                   Track orders, open returns, and manage your account details from one place.
+                 </p>
+               </div>
+
+               <button
+                 type="button"
+                 onClick={handleLogout}
+                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-soft bg-white px-4 py-3 text-sm font-medium text-secondary transition-colors hover:bg-danger/5 hover:text-danger"
+               >
+                 <LogOut className="h-4 w-4" />
+                 Sign Out
+               </button>
             </div>
          </aside>
 
@@ -419,6 +509,15 @@ function DashboardLayout() {
                   {item.label}
                 </NavLink>
               ))}
+            </div>
+            <div className="mb-6 md:hidden">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full border border-soft bg-white px-4 py-2.5 text-sm font-medium text-secondary transition-colors hover:text-danger"
+              >
+                Sign Out
+              </button>
             </div>
             <Outlet />
          </main>

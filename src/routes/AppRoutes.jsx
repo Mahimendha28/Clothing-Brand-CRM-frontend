@@ -51,6 +51,9 @@ function AppRoutes() {
     <Routes>
       <Route element={<StorefrontLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/men" element={<Navigate to="/products?category=men" replace />} />
+        <Route path="/women" element={<Navigate to="/products?category=women" replace />} />
+        <Route path="/kids" element={<Navigate to="/products?category=kids" replace />} />
         <Route path="/products" element={<ProductListing />} />
         <Route path="/products/:slug" element={<ProductDetail />} />
       </Route>
@@ -65,13 +68,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<StorefrontLayout />}>
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/my-orders" element={<MyOrdersPage />} />
-          <Route path="/my-orders/:orderId" element={<OrderDetailPage />} />
-          <Route path="/returns" element={<ReturnsPage />} />
-          <Route path="/returns/new/:orderId" element={<ReturnRequestPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
         <Route element={<DashboardLayout />}>
@@ -80,6 +77,12 @@ function AppRoutes() {
           <Route path="/settings" element={<WorkspaceSection />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/addresses" element={<Addresses />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/my-orders" element={<MyOrdersPage />} />
+          <Route path="/my-orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/returns" element={<ReturnsPage />} />
+          <Route path="/returns/new/:orderId" element={<ReturnRequestPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
         <Route

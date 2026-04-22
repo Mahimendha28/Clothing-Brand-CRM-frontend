@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -25,6 +25,7 @@ const formatDate = (value) => {
 };
 
 function CustomerListPage() {
+  const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -32,6 +33,12 @@ function CustomerListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [segmentNote, setSegmentNote] = useState("");
+
+  useEffect(() => {
+    const query = searchParams.get("q") || "";
+    setSearchInput(query);
+    setAppliedSearch(query);
+  }, [searchParams]);
 
   useEffect(() => {
     let ignore = false;

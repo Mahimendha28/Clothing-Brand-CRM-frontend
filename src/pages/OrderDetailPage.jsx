@@ -3,11 +3,12 @@ import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import Button from "../components/common/Button";
+import CancelOrderDialog from "../components/common/CancelOrderDialog";
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import { useToast } from "../context/ToastContext";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
-import { downloadOrderInvoicePdf, getOrderById } from "../services/orderService";
+import { cancelOrder, downloadOrderInvoicePdf, getOrderById } from "../services/orderService";
 
 const orderTimelineSteps = [
   { key: "placed", label: "Order Placed" },
@@ -48,12 +49,22 @@ const getTimelineStepState = (currentStatus, stepKey) => {
   return "upcoming";
 };
 
+const cleanCancelReason = (value) =>
+  String(value || "")
+    .replace(/^Customer Cancel:\s*/i, "")
+    .replace(/^Admin Cancel:\s*/i, "")
+    .replace(/^Reason not provided$/i, "")
+    .trim();
+
 function OrderDetailPage() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
@@ -105,6 +116,27 @@ function OrderDetailPage() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!order?.id) {
+      return;
+    }
+
+    try {
+      setCancellingOrder(true);
+      const response = await cancelOrder(order.id, cancelReason.trim());
+      if (response.order) {
+        setOrder(response.order);
+      }
+      toastSuccess("Order cancelled successfully");
+      setShowCancelDialog(false);
+      setCancelReason("");
+    } catch (apiError) {
+      toastError(apiError.message || "Failed to cancel order");
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
   if (loading) {
     return <p className="text-sm text-secondary">Loading order detail...</p>;
   }
@@ -125,6 +157,8 @@ function OrderDetailPage() {
     );
   }
 
+  const canCancelOrder = !order.is_cancelled && ["placed", "confirmed", "packed"].includes(order.order_status);
+
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -138,7 +172,7 @@ function OrderDetailPage() {
             {order.order_number}
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
-            Placed on {formatOrderDate(order.created_at)}. This detail page shows the final COD order snapshot, item lines, delivery address, and totals.
+            Placed on {formatOrderDate(order.created_at)}. Review the full order timeline, items, address snapshot, and payment summary in one place.
           </p>
         </div>
 
@@ -171,6 +205,20 @@ function OrderDetailPage() {
               {downloadingInvoice ? "Preparing Invoice" : "Invoice PDF"}
             </Button>
           ) : null}
+          {canCancelOrder ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setCancelReason("");
+                setShowCancelDialog(true);
+              }}
+              disabled={cancellingOrder}
+              className="!px-5 !py-2.5 !text-[11px] !font-semibold !uppercase !tracking-[0.18em]"
+            >
+              Cancel Order
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -199,11 +247,7 @@ function OrderDetailPage() {
                       {index < orderTimelineSteps.length - 1 ? (
                         <div
                           className={`absolute left-[calc(50%+20px)] top-5 hidden h-[2px] w-[calc(100%-8px)] md:block ${
-                            isCancelled
-                              ? "bg-line"
-                              : isCompleted
-                                ? "bg-ink"
-                                : "bg-line"
+                            isCancelled ? "bg-line" : isCompleted ? "bg-ink" : "bg-line"
                           }`}
                         />
                       ) : null}
@@ -215,7 +259,7 @@ function OrderDetailPage() {
                             : isCurrent
                               ? "border-ink bg-page"
                               : isCompleted
-                                ? "border-[#d7c29f] bg-[#fff7ea]"
+                                ? "border-soft bg-page"
                                 : "border-line bg-white"
                         }`}
                       >
@@ -226,20 +270,14 @@ function OrderDetailPage() {
                               : isCurrent
                                 ? "bg-ink text-white"
                                 : isCompleted
-                                  ? "bg-[#1b1408] text-white"
+                                  ? "bg-ink text-white"
                                   : "bg-page text-muted"
                           }`}
                         >
                           {index + 1}
                         </div>
-                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted">
-                          Step {index + 1}
-                        </p>
-                        <p
-                          className={`mt-2 text-lg font-semibold ${
-                            isUpcoming || isCancelled ? "text-secondary" : "text-ink"
-                          }`}
-                        >
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted">Step {index + 1}</p>
+                        <p className={`mt-2 text-lg font-semibold ${isUpcoming || isCancelled ? "text-secondary" : "text-ink"}`}>
                           {step.label}
                         </p>
                         <p className="mt-2 text-sm text-secondary">
@@ -269,56 +307,62 @@ function OrderDetailPage() {
           </section>
 
           <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-            <p className="ui-eyebrow">Ordered Items</p>
-            <h2 className="mt-3 font-display text-4xl text-ink">Products in this order</h2>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="ui-eyebrow">Ordered Items</p>
+                <h2 className="mt-3 font-display text-4xl text-ink">Products in this order</h2>
+              </div>
+              <p className="text-sm text-secondary">{order.items.length} line item(s)</p>
+            </div>
 
-            <div className="mt-6 space-y-5">
-              {order.items.map((item) => {
-                const imageUrl = buildCatalogImageUrl(item.hero_image);
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full min-w-[980px] text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="ui-table-head">Product</th>
+                    <th className="ui-table-head">Category</th>
+                    <th className="ui-table-head">Variant</th>
+                    <th className="ui-table-head">Qty</th>
+                    <th className="ui-table-head">Unit Price</th>
+                    <th className="ui-table-head">Line Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((item) => {
+                    const imageUrl = buildCatalogImageUrl(item.hero_image);
 
-                return (
-                  <div
-                    key={item.id}
-                    className="grid gap-4 rounded-[24px] border border-line bg-page p-4 md:grid-cols-[110px_1fr]"
-                  >
-                    <div className="overflow-hidden rounded-[18px] bg-white">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={item.product_name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex min-h-[110px] items-end bg-[radial-gradient(circle_at_top,#ffffff_0%,#efe6d9_42%,#ddcdb6_100%)] p-4">
-                          <p className="font-display text-2xl leading-none text-ink">{item.product_name}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">
-                          {item.category_name}
-                        </p>
-                        <h3 className="mt-2 font-display text-2xl leading-none text-ink sm:text-3xl">{item.product_name}</h3>
-                        <p className="mt-3 text-sm text-secondary">{item.brand_name}</p>
-                        <p className="mt-3 text-sm leading-6 text-secondary">
-                          {item.variant_id
-                            ? `Variant: ${item.size} / ${item.color}${item.sku ? ` - SKU ${item.sku}` : ""}`
-                            : "Base product selection"}
-                        </p>
-                        <p className="mt-2 text-sm text-secondary">Quantity: {item.quantity}</p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm text-secondary">Line total</p>
-                        <p className="mt-2 text-xl font-semibold text-ink">
-                          {formatCatalogPrice(item.line_total)}
-                        </p>
-                        <p className="mt-2 text-sm text-secondary">
-                          {formatCatalogPrice(item.unit_price)} each
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    return (
+                      <tr key={item.id} className="border-b border-line align-top">
+                        <td className="ui-table-cell">
+                          <div className="flex items-start gap-4">
+                            <div className="h-16 w-16 overflow-hidden rounded-[16px] bg-page shrink-0">
+                              {imageUrl ? (
+                                <img src={imageUrl} alt={item.product_name} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full items-center justify-center px-2 text-center text-xs text-secondary">
+                                  No image
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-ink">{item.product_name}</p>
+                              <p className="mt-1 text-xs text-secondary">{item.brand_name || "Brand unavailable"}</p>
+                              {item.sku ? <p className="mt-1 text-xs text-secondary">SKU {item.sku}</p> : null}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="ui-table-cell">{item.category_name || "Uncategorized"}</td>
+                        <td className="ui-table-cell">
+                          {item.variant_id ? `${item.size || "-"} / ${item.color || "-"}` : "Base product"}
+                        </td>
+                        <td className="ui-table-cell">{item.quantity}</td>
+                        <td className="ui-table-cell">{formatCatalogPrice(item.unit_price)}</td>
+                        <td className="ui-table-cell font-semibold">{formatCatalogPrice(item.line_total)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
 
@@ -385,12 +429,7 @@ function OrderDetailPage() {
             {order.stripe_receipt_url ? (
               <div className="flex items-center justify-between text-sm text-secondary">
                 <span>Stripe Receipt</span>
-                <a
-                  href={order.stripe_receipt_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-ink underline underline-offset-4"
-                >
+                <a href={order.stripe_receipt_url} target="_blank" rel="noreferrer" className="font-semibold text-ink underline underline-offset-4">
                   Open
                 </a>
               </div>
@@ -399,6 +438,12 @@ function OrderDetailPage() {
               <span>Order Status</span>
               <span className="font-semibold text-ink">{order.order_status}</span>
             </div>
+            {cleanCancelReason(order.cancel_reason) ? (
+              <div className="border-t border-line pt-3">
+                <p className="text-sm text-secondary">Cancellation Reason</p>
+                <p className="mt-1 text-sm font-medium text-ink">{cleanCancelReason(order.cancel_reason)}</p>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between text-sm text-secondary">
               <span>Shipment Status</span>
               <span className="font-semibold text-ink">{order.shipment?.shipment_status || "Pending setup"}</span>
@@ -427,25 +472,33 @@ function OrderDetailPage() {
             ) : null}
             {order.stripe_receipt_url ? (
               <a href={order.stripe_receipt_url} target="_blank" rel="noreferrer">
-                <Button
-                  variant="secondary"
-                  className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                >
+                <Button variant="secondary" className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]">
                   Download Stripe Receipt
                 </Button>
               </a>
             ) : null}
             <Link to="/notifications">
-              <Button
-                variant="secondary"
-                className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]"
-              >
+              <Button variant="secondary" className="w-full !text-sm !font-medium !normal-case !tracking-[0.02em]">
                 Open Notifications
               </Button>
             </Link>
           </div>
         </aside>
       </div>
+
+      <CancelOrderDialog
+        order={showCancelDialog ? order : null}
+        reason={cancelReason}
+        onReasonChange={setCancelReason}
+        onClose={() => {
+          if (!cancellingOrder) {
+            setShowCancelDialog(false);
+            setCancelReason("");
+          }
+        }}
+        onConfirm={handleCancelOrder}
+        loading={cancellingOrder}
+      />
     </div>
   );
 }
