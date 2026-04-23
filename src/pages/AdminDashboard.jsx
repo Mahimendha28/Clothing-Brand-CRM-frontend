@@ -31,12 +31,12 @@ const PAGE_SIZE = 6;
 const formatDateTime = (value) =>
   value
     ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      }).format(new Date(value))
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(new Date(value))
     : "Not available";
 
 const formatStatusLabel = (value) =>

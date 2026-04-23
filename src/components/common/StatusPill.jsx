@@ -26,9 +26,8 @@ const resolveTone = (value) => {
 function StatusPill({ value, tone, className = "" }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
-        toneMap[tone || resolveTone(value)]
-      } ${className}`.trim()}
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${toneMap[tone || resolveTone(value)]
+        } ${className}`.trim()}
     >
       {String(value || "").replace(/_/g, " ")}
     </span>

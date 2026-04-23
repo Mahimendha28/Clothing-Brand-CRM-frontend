@@ -145,7 +145,7 @@ function CouponManagementPage() {
               </thead>
               <tbody>
                 {coupons.map((coupon) => (
-                  <tr key={coupon.id} className="border-b border-line align-top">
+                  <tr key={coupon.id} className="border-b border-line align-middle">
                     <td className="px-5 py-4">
                       <p className="font-semibold text-ink">{coupon.code}</p>
                       <p className="mt-1 text-xs text-secondary">#{coupon.id}</p>
@@ -164,25 +164,23 @@ function CouponManagementPage() {
                     <td className="px-5 py-4 text-ink">{formatCatalogPrice(coupon.minimum_order_amount)}</td>
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          coupon.status === "active" ? "bg-[#edf8f1] text-[#1f7a47]" : "bg-[#fff0eb] text-[#a54435]"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${coupon.status === "active" ? "bg-[#edf8f1] text-[#1f7a47]" : "bg-[#fff0eb] text-[#a54435]"
+                          }`}
                       >
                         {coupon.status}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          coupon.show_in_banner ? "bg-[#eef3ff] text-[#3349a8]" : "bg-[#f5f6f8] text-[#667085]"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${coupon.show_in_banner ? "bg-[#eef3ff] text-[#3349a8]" : "bg-[#f5f6f8] text-[#667085]"
+                          }`}
                       >
                         {coupon.show_in_banner ? "On" : "Off"}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-ink">{coupon.usage_count} uses</td>
                     <td className="px-5 py-4">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
                         <IconActionButton
                           icon={Pencil}
                           label="Edit coupon"

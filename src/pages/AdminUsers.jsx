@@ -189,11 +189,10 @@ function AdminUsers() {
                       <td className="ui-table-cell text-ink">{user.role}</td>
                       <td className="ui-table-cell">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                            user.status === "active"
+                          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${user.status === "active"
                               ? "bg-success/15 text-success"
                               : "bg-danger/15 text-danger"
-                          }`}
+                            }`}
                         >
                           {user.status}
                         </span>

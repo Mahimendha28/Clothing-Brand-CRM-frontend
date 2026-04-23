@@ -113,9 +113,8 @@ function CustomerListPage() {
                 key={filter.value}
                 type="button"
                 onClick={() => setActiveFilter(filter.value)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  activeFilter === filter.value ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
-                }`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${activeFilter === filter.value ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
+                  }`}
               >
                 {filter.label}
               </button>
@@ -170,11 +169,10 @@ function CustomerListPage() {
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          customer.status === "active"
+                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${customer.status === "active"
                             ? "bg-[#edf8f1] text-[#1f7a47]"
                             : "bg-[#fff0eb] text-[#a54435]"
-                        }`}
+                          }`}
                       >
                         {customer.status}
                       </span>

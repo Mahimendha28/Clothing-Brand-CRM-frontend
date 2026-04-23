@@ -11,7 +11,7 @@ import { useToast } from "../../context/ToastContext";
 function ProductQuickViewModal({ product, isOpen, onClose }) {
   const [addingToCart, setAddingToCart] = useState(false);
   const { toastSuccess, toastError } = useToast();
-  
+
   if (!product) return null;
 
   const currentPrice = product.price_from || product.base_price;
@@ -60,18 +60,18 @@ function ProductQuickViewModal({ product, isOpen, onClose }) {
 
             {/* Left side Image */}
             <div className="w-full md:w-1/2 h-[300px] md:h-auto bg-input relative group overflow-hidden">
-               <img
-                  src={buildCatalogImageUrl(product.hero_image) || "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80"}
-                  alt={product.product_name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-               />
-               {product.images?.length > 1 && (
-                 <img
-                    src={buildCatalogImageUrl(product.images[1]?.image_url)}
-                    alt="hover"
-                    className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                 />
-               )}
+              <img
+                src={buildCatalogImageUrl(product.hero_image) || "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80"}
+                alt={product.product_name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              {product.images?.length > 1 && (
+                <img
+                  src={buildCatalogImageUrl(product.images[1]?.image_url)}
+                  alt="hover"
+                  className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                />
+              )}
             </div>
 
             {/* Right side Details */}
@@ -87,14 +87,14 @@ function ProductQuickViewModal({ product, isOpen, onClose }) {
               </p>
 
               <div className="flex items-center gap-2 mb-6 text-sm font-semibold text-secondary">
-                 <div className="flex text-accent drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">
-                   <Star className="w-4 h-4 fill-current"/>
-                   <Star className="w-4 h-4 fill-current"/>
-                   <Star className="w-4 h-4 fill-current"/>
-                   <Star className="w-4 h-4 fill-current"/>
-                   <Star className="w-4 h-4 fill-current"/>
-                 </div>
-                 {rating} ({reviews} reviews)
+                <div className="flex text-accent drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">
+                  <Star className="w-4 h-4 fill-current" />
+                  <Star className="w-4 h-4 fill-current" />
+                  <Star className="w-4 h-4 fill-current" />
+                  <Star className="w-4 h-4 fill-current" />
+                  <Star className="w-4 h-4 fill-current" />
+                </div>
+                {rating} ({reviews} reviews)
               </div>
 
               <p className="text-secondary text-sm leading-relaxed mb-8">

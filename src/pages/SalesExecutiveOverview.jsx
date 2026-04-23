@@ -13,9 +13,9 @@ import { getReturns } from "../services/returnService";
 const formatDate = (value) =>
   value
     ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric"
-      }).format(new Date(value))
+      month: "short",
+      day: "numeric"
+    }).format(new Date(value))
     : "Not available";
 
 const formatStatusLabel = (value) =>

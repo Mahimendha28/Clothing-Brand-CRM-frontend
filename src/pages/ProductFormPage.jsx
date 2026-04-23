@@ -150,9 +150,8 @@ const StepHeader = ({ icon: Icon, step, title, description }) => (
 
 const ToggleCard = ({ checked, name, label, description, onChange }) => (
   <label
-    className={`flex cursor-pointer items-start gap-3 rounded-[20px] border px-4 py-4 transition ${
-      checked ? "border-[#111827] bg-slate-900 text-white" : "border-line bg-page text-ink hover:border-slate-300"
-    }`}
+    className={`flex cursor-pointer items-start gap-3 rounded-[20px] border px-4 py-4 transition ${checked ? "border-[#111827] bg-slate-900 text-white" : "border-line bg-page text-ink hover:border-slate-300"
+      }`}
   >
     <input type="checkbox" name={name} checked={checked} onChange={onChange} className="mt-1 h-4 w-4 accent-white" />
     <div>
@@ -287,11 +286,11 @@ function ProductFormPage({ mode = "create" }) {
             isTrending: Boolean(product.is_trending),
             variants: product.variants?.length
               ? product.variants.map((variant) => ({
-                  size: variant.size || "",
-                  color: variant.color || "",
-                  price: String(variant.price ?? ""),
-                  stock: String(variant.stock ?? "")
-                }))
+                size: variant.size || "",
+                color: variant.color || "",
+                price: String(variant.price ?? ""),
+                stock: String(variant.stock ?? "")
+              }))
               : [createEmptyVariant()],
             galleryImageText: product.images?.map((image) => image.image_url).join("\n") || ""
           });
@@ -580,13 +579,12 @@ function ProductFormPage({ mode = "create" }) {
                   key={step.id}
                   type="button"
                   onClick={() => goToStep(index)}
-                  className={`min-w-[120px] rounded-[12px] border px-3 py-2.5 text-left transition ${
-                    isActive
+                  className={`min-w-[120px] rounded-[12px] border px-3 py-2.5 text-left transition ${isActive
                       ? "border-slate-900 bg-slate-900 text-white"
                       : isDone
                         ? "border-slate-300 bg-slate-100 text-ink"
                         : "border-line bg-white text-ink hover:border-slate-300"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${isActive ? "text-slate-300" : "text-muted"}`}>
@@ -717,9 +715,8 @@ function ProductFormPage({ mode = "create" }) {
                       key={category.id}
                       type="button"
                       onClick={() => handleChange({ target: { name: "categoryId", value: String(category.id), type: "select-one" } })}
-                      className={`rounded-full border px-4 py-2.5 text-sm font-medium transition ${
-                        isSelected ? "border-slate-900 bg-slate-900 text-white" : "border-line bg-page hover:border-slate-300"
-                      }`}
+                      className={`rounded-full border px-4 py-2.5 text-sm font-medium transition ${isSelected ? "border-slate-900 bg-slate-900 text-white" : "border-line bg-page hover:border-slate-300"
+                        }`}
                     >
                       {category.name}
                     </button>
@@ -764,36 +761,36 @@ function ProductFormPage({ mode = "create" }) {
                       </Button>
                     </div>
                     <div className="grid gap-4 md:grid-cols-4">
-                  <FormField
-                    label="Size"
-                    value={variant.size}
-                    onChange={(event) => handleVariantChange(index, "size", event.target.value)}
-                    className={compactInputClass}
-                  />
-                  <FormField
-                    label="Color"
-                    value={variant.color}
-                    onChange={(event) => handleVariantChange(index, "color", event.target.value)}
-                    className={compactInputClass}
-                  />
-                  <FormField
-                    label="Price"
+                      <FormField
+                        label="Size"
+                        value={variant.size}
+                        onChange={(event) => handleVariantChange(index, "size", event.target.value)}
+                        className={compactInputClass}
+                      />
+                      <FormField
+                        label="Color"
+                        value={variant.color}
+                        onChange={(event) => handleVariantChange(index, "color", event.target.value)}
+                        className={compactInputClass}
+                      />
+                      <FormField
+                        label="Price"
                         type="number"
                         min="0"
-                    step="0.01"
-                    value={variant.price}
-                    onChange={(event) => handleVariantChange(index, "price", event.target.value)}
-                    className={compactInputClass}
-                  />
-                  <FormField
-                    label="Stock"
+                        step="0.01"
+                        value={variant.price}
+                        onChange={(event) => handleVariantChange(index, "price", event.target.value)}
+                        className={compactInputClass}
+                      />
+                      <FormField
+                        label="Stock"
                         type="number"
                         min="0"
-                    step="1"
-                    value={variant.stock}
-                    onChange={(event) => handleVariantChange(index, "stock", event.target.value)}
-                    className={compactInputClass}
-                  />
+                        step="1"
+                        value={variant.stock}
+                        onChange={(event) => handleVariantChange(index, "stock", event.target.value)}
+                        className={compactInputClass}
+                      />
                     </div>
                   </div>
                 ))}

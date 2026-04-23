@@ -4,9 +4,9 @@ const Input = React.forwardRef(({ label, icon: Icon, className = "", ...props },
   return (
     <div className="space-y-1.5 w-full flex flex-col items-start">
       {label && (
-         <label className="ui-label">
-           {label}
-         </label>
+        <label className="ui-label">
+          {label}
+        </label>
       )}
       <div className="relative w-full group">
         {Icon && (
@@ -16,9 +16,8 @@ const Input = React.forwardRef(({ label, icon: Icon, className = "", ...props },
         )}
         <input
           ref={ref}
-          className={`ui-input ${
-            Icon ? "pl-11" : "px-4"
-          } ${className}`}
+          className={`ui-input ${Icon ? "pl-11" : "px-4"
+            } ${className}`}
           {...props}
         />
       </div>

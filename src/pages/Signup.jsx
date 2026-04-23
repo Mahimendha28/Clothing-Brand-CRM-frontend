@@ -5,11 +5,47 @@ import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 import PasswordToggleButton from "../components/PasswordToggleButton";
-import Button from "../components/common/Button";
 import StatusBanner from "../components/common/StatusBanner";
 import { setCredentials } from "../features/auth/authSlice";
 import { loginUser, registerUser } from "../services/authService";
 import { getDefaultRouteForRole } from "../utils/redirect";
+
+const fade = {
+  hidden: { opacity: 0, y: 18 },
+  show: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
+
+/* Floating-label input abstraction */
+function FloatingInput({ id, type = "text", name, label, value, onChange, required, autoComplete, extra, custom }) {
+  return (
+    <motion.div variants={fade} custom={custom} initial="hidden" animate="show" className="relative">
+      <input
+        type={type}
+        name={name}
+        id={id}
+        placeholder=" "
+        className="peer w-full border-b border-gray-200 bg-transparent pb-2.5 pt-5 pr-10 text-sm text-[#041e3a] outline-none transition-colors focus:border-[#041e3a]"
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={autoComplete}
+      />
+      <label
+        htmlFor={id}
+        className="pointer-events-none absolute left-0 top-5 -translate-y-6 text-[9px] font-bold uppercase tracking-[0.3em] text-gray-300 transition-all
+          peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-gray-400
+          peer-focus:-translate-y-6 peer-focus:text-[9px] peer-focus:text-[#041e3a]"
+      >
+        {label}
+      </label>
+      {extra}
+    </motion.div>
+  );
+}
 
 function Signup() {
   const navigate = useNavigate();
@@ -20,21 +56,16 @@ function Signup() {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const handleChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
@@ -43,19 +74,16 @@ function Signup() {
     }
 
     setLoading(true);
-
     try {
       await registerUser({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
-
       const loginResponse = await loginUser({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
-
       dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
       navigate(getDefaultRouteForRole(loginResponse.user.role));
     } catch (apiError) {
@@ -65,144 +93,119 @@ function Signup() {
     }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemAnim = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    <motion.div 
-      className="w-full"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div variants={itemAnim} className="mb-8 text-center">
-         <p className="ui-eyebrow mb-2 opacity-70">Create Profile</p>
-         <h2 className="font-serif text-3xl leading-tight text-ink">Join the brand.</h2>
-         <p className="mt-3 max-w-sm mx-auto text-xs leading-5 text-secondary transform-gpu">
-           Register for access to exclusive streetwear drops and personalized curation.
-         </p>
+    <div className="w-full">
+      {/* Heading */}
+      <motion.div variants={fade} custom={0} initial="hidden" animate="show" className="mb-6">
+        <p className="text-[9px] font-bold uppercase tracking-[0.5em] text-gray-300 mb-2">
+          Create Profile
+        </p>
+        <h1 className="font-serif text-3xl text-[#041e3a] leading-tight tracking-wide mb-2">
+          Join the brand.
+        </h1>
+        <p className="text-[11px] text-gray-400 leading-relaxed">
+          Register for exclusive drops, fast checkout and personalised curation.
+        </p>
       </motion.div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="text"
-            name="name"
-            id="name"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="name"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Full Name
-          </label>
-        </motion.div>
+      {/* Form */}
+      <form className="space-y-4" onSubmit={handleSubmit}>
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type="email"
-            name="email"
-            id="email"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="email"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Email Address
-          </label>
-        </motion.div>
+        <FloatingInput
+          id="signup-name"
+          name="name"
+          label="Full Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          autoComplete="name"
+          custom={1}
+        />
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            id="password"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="password"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Password
-          </label>
-          <PasswordToggleButton
-            visible={showPassword}
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
-          />
-        </motion.div>
+        <FloatingInput
+          id="signup-email"
+          type="email"
+          name="email"
+          label="Email Address"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          autoComplete="email"
+          custom={2}
+        />
 
-        <motion.div variants={itemAnim} className="relative">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            name="confirmPassword"
-            id="confirmPassword"
-            placeholder=" "
-            className="peer w-full border-b border-line-strong bg-transparent pb-3 pt-5 pr-10 text-sm text-ink outline-none transition-all focus:border-ink"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-          <label 
-            htmlFor="confirmPassword"
-            className="absolute left-0 top-5 -translate-y-6 text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-placeholder-shown:text-ink/60 peer-focus:-translate-y-6 peer-focus:text-[10px] peer-focus:text-ink pointer-events-none"
-          >
-            Confirm Password
-          </label>
-          <PasswordToggleButton
-            visible={showConfirmPassword}
-            onClick={() => setShowConfirmPassword((prev) => !prev)}
-            className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-secondary hover:text-ink transition-colors z-10"
-          />
-        </motion.div>
+        <FloatingInput
+          id="signup-password"
+          type={showPassword ? "text" : "password"}
+          name="password"
+          label="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          autoComplete="new-password"
+          custom={3}
+          extra={
+            <PasswordToggleButton
+              visible={showPassword}
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-gray-300 hover:text-[#041e3a] transition-colors z-10"
+            />
+          }
+        />
+
+        <FloatingInput
+          id="signup-confirm-password"
+          type={showConfirmPassword ? "text" : "password"}
+          name="confirmPassword"
+          label="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          required
+          autoComplete="new-password"
+          custom={4}
+          extra={
+            <PasswordToggleButton
+              visible={showConfirmPassword}
+              onClick={() => setShowConfirmPassword((v) => !v)}
+              className="absolute right-0 top-3 h-8 w-8 border-0 bg-transparent text-gray-300 hover:text-[#041e3a] transition-colors z-10"
+            />
+          }
+        />
 
         {error && (
-           <motion.div variants={itemAnim} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <StatusBanner tone="danger">{error}</StatusBanner>
-           </motion.div>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <StatusBanner tone="danger">{error}</StatusBanner>
+          </motion.div>
         )}
 
-        {/* Empty space matching Login 'Forgot password' to retain identical structural height/layout flow if needed, but not necessary if we just match spacing. Let's maintain spacing. */}
-
-        <motion.div variants={itemAnim}>
-           <Button type="submit" disabled={loading} className="w-full !mt-4 !rounded-full !py-4 font-semibold uppercase tracking-widest hover:scale-[1.02] transition-transform overflow-hidden relative group">
-             <span className="relative z-10 transition-colors group-hover:text-page">{loading ? "Registering..." : "Create Account"}</span>
-             <div className="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-300 group-hover:scale-y-100 z-0"></div>
-           </Button>
+        {/* Submit */}
+        <motion.div variants={fade} custom={5} initial="hidden" animate="show">
+          <button
+            id="signup-submit"
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#041e3a] text-white text-[11px] font-bold uppercase tracking-[0.3em] py-4 rounded-none hover:bg-[#041e3a]/85 active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
+          >
+            {loading ? "Creating account…" : "Create Account"}
+          </button>
         </motion.div>
       </form>
 
-      <motion.div variants={itemAnim} className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-8">
-        <span className="text-sm text-secondary">Already hold access?</span>
-        <Link to="/login" className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-ink transition hover:opacity-70">
-          Sign In <span className="transform transition-transform group-hover:translate-x-2"><ArrowRight className="h-4 w-4" /></span>
+      {/* Switch to login */}
+      <motion.div
+        variants={fade} custom={6} initial="hidden" animate="show"
+        className="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between"
+      >
+        <span className="text-[12px] text-gray-400">Already have an account?</span>
+        <Link
+          to="/login"
+          className="group inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#041e3a] hover:opacity-60 transition-opacity"
+        >
+          Sign In
+          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-200" />
         </Link>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 

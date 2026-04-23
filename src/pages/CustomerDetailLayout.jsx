@@ -118,8 +118,7 @@ function CustomerDetailLayout() {
             end
             to={`/customers/${customer.id}`}
             className={({ isActive }) =>
-              `rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
+              `rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
               }`
             }
           >
@@ -128,8 +127,7 @@ function CustomerDetailLayout() {
           <NavLink
             to={`/customers/${customer.id}/orders`}
             className={({ isActive }) =>
-              `rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
+              `rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
               }`
             }
           >
@@ -138,8 +136,7 @@ function CustomerDetailLayout() {
           <NavLink
             to={`/customers/${customer.id}/notes`}
             className={({ isActive }) =>
-              `rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
+              `rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
               }`
             }
           >

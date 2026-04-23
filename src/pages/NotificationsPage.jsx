@@ -211,9 +211,8 @@ function NotificationsPage() {
             {filteredNotifications.map((notification) => (
               <article
                 key={notification.id}
-                className={`rounded-[24px] border p-5 ${
-                  notification.is_read ? "border-line bg-page" : "border-soft bg-canvas shadow-soft"
-                } ${!notification.is_read || getNotificationTarget(notification) ? "cursor-pointer" : ""}`}
+                className={`rounded-[24px] border p-5 ${notification.is_read ? "border-line bg-page" : "border-soft bg-canvas shadow-soft"
+                  } ${!notification.is_read || getNotificationTarget(notification) ? "cursor-pointer" : ""}`}
                 onClick={() => handleOpenNotification(notification)}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">

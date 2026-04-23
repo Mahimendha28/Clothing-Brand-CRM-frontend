@@ -499,9 +499,8 @@ function CheckoutPage() {
                   {addresses.map((address) => (
                     <label
                       key={address.id}
-                      className={`block cursor-pointer rounded-[24px] border p-5 transition ${
-                        selectedAddressId === String(address.id) ? "border-ink bg-page" : "border-line bg-white hover:bg-page"
-                      }`}
+                      className={`block cursor-pointer rounded-[24px] border p-5 transition ${selectedAddressId === String(address.id) ? "border-ink bg-page" : "border-line bg-white hover:bg-page"
+                        }`}
                     >
                       <div className="flex items-start gap-4">
                         <input
@@ -568,12 +567,11 @@ function CheckoutPage() {
               </div>
 
               <div className="mt-6 grid gap-4">
-              {paymentMethods.map((method) => (
+                {paymentMethods.map((method) => (
                   <label
                     key={method.value}
-                    className={`block cursor-pointer rounded-[24px] border p-5 transition ${
-                      paymentMethod === method.value ? "border-ink bg-page" : "border-line bg-white hover:bg-page"
-                    }`}
+                    className={`block cursor-pointer rounded-[24px] border p-5 transition ${paymentMethod === method.value ? "border-ink bg-page" : "border-line bg-white hover:bg-page"
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       <input
@@ -652,9 +650,9 @@ function CheckoutPage() {
                     : "Placing COD order..."
                   : restoringCheckout
                     ? "Finalizing Stripe order..."
-                  : paymentMethod === "stripe"
-                    ? "Pay Online (UPI/Card)"
-                    : "Place COD Order"}
+                    : paymentMethod === "stripe"
+                      ? "Pay Online (UPI/Card)"
+                      : "Place COD Order"}
               </Button>
               <Link to="/cart" className="block">
                 <Button

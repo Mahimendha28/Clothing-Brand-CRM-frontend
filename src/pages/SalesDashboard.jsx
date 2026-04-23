@@ -13,10 +13,10 @@ import { getStoredUser } from "../utils/auth";
 const formatDate = (value) =>
   value
     ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      }).format(new Date(value))
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }).format(new Date(value))
     : "Not available";
 
 const CompactMetric = ({ label, value, note }) => (

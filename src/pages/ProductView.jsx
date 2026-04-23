@@ -46,7 +46,7 @@ function ProductView() {
   const [categoryLabel, setCategoryLabel] = useState("");
   const [subcategoryLabel, setSubcategoryLabel] = useState("");
   const [typeLabel, setTypeLabel] = useState("");
-  
+
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -196,19 +196,19 @@ function ProductView() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files?.length) {
-       setSelectedImages(prev => [...prev, ...Array.from(e.dataTransfer.files)]);
+      setSelectedImages(prev => [...prev, ...Array.from(e.dataTransfer.files)]);
     }
   };
 
   const handleImageSelection = (event) => {
     if (event.target.files?.length) {
-       setSelectedImages(prev => [...prev, ...Array.from(event.target.files)]);
+      setSelectedImages(prev => [...prev, ...Array.from(event.target.files)]);
     }
     event.target.value = null; // reset so same file can be re-selected if removed
   };
 
   const removeSelectedImage = (index) => {
-     setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleImageUpload = async () => {
@@ -233,15 +233,15 @@ function ProductView() {
   };
 
   const handleDeleteUploadedImage = async (imageId) => {
-      if (!window.confirm("Are you sure you want to delete this image?")) return;
-      try {
-         setError(""); setMessage("");
-         await deleteProductImage(productId, imageId);
-         setMessage("Product image removed.");
-         await loadProduct();
-      } catch (err) {
-         setError(err.message || "Failed to delete product image.");
-      }
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
+    try {
+      setError(""); setMessage("");
+      await deleteProductImage(productId, imageId);
+      setMessage("Product image removed.");
+      await loadProduct();
+    } catch (err) {
+      setError(err.message || "Failed to delete product image.");
+    }
   };
 
   if (loading) {
@@ -392,11 +392,10 @@ function ProductView() {
                       Rs. {Number(variant.price).toFixed(2)} &bull; {variant.stock} in stock
                     </p>
                     <span
-                      className={`inline-flex rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest mt-1 ${
-                        variant.status === "active"
+                      className={`inline-flex rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest mt-1 ${variant.status === "active"
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {variant.status}
                     </span>
@@ -425,73 +424,73 @@ function ProductView() {
 
       <div className="grid gap-5 xl:grid-cols-[1fr]">
         <SurfaceCard>
-           <h2 className="font-display text-3xl font-bold tracking-tight text-primary mb-6">Multi-Image Gallery</h2>
-           
-           {/* Multi-Image Drag & Drop Area */}
-           <div className="mb-8">
-              <div 
-                 onDragOver={handleDragOver}
-                 onDragLeave={handleDragLeave}
-                 onDrop={handleDrop}
-                 className={`w-full border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-soft bg-input hover:border-primary/50'}`}
-              >
-                 <UploadCloud className="w-10 h-10 text-muted mb-4" />
-                 <p className="font-bold text-primary mb-2">Drag and drop images here</p>
-                 <p className="text-sm font-medium text-secondary mb-6">or click to browse multiple files</p>
-                 <label className="bg-primary text-canvas px-6 py-3 rounded-full font-bold text-sm cursor-pointer shadow-float hover:scale-105 transition-transform">
-                    Browse Files
-                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
-                 </label>
-              </div>
+          <h2 className="font-display text-3xl font-bold tracking-tight text-primary mb-6">Multi-Image Gallery</h2>
 
-              {/* Upload Previews */}
-              {selectedImages.length > 0 && (
-                 <div className="mt-6">
-                    <p className="text-sm font-bold text-primary mb-4 flex items-center justify-between">
-                       Ready to Upload ({selectedImages.length})
-                       <Button type="button" disabled={uploadingImage} onClick={handleImageUpload}>
-                          {uploadingImage ? "Uploading..." : `Upload ${selectedImages.length} Image${selectedImages.length > 1 ? 's' : ''}`}
-                       </Button>
-                    </p>
-                    <div className="flex flex-wrap gap-4">
-                       {selectedImages.map((file, i) => (
-                          <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-soft shadow-sm group">
-                             <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover" />
-                             <button type="button" onClick={() => removeSelectedImage(i)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-danger opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hover:bg-white"><X className="w-4 h-4"/></button>
-                          </div>
-                       ))}
+          {/* Multi-Image Drag & Drop Area */}
+          <div className="mb-8">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`w-full border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-soft bg-input hover:border-primary/50'}`}
+            >
+              <UploadCloud className="w-10 h-10 text-muted mb-4" />
+              <p className="font-bold text-primary mb-2">Drag and drop images here</p>
+              <p className="text-sm font-medium text-secondary mb-6">or click to browse multiple files</p>
+              <label className="bg-primary text-canvas px-6 py-3 rounded-full font-bold text-sm cursor-pointer shadow-float hover:scale-105 transition-transform">
+                Browse Files
+                <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
+              </label>
+            </div>
+
+            {/* Upload Previews */}
+            {selectedImages.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm font-bold text-primary mb-4 flex items-center justify-between">
+                  Ready to Upload ({selectedImages.length})
+                  <Button type="button" disabled={uploadingImage} onClick={handleImageUpload}>
+                    {uploadingImage ? "Uploading..." : `Upload ${selectedImages.length} Image${selectedImages.length > 1 ? 's' : ''}`}
+                  </Button>
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {selectedImages.map((file, i) => (
+                    <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-soft shadow-sm group">
+                      <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => removeSelectedImage(i)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-danger opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hover:bg-white"><X className="w-4 h-4" /></button>
                     </div>
-                 </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Uploaded Images Gallery */}
+          <div className="mt-10 pt-8 border-t border-soft">
+            <p className="font-bold text-primary mb-6">Gallery Images ({product.images?.length || 0})</p>
+            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-5">
+              {product.images?.length ? null : (
+                <p className="text-sm font-medium text-secondary col-span-full">No product images uploaded yet.</p>
               )}
-           </div>
 
-           {/* Uploaded Images Gallery */}
-           <div className="mt-10 pt-8 border-t border-soft">
-              <p className="font-bold text-primary mb-6">Gallery Images ({product.images?.length || 0})</p>
-              <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-5">
-                {product.images?.length ? null : (
-                  <p className="text-sm font-medium text-secondary col-span-full">No product images uploaded yet.</p>
-                )}
-
-                {product.images?.map((image) => (
-                  <div key={image.id} className="relative group overflow-hidden rounded-2xl border border-soft shadow-sm aspect-[4/5] bg-input">
-                    <img
-                      src={`${API_BASE_URL}${image.image_url}`}
-                      alt={product.product_name}
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                       <button type="button" onClick={() => handleDeleteUploadedImage(image.id)} className="bg-canvas p-3 rounded-full text-danger shadow-float hover:scale-110 transition-transform">
-                          <Trash2 className="w-5 h-5" />
-                       </button>
-                    </div>
-                    <div className="absolute bottom-2 left-2 bg-canvas/80 backdrop-blur text-[10px] font-bold px-2 py-1 rounded text-primary">
-                      ID: {image.id}
-                    </div>
+              {product.images?.map((image) => (
+                <div key={image.id} className="relative group overflow-hidden rounded-2xl border border-soft shadow-sm aspect-[4/5] bg-input">
+                  <img
+                    src={`${API_BASE_URL}${image.image_url}`}
+                    alt={product.product_name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <button type="button" onClick={() => handleDeleteUploadedImage(image.id)} className="bg-canvas p-3 rounded-full text-danger shadow-float hover:scale-110 transition-transform">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
-                ))}
-              </div>
-           </div>
+                  <div className="absolute bottom-2 left-2 bg-canvas/80 backdrop-blur text-[10px] font-bold px-2 py-1 rounded text-primary">
+                    ID: {image.id}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </SurfaceCard>
       </div>
     </div>

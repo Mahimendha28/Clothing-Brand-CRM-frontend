@@ -110,11 +110,10 @@ function LandingPage() {
                               [section.id]: tab.label
                             }))
                           }
-                          className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
-                            isActive
+                          className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${isActive
                               ? "border-ink bg-ink text-white"
                               : "border-line bg-transparent text-secondary hover:border-ink hover:text-ink"
-                          }`}
+                            }`}
                         >
                           {tab.label}
                         </button>

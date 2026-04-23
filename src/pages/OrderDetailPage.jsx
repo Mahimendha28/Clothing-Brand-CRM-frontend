@@ -260,9 +260,9 @@ function OrderDetailPage() {
                     onClick={
                       canCancelOrder
                         ? () => {
-                            setCancelReason("");
-                            setShowCancelDialog(true);
-                          }
+                          setCancelReason("");
+                          setShowCancelDialog(true);
+                        }
                         : undefined
                     }
                     disabled={cancellingOrder || !canCancelOrder}
@@ -301,19 +301,17 @@ function OrderDetailPage() {
                   return (
                     <div
                       key={step.key}
-                      className={`min-w-[116px] rounded-[16px] border px-3 py-3 ${
-                        isCancelled
+                      className={`min-w-[116px] rounded-[16px] border px-3 py-3 ${isCancelled
                           ? "border-line bg-page"
                           : isCurrent
                             ? "border-ink bg-ink text-white"
                             : isCompleted
                               ? "border-slate-300 bg-slate-100"
                               : "border-line bg-white"
-                      }`}
+                        }`}
                     >
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                        isCurrent ? "bg-white text-ink" : isCompleted ? "bg-ink text-white" : "bg-page text-muted"
-                      }`}>
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${isCurrent ? "bg-white text-ink" : isCompleted ? "bg-ink text-white" : "bg-page text-muted"
+                        }`}>
                         {index + 1}
                       </div>
                       <p className={`mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] ${isCurrent ? "text-slate-200" : "text-muted"}`}>

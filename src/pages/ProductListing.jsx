@@ -36,14 +36,14 @@ function ProductListing() {
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || ""
   });
-  
+
   const [sortOption, setSortOption] = useState(searchParams.get("sort") || "new");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [catalogFilters, setCatalogFilters] = useState({
     categories: [], subcategories: [], types: [], brands: [], sizes: [], price_range: { min: 0, max: 0 }
   });
-  
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -61,11 +61,11 @@ function ProductListing() {
           setCatalogFilters(nextFilters);
 
           if (!searchParams.get("maxPrice") && response.filters?.price_range?.max) {
-             setSliderPrice(response.filters.price_range.max);
+            setSliderPrice(response.filters.price_range.max);
           }
         }
       } catch (apiError) {
-         if(!ignore) setError(apiError.message);
+        if (!ignore) setError(apiError.message);
       }
     };
     loadFilters();
@@ -201,16 +201,16 @@ function ProductListing() {
     if (maxPrice !== null && priceFrom > maxPrice) return false;
     return true;
   }).sort((a, b) => {
-     const priceA = Number(a.price_from || a.base_price);
-     const priceB = Number(b.price_from || b.base_price);
-     switch(sortOption) {
-        case 'price-asc': return priceA - priceB;
-        case 'price-desc': return priceB - priceA;
-        case 'popular': return (b.rating || 5) - (a.rating || 5);
-        case 'new': 
-        default: 
-           return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-     }
+    const priceA = Number(a.price_from || a.base_price);
+    const priceB = Number(b.price_from || b.base_price);
+    switch (sortOption) {
+      case 'price-asc': return priceA - priceB;
+      case 'price-desc': return priceB - priceA;
+      case 'popular': return (b.rating || 5) - (a.rating || 5);
+      case 'new':
+      default:
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    }
   });
 
   const visibleSubcategories = (catalogFilters.subcategories || []).filter((subcategory) => {
@@ -260,282 +260,239 @@ function ProductListing() {
   const showcaseProducts = useMemo(() => visibleProducts.slice(0, 4), [visibleProducts]);
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 py-10 md:px-10 lg:py-16 selection:bg-accent/20">
-      {showCategoryShowcase ? (
-        <section className="mb-12 overflow-hidden border border-[#e8e0d4] bg-[#f7f3ec]">
-          <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="border-b border-[#e8e0d4] bg-[#fbf8f2] px-6 py-10 lg:border-b-0 lg:border-r">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b746a]">
-                {selectedCategory?.name} Filter
-              </p>
-              <div className="mt-8 space-y-5">
-                <button
-                  type="button"
-                  onClick={() => handleFilterChange("subcategory", "")}
-                  className={`block text-left text-[17px] transition-colors ${
-                    !filters.subcategory ? "font-semibold text-[#102741] underline underline-offset-8" : "text-[#5f5a53] hover:text-[#102741]"
-                  }`}
+    <div className="max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
+
+      {/* ── Page Header ──────────────────────────────────────────────── */}
+      <div className="py-8 border-b border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400 mb-1">
+            {selectedCategory?.name || "All"} Collection
+          </p>
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <h1 className="text-2xl font-semibold text-[#041e3a] tracking-tight">
+              {selectedSubcategory?.name || selectedCategory?.name || "All Products"}
+              <span className="ml-3 text-sm font-normal text-gray-400">
+                {visibleProducts.length} items
+              </span>
+            </h1>
+
+            {/* Sort + Mobile filter toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                className="lg:hidden flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-[11px] font-bold uppercase tracking-widest text-[#041e3a] hover:bg-gray-50 transition-colors"
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                Filters
+              </button>
+              <div className="relative">
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="appearance-none bg-white border border-gray-200 px-4 py-2 pr-8 text-[11px] font-bold uppercase tracking-widest text-[#041e3a] outline-none cursor-pointer hover:border-[#041e3a] transition-colors"
                 >
-                  All {selectedCategory?.name}
-                </button>
-                {visibleSubcategories.map((subcategory) => (
-                  <button
-                    key={subcategory.id}
-                    type="button"
-                    onClick={() => handleFilterChange("subcategory", String(subcategory.id))}
-                    className={`block text-left text-[17px] transition-colors ${
-                      String(filters.subcategory) === String(subcategory.id)
-                        ? "font-semibold text-[#102741] underline underline-offset-8"
-                        : "text-[#5f5a53] hover:text-[#102741]"
-                    }`}
-                  >
-                    {subcategory.name}
-                  </button>
-                ))}
-              </div>
-            </aside>
-
-            <div className="px-6 py-8 md:px-8 lg:px-10">
-              <div className="flex flex-col gap-4 border-b border-[#c9c0b4] pb-5 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b746a]">
-                    {selectedCategory?.name} Collection
-                  </p>
-                  <h2 className="mt-3 text-3xl font-semibold text-[#102741]">
-                    {selectedSubcategory?.name || `${selectedCategory?.name} Essentials`}
-                  </h2>
-                </div>
-                <p className="max-w-2xl text-sm leading-7 text-[#5f5a53]">
-                  Browse category-first shopping with quick jumps into subcategories, types, and featured pieces without losing your current filter state.
-                </p>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                {showcaseTypes.length ? (
-                  showcaseTypes.map((itemType) => (
-                    <button
-                      key={itemType.id}
-                      type="button"
-                      onClick={() => handleFilterChange("type", String(itemType.id))}
-                      className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-colors ${
-                        String(filters.type) === String(itemType.id)
-                          ? "border-[#102741] bg-[#102741] text-white"
-                          : "border-[#d5cec3] bg-white text-[#102741] hover:border-[#102741]"
-                      }`}
-                    >
-                      {itemType.name}
-                    </button>
-                  ))
-                ) : (
-                  <span className="text-sm text-[#6b645b]">No type filters available in this section yet.</span>
-                )}
-              </div>
-
-              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                {showcaseProducts.map((product) => (
-                  <Link
-                    key={product.id}
-                    to={`/products/${product.slug}`}
-                    className="group overflow-hidden bg-white shadow-sm ring-1 ring-[#e6e0d6] transition-transform hover:-translate-y-1"
-                  >
-                    <div className="aspect-[4/5] overflow-hidden bg-[#ece7de]">
-                      <img
-                        src={buildCatalogImageUrl(product.hero_image) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80"}
-                        alt={product.product_name}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7b746a]">
-                        {product.brand_name || product.category_name}
-                      </p>
-                      <h3 className="mt-2 text-lg font-semibold text-[#102741]">{product.product_name}</h3>
-                      <p className="mt-3 text-sm font-medium text-[#3d3a35]">
-                        {formatCatalogPrice(product.price_from || product.base_price)}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                  <option value="new">New Arrivals</option>
+                  <option value="popular">Popularity</option>
+                  <option value="price-asc">Price: Low – High</option>
+                  <option value="price-desc">Price: High – Low</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
             </div>
           </div>
-        </section>
-      ) : null}
-      
-      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12 border-b border-soft pb-8">
-         <div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-primary">
-              {selectedCategory?.name ? `${selectedCategory.name} Collection` : "Collection"}
-            </h1>
-            <p className="text-secondary mt-3">
-              {selectedSubcategory?.name
-                ? `Filtered by ${selectedSubcategory.name}. Explore the latest pieces without losing your selected category flow.`
-                : "Discover the latest pieces thoughtfully crafted for you."}
-            </p>
-         </div>
-         <div className="flex items-center gap-4 w-full md:w-auto">
-            <button className="lg:hidden flex items-center gap-2 px-4 py-2 border border-soft rounded-lg bg-canvas text-sm font-semibold text-primary shadow-sm hover:bg-input" onClick={() => setShowMobileFilters(!showMobileFilters)}>
-               <Filter className="w-4 h-4" /> Filters
-            </button>
-            <div className="relative w-full md:w-64">
-               <select 
-                  value={sortOption} 
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="appearance-none w-full bg-input rounded-xl px-4 py-3 pr-10 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer border border-soft shadow-sm"
-               >
-                  <option value="new">Sort by: New Arrivals</option>
-                  <option value="popular">Sort by: Popularity</option>
-                  <option value="price-asc">Sort by: Price (Low to High)</option>
-                  <option value="price-desc">Sort by: Price (High to Low)</option>
-               </select>
-               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-            </div>
-         </div>
+        </motion.div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-10">
-         
-         <aside className={`${showMobileFilters ? 'block' : 'hidden'} lg:block w-full lg:w-[280px] shrink-0 flex-col gap-8 sticky top-32 h-fit mb-10 lg:mb-0`}>
-            
-            <div className="mb-8">
-               <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input 
-                     type="text" 
-                     placeholder="Search products..." 
-                     value={searchTerm} 
-                     onChange={(e) => setSearchTerm(e.target.value)}
-                     className="w-full bg-canvas pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/30 border border-soft shadow-sm placeholder:text-muted"
-                  />
-               </div>
-            </div>
+      {/* ── Body: Sidebar + Grid ─────────────────────────────────────── */}
+      <div className="flex items-start gap-0 lg:gap-8 py-8">
 
-            <div className="mb-8 bg-canvas p-6 rounded-2xl border border-soft shadow-soft">
-               <h3 className="text-sm font-bold text-primary mb-5 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-accent"></div>Price Range</h3>
-               <div className="px-1">
-                  <input 
-                     type="range" 
-                     min={catalogFilters.price_range.min || 0} 
-                     max={catalogFilters.price_range.max || 1000} 
-                     value={sliderPrice}
-                     onChange={(e) => setSliderPrice(e.target.value)}
-                     onMouseUp={(e) => handleFilterChange("maxPrice", e.target.value)}
-                     className="w-full h-1.5 bg-input rounded-full appearance-none cursor-pointer accent-primary"
+        {/* ── LEFT: Filter Sidebar ─────────────────────────────────── */}
+        <aside className={`${showMobileFilters ? "block" : "hidden"} lg:block w-full lg:w-[200px] xl:w-[220px] shrink-0 sticky top-28 h-fit`}>
+
+          {/* Search */}
+          <div className="relative mb-6">
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+            <input
+              type="text"
+              placeholder="Search products"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-6 pr-2 py-2 border-b border-gray-200 text-[12px] text-[#041e3a] placeholder:text-gray-300 outline-none focus:border-[#041e3a] bg-transparent transition-colors"
+            />
+          </div>
+
+          {/* Filter section helper */}
+          {[
+            {
+              label: "Price Range",
+              content: (
+                <div>
+                  <input
+                    type="range"
+                    min={catalogFilters.price_range.min || 0}
+                    max={catalogFilters.price_range.max || 10000}
+                    value={sliderPrice}
+                    onChange={(e) => setSliderPrice(e.target.value)}
+                    onMouseUp={(e) => handleFilterChange("maxPrice", e.target.value)}
+                    className="w-full h-px bg-gray-200 appearance-none cursor-pointer accent-[#041e3a] mt-1"
                   />
-                  <div className="flex justify-between text-xs font-semibold text-secondary mt-4 bg-input px-3 py-1.5 rounded-lg">
-                     <span>{formatCatalogPrice(catalogFilters.price_range.min || 0)}</span>
-                     <span>{formatCatalogPrice(sliderPrice)}</span>
+                  <div className="flex justify-between text-[10px] text-gray-400 mt-2 uppercase tracking-wider">
+                    <span>{formatCatalogPrice(catalogFilters.price_range.min || 0)}</span>
+                    <span>{formatCatalogPrice(sliderPrice)}</span>
                   </div>
-               </div>
+                </div>
+              ),
+            },
+          ].map(({ label, content }) => (
+            <div key={label} className="mb-6 pb-6 border-b border-gray-100">
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-4">{label}</p>
+              {content}
             </div>
+          ))}
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Category</h3>
-               <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                     <input type="radio" name="category" checked={filters.category === ""} onChange={() => handleFilterChange("category", "")} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
-                     <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">All Categories</span>
-                  </label>
-                  {catalogFilters.categories.map(cat => (
-                     <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="radio" name="category" checked={resolveOptionId(catalogFilters.categories, filters.category) === String(cat.id)} onChange={() => handleFilterChange("category", String(cat.id))} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
-                        <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">{cat.name}</span>
-                     </label>
-                  ))}
-               </div>
+          {/* Category */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-3">Category</p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => handleFilterChange("category", "")}
+                className={`block text-left text-[12px] transition-colors w-full ${!filters.category ? "font-bold text-[#041e3a]" : "text-gray-400 hover:text-[#041e3a]"}`}
+              >
+                All Categories
+              </button>
+              {catalogFilters.categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleFilterChange("category", String(cat.id))}
+                  className={`block text-left text-[12px] transition-colors w-full ${resolveOptionId(catalogFilters.categories, filters.category) === String(cat.id) ? "font-bold text-[#041e3a]" : "text-gray-400 hover:text-[#041e3a]"}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Subcategory</h3>
-               <div className="relative">
-                 <select
-                    value={resolveOptionId(catalogFilters.subcategories, filters.subcategory)}
-                    onChange={(e) => handleFilterChange("subcategory", e.target.value)}
-                    className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
-                 >
-                    <option value="">All Subcategories</option>
-                    {visibleSubcategories.map((subcategory) => (
-                      <option key={subcategory.id} value={subcategory.id}>{subcategory.name}</option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-               </div>
+          {/* Subcategory */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-3">Subcategory</p>
+            <div className="relative">
+              <select
+                value={resolveOptionId(catalogFilters.subcategories, filters.subcategory)}
+                onChange={(e) => handleFilterChange("subcategory", e.target.value)}
+                className="w-full bg-transparent text-[12px] text-[#041e3a] outline-none cursor-pointer appearance-none border-b border-gray-200 py-1.5 pr-5 focus:border-[#041e3a] transition-colors"
+              >
+                <option value="">All Subcategories</option>
+                {visibleSubcategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>{sub.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" />
             </div>
+          </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Type</h3>
-               <div className="relative">
-                 <select
-                    value={resolveOptionId(catalogFilters.types, filters.type)}
-                    onChange={(e) => handleFilterChange("type", e.target.value)}
-                    className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
-                 >
-                    <option value="">All Types</option>
-                    {visibleTypes.map((itemType) => (
-                      <option key={itemType.id} value={itemType.id}>{itemType.name}</option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-               </div>
+          {/* Type */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-3">Type</p>
+            <div className="relative">
+              <select
+                value={resolveOptionId(catalogFilters.types, filters.type)}
+                onChange={(e) => handleFilterChange("type", e.target.value)}
+                className="w-full bg-transparent text-[12px] text-[#041e3a] outline-none cursor-pointer appearance-none border-b border-gray-200 py-1.5 pr-5 focus:border-[#041e3a] transition-colors"
+              >
+                <option value="">All Types</option>
+                {visibleTypes.map((itemType) => (
+                  <option key={itemType.id} value={itemType.id}>{itemType.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" />
             </div>
+          </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Size</h3>
-               <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleFilterChange("size", "")} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${filters.size === "" ? "border-primary bg-primary text-canvas" : "border-soft bg-canvas text-secondary hover:border-primary hover:text-primary shadow-sm"}`}>
-                     Any
-                  </button>
-                  {catalogFilters.sizes.map(size => (
-                     <button key={size} onClick={() => handleFilterChange("size", size)} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${filters.size === size ? "border-primary bg-primary text-canvas" : "border-soft bg-canvas text-secondary hover:border-primary hover:text-primary shadow-sm"}`}>
-                        {size}
-                     </button>
-                  ))}
-               </div>
+          {/* Size */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-3">Size</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleFilterChange("size", "")}
+                className={`w-9 h-9 text-[11px] font-semibold border transition-colors ${filters.size === "" ? "border-[#041e3a] bg-[#041e3a] text-white" : "border-gray-200 text-gray-500 hover:border-[#041e3a] hover:text-[#041e3a]"}`}
+              >
+                All
+              </button>
+              {catalogFilters.sizes.map((size) => (
+                <button
+                  key={size}
+                  onClick={() => handleFilterChange("size", size)}
+                  className={`w-9 h-9 text-[11px] font-semibold border transition-colors ${filters.size === size ? "border-[#041e3a] bg-[#041e3a] text-white" : "border-gray-200 text-gray-500 hover:border-[#041e3a] hover:text-[#041e3a]"}`}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="mb-8">
-               <h3 className="text-sm font-bold text-primary mb-4">Brand</h3>
-               <div className="relative">
-                 <select value={resolveOptionId(catalogFilters.brands, filters.brand)} onChange={(e) => handleFilterChange("brand", e.target.value)} className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer">
-                    <option value="">All Brands</option>
-                    {catalogFilters.brands.map(brand => (
-                       <option key={brand.id} value={brand.id}>{brand.name}</option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-               </div>
+          {/* Brand */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-3">Brand</p>
+            <div className="relative">
+              <select
+                value={resolveOptionId(catalogFilters.brands, filters.brand)}
+                onChange={(e) => handleFilterChange("brand", e.target.value)}
+                className="w-full bg-transparent text-[12px] text-[#041e3a] outline-none cursor-pointer appearance-none border-b border-gray-200 py-1.5 pr-5 focus:border-[#041e3a] transition-colors"
+              >
+                <option value="">All Brands</option>
+                {catalogFilters.brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>{brand.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" />
             </div>
+          </div>
 
-            <button onClick={clearFilters} className="w-full py-3 rounded-xl bg-input border border-soft text-secondary text-sm font-bold hover:bg-page hover:text-primary shadow-sm transition-all">
-               Reset Filters
-            </button>
-         </aside>
+          {/* Clear */}
+          <button
+            onClick={clearFilters}
+            className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-[#041e3a] transition-colors underline underline-offset-4"
+          >
+            Clear All Filters
+          </button>
+        </aside>
 
-         <div className="flex-1 min-w-0">
-            {error && <StatusBanner tone="danger">{error}</StatusBanner>}
+        {/* ── RIGHT: Product Grid ───────────────────────────────────── */}
+        <div className="flex-1 min-w-0">
+          {error && <StatusBanner tone="danger">{error}</StatusBanner>}
 
-            {loading ? (
-               <div className="w-full h-64 flex items-center justify-center">
-                  <div className="w-10 h-10 rounded-full border-4 border-input border-t-primary animate-spin"></div>
-               </div>
-            ) : visibleProducts.length === 0 ? (
-               <EmptyState title="No items found" description="Try adjusting your filters to see more results." />
-            ) : (
-               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-                  {visibleProducts.map((product, i) => (
-                     <motion.div
-                       key={product.id}
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ duration: 0.4, delay: i * 0.05 }}
-                     >
-                       <ProductCard product={product} />
-                     </motion.div>
-                  ))}
-               </div>
-            )}
-         </div>
-
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-[3/4] bg-gray-100 mb-2" />
+                  <div className="h-2 bg-gray-100 w-1/3 mb-1.5" />
+                  <div className="h-2.5 bg-gray-100 w-3/4 mb-1.5" />
+                  <div className="h-2.5 bg-gray-100 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : visibleProducts.length === 0 ? (
+            <EmptyState title="No items found" description="Try adjusting your filters to see more results." />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {visibleProducts.map((product, i) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(i * 0.035, 0.35) }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

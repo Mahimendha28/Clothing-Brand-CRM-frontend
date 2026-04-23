@@ -82,9 +82,8 @@ function ReturnManagementPage() {
               key={filter.label}
               type="button"
               onClick={() => setStatusFilter(filter.value)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                statusFilter === filter.value ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
-              }`}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${statusFilter === filter.value ? "bg-ink text-white" : "bg-page text-secondary hover:text-ink"
+                }`}
             >
               {filter.label}
             </button>
@@ -192,7 +191,7 @@ function ReturnManagementPage() {
                     ) : null}
 
                     {["approved", "received"].includes(returnRequest.return_status) &&
-                    returnRequest.refund_status === "pending" ? (
+                      returnRequest.refund_status === "pending" ? (
                       <Button
                         type="button"
                         variant="secondary"
