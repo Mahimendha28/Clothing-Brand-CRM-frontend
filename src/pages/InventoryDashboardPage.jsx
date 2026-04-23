@@ -8,6 +8,7 @@ import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { getInventoryReport } from "../services/reportService";
+import { getStoredUser } from "../utils/auth";
 
 const formatStatusLabel = (value) =>
   String(value || "")
@@ -18,6 +19,8 @@ function InventoryDashboardPage() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const user = getStoredUser();
+  const canOpenProductDetail = user?.role === "admin";
 
   useEffect(() => {
     let ignore = false;
@@ -123,7 +126,13 @@ function InventoryDashboardPage() {
                     <div key={item.variant_id} className="rounded-[16px] border border-line bg-page p-4">
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
-                          <p className="font-medium text-ink">{item.product_name}</p>
+                          {canOpenProductDetail && item.product_id ? (
+                            <Link to={`/admin/products/${item.product_id}`} className="font-medium text-ink hover:underline">
+                              {item.product_name}
+                            </Link>
+                          ) : (
+                            <p className="font-medium text-ink">{item.product_name}</p>
+                          )}
                           <p className="text-sm text-secondary">
                             {item.category_name} | {item.sku} | {item.size} / {item.color}
                           </p>
@@ -196,7 +205,13 @@ function InventoryDashboardPage() {
                       <tr key={transaction.id} className="border-b border-line last:border-b-0">
                         <td className="ui-table-cell text-secondary">{new Date(transaction.created_at).toLocaleString()}</td>
                         <td className="ui-table-cell">
-                          <p className="font-medium text-ink">{transaction.product_name}</p>
+                          {canOpenProductDetail && transaction.product_id ? (
+                            <Link to={`/admin/products/${transaction.product_id}`} className="font-medium text-ink hover:underline">
+                              {transaction.product_name}
+                            </Link>
+                          ) : (
+                            <p className="font-medium text-ink">{transaction.product_name}</p>
+                          )}
                           <p className="text-xs uppercase tracking-[0.18em] text-muted">
                             {transaction.sku} | {transaction.size} / {transaction.color}
                           </p>

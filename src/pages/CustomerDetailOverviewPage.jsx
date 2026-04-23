@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { getCrmCustomerNotes, getCrmCustomerOrders } from "../services/crmService";
+import { getStoredUser } from "../utils/auth";
 
 const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 function CustomerDetailOverviewPage() {
   const { customer } = useOutletContext();
   const navigate = useNavigate();
+  const user = getStoredUser();
+  const canOpenOrderDetail = user?.role === "admin" || user?.role === "sales_executive";
   const [orders, setOrders] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +162,13 @@ function CustomerDetailOverviewPage() {
                 <div key={order.id} className="rounded-[16px] border border-line bg-page p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="font-medium text-ink">{order.order_number}</p>
+                      {canOpenOrderDetail ? (
+                        <Link to={`/orders/${order.id}`} className="font-medium text-ink hover:underline">
+                          {order.order_number}
+                        </Link>
+                      ) : (
+                        <p className="font-medium text-ink">{order.order_number}</p>
+                      )}
                       <p className="mt-1 text-sm text-secondary">
                         {order.item_count} items | {order.order_status} | {new Date(order.created_at).toLocaleDateString()}
                       </p>

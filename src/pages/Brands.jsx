@@ -1,37 +1,29 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
-import FormField from "../components/common/FormField";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
-import {
-  createBrand,
-  deleteBrand,
-  getBrands,
-  updateBrand
-} from "../services/authService";
+import { deleteBrand, getBrands } from "../services/authService";
 
 function Brands() {
   const [brands, setBrands] = useState([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: ""
-  });
-  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const loadBrands = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await getBrands();
-      setBrands(response.brands);
+      setBrands(response.brands || []);
     } catch (apiError) {
       setError(apiError.message || "Failed to load brands");
+      setBrands([]);
     } finally {
       setLoading(false);
     }
@@ -41,54 +33,6 @@ function Brands() {
     loadBrands();
   }, []);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: ""
-    });
-    setEditingId(null);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    setMessage("");
-
-    try {
-      if (editingId) {
-        await updateBrand(editingId, formData);
-        setMessage("Brand updated successfully");
-      } else {
-        await createBrand(formData);
-        setMessage("Brand created successfully");
-      }
-
-      resetForm();
-      loadBrands();
-    } catch (apiError) {
-      setError(apiError.message || "Failed to save brand");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (brand) => {
-    setEditingId(brand.id);
-    setFormData({
-      name: brand.name,
-      description: brand.description || ""
-    });
-  };
-
   const handleDelete = async (brandId) => {
     const confirmed = window.confirm("Do you want to delete this brand?");
 
@@ -97,13 +41,16 @@ function Brands() {
     }
 
     try {
+      setDeletingId(brandId);
       setError("");
       setMessage("");
       await deleteBrand(brandId);
+      setBrands((current) => current.filter((brand) => brand.id !== brandId));
       setMessage("Brand deleted successfully");
-      loadBrands();
     } catch (apiError) {
       setError(apiError.message || "Failed to delete brand");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -112,75 +59,84 @@ function Brands() {
       <PageHeader
         eyebrow="Brand Master"
         title="Brands"
-        description="Create and maintain brand records through the same reusable admin surface and form system."
+        description="Manage brand records in a consistent table workflow with dedicated create and edit pages."
+        actions={
+          <Link to="/admin/brands/create">
+            <Button className="ui-compact-button !min-w-[148px]">Create Brand</Button>
+          </Link>
+        }
       />
 
-      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">{editingId ? "Edit brand" : "Add brand"}</h2>
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <FormField label="Brand Name" name="name" value={formData.name} onChange={handleChange} />
-            <FormField
-              as="textarea"
-              label="Description"
-              name="description"
-              rows="4"
-              value={formData.description}
-              onChange={handleChange}
-            />
+      <StatusBanner tone="success">{message}</StatusBanner>
+      <StatusBanner tone="danger">{error}</StatusBanner>
 
-            <StatusBanner tone="success">{message}</StatusBanner>
-            <StatusBanner tone="danger">{error}</StatusBanner>
-
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingId ? "Update Brand" : "Create Brand"}
-              </Button>
-              {editingId ? (
-                <Button type="button" variant="secondary" onClick={resetForm}>
-                  Cancel
-                </Button>
-              ) : null}
-            </div>
-          </form>
-        </SurfaceCard>
-
-        <SurfaceCard>
-          <h2 className="font-display text-4xl text-ink">Brand list</h2>
-          {loading ? <p className="mt-4 text-sm text-secondary">Loading brands...</p> : null}
-
-          <div className="mt-5 space-y-4">
-            {!loading && brands.length === 0 ? (
-              <EmptyState
-                title="No brands yet"
-                description="Create a brand record to start populating the master data section."
-              />
-            ) : null}
-
-            {brands.map((brand) => (
-              <div key={brand.id} className="rounded-card bg-canvas p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold text-ink">{brand.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-secondary">
-                      {brand.description || "No description added yet."}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button type="button" variant="secondary" onClick={() => handleEdit(brand)}>
-                      Edit
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => handleDelete(brand.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+      <SurfaceCard className="space-y-5 !p-5 md:!p-6">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Total Brands</p>
+            <p className="mt-2 text-xl font-semibold text-ink">{brands.length}</p>
+            <p className="mt-1 text-sm text-secondary">All brand records currently available in catalog master data.</p>
           </div>
-        </SurfaceCard>
-      </div>
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Workflow</p>
+            <p className="mt-2 text-xl font-semibold text-ink">List First</p>
+            <p className="mt-1 text-sm text-secondary">Form actions have moved to dedicated create and edit pages.</p>
+          </div>
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Consistency</p>
+            <p className="mt-2 text-xl font-semibold text-ink">Order Style</p>
+            <p className="mt-1 text-sm text-secondary">Page layout now follows the same table pattern used in Orders.</p>
+          </div>
+        </div>
+
+        {loading ? <p className="text-sm text-secondary">Loading brands...</p> : null}
+
+        {!loading && !brands.length ? (
+          <EmptyState
+            title="No brands yet"
+            description="Use Create Brand to add your first catalog brand."
+          />
+        ) : null}
+
+        {brands.length ? (
+          <div className="overflow-x-auto rounded-[18px] border border-line">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-page">
+                <tr>
+                  <th className="ui-table-head">Brand</th>
+                  <th className="ui-table-head">Description</th>
+                  <th className="ui-table-head">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {brands.map((brand) => (
+                  <tr key={brand.id} className="border-b border-line align-top last:border-b-0">
+                    <td className="ui-table-cell font-medium text-ink">{brand.name}</td>
+                    <td className="ui-table-cell text-secondary">{brand.description || "No description added yet."}</td>
+                    <td className="ui-table-cell">
+                      <div className="flex flex-wrap gap-2">
+                        <Link to={`/admin/brands/${brand.id}/edit`}>
+                          <Button type="button" variant="secondary">
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleDelete(brand.id)}
+                          disabled={deletingId === brand.id}
+                        >
+                          {deletingId === brand.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </SurfaceCard>
     </div>
   );
 }

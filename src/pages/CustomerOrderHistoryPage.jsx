@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 
 import EmptyState from "../components/common/EmptyState";
 import StatusBanner from "../components/common/StatusBanner";
 import { getCrmCustomerOrders } from "../services/crmService";
+import { getStoredUser } from "../utils/auth";
 
 const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 function CustomerOrderHistoryPage() {
   const { customer } = useOutletContext();
+  const user = getStoredUser();
+  const canOpenOrderDetail = user?.role === "admin" || user?.role === "sales_executive";
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,7 +78,13 @@ function CustomerOrderHistoryPage() {
               {orders.map((order) => (
                 <tr key={order.id} className="border-b border-line">
                   <td className="px-5 py-4">
-                    <p className="font-medium text-ink">{order.order_number}</p>
+                    {canOpenOrderDetail ? (
+                      <Link to={`/orders/${order.id}`} className="font-medium text-ink hover:underline">
+                        {order.order_number}
+                      </Link>
+                    ) : (
+                      <p className="font-medium text-ink">{order.order_number}</p>
+                    )}
                     <p className="text-sm text-secondary">{order.payment_method.toUpperCase()}</p>
                   </td>
                   <td className="px-5 py-4 text-ink">{order.order_status}</td>

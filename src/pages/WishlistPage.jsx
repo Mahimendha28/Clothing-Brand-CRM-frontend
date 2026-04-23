@@ -108,8 +108,8 @@ function WishlistPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ui-eyebrow">Wishlist</p>
-          <h1 className="mt-4 font-display text-6xl leading-[0.92] text-ink">Saved for later.</h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
+          <h1 className="ui-hero-title">Saved for later.</h1>
+          <p className="ui-hero-copy">
             Keep products aside, remove anything you no longer need, or move saved items directly into the cart when you are ready.
           </p>
         </div>
@@ -158,7 +158,7 @@ function WishlistPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
                           {item.category_name}
                         </p>
-                        <Link to={`/products/${item.slug}`} className="mt-3 block font-display text-4xl leading-none text-ink">
+                        <Link to={`/products/${item.slug}`} className="mt-3 block font-display text-2xl leading-none text-ink md:text-3xl">
                           {item.product_name}
                         </Link>
                         <p className="mt-3 text-sm text-secondary">{item.brand_name}</p>

@@ -108,12 +108,12 @@ function CartPage() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="ui-page-wrap space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ui-eyebrow">Cart</p>
-          <h1 className="mt-4 font-display text-6xl leading-[0.92] text-ink">Your selected pieces.</h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
+          <h1 className="ui-hero-title">Your selected pieces.</h1>
+          <p className="ui-hero-copy">
             Review your items, adjust quantities, remove anything you no longer need, and keep the running subtotal accurate.
           </p>
         </div>
@@ -165,7 +165,7 @@ function CartPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
                           {item.category_name}
                         </p>
-                        <Link to={`/products/${item.slug}`} className="mt-3 block font-display text-4xl leading-none text-ink">
+                        <Link to={`/products/${item.slug}`} className="mt-3 block font-display text-2xl leading-none text-ink md:text-3xl">
                           {item.product_name}
                         </Link>
                         <p className="mt-3 text-sm text-secondary">{item.brand_name}</p>
@@ -251,7 +251,7 @@ function CartPage() {
               </div>
               <div className="border-t border-line pt-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">Payable total</p>
-                <p className="mt-3 font-display text-5xl leading-none text-ink">
+                <p className="mt-3 font-display text-4xl leading-none text-ink md:text-5xl">
                   {formatCatalogPrice(cart.subtotal)}
                 </p>
               </div>

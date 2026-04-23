@@ -48,10 +48,16 @@ const crmNavItems = [
     match: (pathname) =>
       pathname === "/inventory" ||
       pathname.startsWith("/inventory/") ||
-      pathname.startsWith("/admin/products") ||
       pathname.startsWith("/admin/categories") ||
       pathname.startsWith("/admin/brands"),
     roles: ["admin", "inventory_manager"]
+  },
+  {
+    label: "Products",
+    to: "/admin/products",
+    icon: ShoppingBag,
+    match: (pathname) => pathname === "/admin/products" || pathname.startsWith("/admin/products/"),
+    roles: ["admin"]
   },
   {
     label: "Orders",
@@ -89,13 +95,6 @@ const crmNavItems = [
     icon: BarChart3,
     match: (pathname) => pathname === "/dashboard/sales",
     roles: ["admin", "sales_executive", "marketing_manager"]
-  },
-  {
-    label: "Inventory Dash",
-    to: "/dashboard/inventory",
-    icon: Package,
-    match: (pathname) => pathname === "/dashboard/inventory",
-    roles: ["admin", "inventory_manager"]
   },
   {
     label: "Returns",
@@ -230,6 +229,18 @@ function DashboardLayout() {
   const currentCrmTitle = useMemo(() => {
     if (location.pathname.startsWith("/admin/products/create")) {
       return "Create Product";
+    }
+
+    if (location.pathname.startsWith("/admin/categories/create")) {
+      return "Create Category";
+    }
+
+    if (location.pathname.startsWith("/admin/brands/create")) {
+      return "Create Brand";
+    }
+
+    if (location.pathname.startsWith("/inventory/adjustments/new")) {
+      return "Record Stock";
     }
 
     if (location.pathname.includes("/edit")) {

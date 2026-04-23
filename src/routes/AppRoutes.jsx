@@ -31,6 +31,8 @@ import AdminUsers from "../pages/AdminUsers";
 import AdminUserForm from "../pages/AdminUserForm";
 import Categories from "../pages/Categories";
 import Brands from "../pages/Brands";
+import CategoryFormPage from "../pages/CategoryFormPage";
+import BrandFormPage from "../pages/BrandFormPage";
 import Products from "../pages/Products";
 import AddProduct from "../pages/AddProduct";
 import EditProduct from "../pages/EditProduct";
@@ -45,6 +47,7 @@ import CouponManagementPage from "../pages/CouponManagementPage";
 import CouponFormPage from "../pages/CouponFormPage";
 import SalesDashboard from "../pages/SalesDashboard";
 import InventoryDashboardPage from "../pages/InventoryDashboardPage";
+import InventoryAdjustmentFormPage from "../pages/InventoryAdjustmentFormPage";
 
 function AppRoutes() {
   return (
@@ -113,6 +116,7 @@ function AppRoutes() {
         <Route element={<RoleRoute allowedRoles={["admin", "inventory_manager"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/inventory/adjustments/new" element={<InventoryAdjustmentFormPage />} />
           </Route>
         </Route>
 
@@ -150,7 +154,11 @@ function AppRoutes() {
             <Route path="/admin/users/:userId/edit" element={<AdminUserForm />} />
             <Route path="/admin/users/:userId" element={<Profile />} />
             <Route path="/admin/categories" element={<Categories />} />
+            <Route path="/admin/categories/create" element={<CategoryFormPage />} />
+            <Route path="/admin/categories/:categoryId/edit" element={<CategoryFormPage />} />
             <Route path="/admin/brands" element={<Brands />} />
+            <Route path="/admin/brands/create" element={<BrandFormPage />} />
+            <Route path="/admin/brands/:brandId/edit" element={<BrandFormPage />} />
             <Route path="/admin/products" element={<Products />} />
             <Route path="/admin/products/create" element={<AddProduct />} />
             <Route path="/admin/products/:productId/edit" element={<EditProduct />} />

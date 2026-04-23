@@ -309,7 +309,9 @@ function AdminDashboard() {
                   {topProducts.map((product, index) => (
                     <div key={product.id} className="flex items-center justify-between gap-3 rounded-[16px] border border-line bg-page px-4 py-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-ink">{index + 1}. {product.product_name}</p>
+                        <Link to={`/admin/products/${product.id}`} className="truncate text-sm font-semibold text-ink hover:underline">
+                          {index + 1}. {product.product_name}
+                        </Link>
                         <p className="mt-1 text-sm text-secondary">{product.category_name} | {product.brand_name}</p>
                       </div>
                       <div className="text-right">
@@ -404,7 +406,11 @@ function AdminDashboard() {
                         <tbody>
                           {paginatedOrders.map((order) => (
                             <tr key={order.id} className="border-b border-line last:border-b-0">
-                              <td className="ui-table-cell font-medium text-ink">{order.order_number}</td>
+                              <td className="ui-table-cell font-medium text-ink">
+                                <Link to={`/orders/${order.id}`} className="hover:underline">
+                                  {order.order_number}
+                                </Link>
+                              </td>
                               <td className="ui-table-cell text-secondary">{order.customer_name}</td>
                               <td className="ui-table-cell text-secondary">{formatDateTime(order.created_at)}</td>
                               <td className="ui-table-cell text-ink">{formatCatalogPrice(order.total_amount)}</td>

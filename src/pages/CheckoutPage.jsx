@@ -21,8 +21,8 @@ const paymentMethods = [
   },
   {
     value: "stripe",
-    label: "Credit Card (Stripe)",
-    description: "Pay securely using your credit or debit card."
+    label: "Online Payment (Stripe)",
+    description: "Pay securely using UPI, QR, debit/credit card, or other Stripe-supported methods."
   }
 ];
 
@@ -322,13 +322,13 @@ function CheckoutPage() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="ui-page-wrap space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ui-eyebrow">Checkout</p>
-          <h1 className="mt-4 font-display text-6xl leading-[0.92] text-ink">Complete your order.</h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-secondary">
-            Review selected products, apply a coupon if available, choose a delivery address, and finish with COD or the demo card flow.
+          <h1 className="ui-hero-title">Complete your order.</h1>
+          <p className="ui-hero-copy">
+            Review selected products, apply a coupon if available, choose a delivery address, and finish with COD or secure online payment.
           </p>
         </div>
 
@@ -593,7 +593,7 @@ function CheckoutPage() {
               </div>
               {paymentMethod === "stripe" ? (
                 <div className="mt-6 rounded-[12px] bg-sky-50 p-4 text-xs text-sky-700">
-                  You will be redirected to Stripe hosted checkout to complete payment securely.
+                  You will be redirected to Stripe Checkout to complete payment securely using available methods (UPI/QR/card).
                 </div>
               ) : null}
             </section>
@@ -653,7 +653,7 @@ function CheckoutPage() {
                   : restoringCheckout
                     ? "Finalizing Stripe order..."
                   : paymentMethod === "stripe"
-                    ? "Pay via Stripe Checkout"
+                    ? "Pay Online (UPI/Card)"
                     : "Place COD Order"}
               </Button>
               <Link to="/cart" className="block">

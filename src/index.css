@@ -106,6 +106,19 @@
     @apply font-display text-lg font-semibold leading-snug text-ink;
   }
 
+  .ui-page-wrap {
+    @apply ui-container py-6 md:py-8 xl:py-10;
+  }
+
+  .ui-hero-title {
+    @apply mt-3 font-display leading-[0.95] tracking-tight text-ink;
+    font-size: clamp(2.2rem, 4.8vw, 4rem);
+  }
+
+  .ui-hero-copy {
+    @apply mt-4 max-w-2xl text-sm leading-7 text-secondary;
+  }
+
   .ui-page-copy {
     @apply text-sm leading-6 text-secondary;
   }

@@ -1,25 +1,11 @@
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import StatusBanner from "../components/common/StatusBanner";
 import { buildCatalogImageUrl, formatCatalogPrice, getStoreProducts } from "../services/catalogService";
-import {
-  getHierarchyCategories,
-  getHierarchySubcategories,
-  getHierarchyTypes
-} from "../services/hierarchyService";
-
-const departmentOrder = ["men", "women", "kids"];
-
-const departmentVisuals = {
-  men: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1400&q=80",
-  women: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1400&q=80",
-  kids: "https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=1400&q=80"
-};
 
 function Home() {
   const [products, setProducts] = useState([]);
-  const [hierarchy, setHierarchy] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState("");
 
@@ -31,49 +17,17 @@ function Home() {
         setError("");
         setLoadingProducts(true);
 
-        const [productsResponse, categoriesResponse, subcategoriesResponse, typesResponse] = await Promise.all([
-          getStoreProducts({ limit: 12 }),
-          getHierarchyCategories(),
-          getHierarchySubcategories(),
-          getHierarchyTypes()
-        ]);
-
-        if (ignore) {
-          return;
-        }
+        const response = await getStoreProducts({ limit: 4 });
+        if (ignore) return;
 
         startTransition(() => {
-          setProducts(productsResponse.products || []);
+          setProducts(response.products || []);
         });
 
-        const categories = categoriesResponse.categories || [];
-        const subcategories = subcategoriesResponse.subcategories || [];
-        const types = typesResponse.types || [];
-
-        const topCategories = categories
-          .filter((category) => departmentOrder.includes(category.name.toLowerCase()))
-          .sort((a, b) => departmentOrder.indexOf(a.name.toLowerCase()) - departmentOrder.indexOf(b.name.toLowerCase()));
-
-        const categoryTree = topCategories.map((category) => {
-          const matchedSubcategories = subcategories
-            .filter((subcategory) => Number(subcategory.category_id) === Number(category.id))
-            .map((subcategory) => ({
-              ...subcategory,
-              types: types.filter((itemType) => Number(itemType.subcategory_id) === Number(subcategory.id))
-            }));
-
-          return {
-            ...category,
-            subcategories: matchedSubcategories
-          };
-        });
-
-        setHierarchy(categoryTree);
       } catch (apiError) {
         if (!ignore) {
           setError(apiError.message || "Failed to load homepage content.");
           setProducts([]);
-          setHierarchy([]);
         }
       } finally {
         if (!ignore) {
@@ -89,159 +43,183 @@ function Home() {
     };
   }, []);
 
-  const groupedProducts = useMemo(() => {
-    const groups = { men: [], women: [], kids: [] };
-
-    products.forEach((product) => {
-      const key = product.category_name?.toLowerCase();
-      if (groups[key]) {
-        groups[key].push(product);
-      }
-    });
-
-    return groups;
-  }, [products]);
-
   return (
-    <div className="min-h-screen bg-[#f8f8f6] text-[#1f1f1f]">
-      <StatusBanner tone="danger">{error}</StatusBanner>
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
+      {error && <StatusBanner tone="danger" className="w-full">{error}</StatusBanner>}
 
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(214,88,58,0.18),transparent_42%),radial-gradient(circle_at_80%_10%,rgba(43,101,171,0.15),transparent_35%),linear-gradient(180deg,#0f1013_0%,#1f2329_100%)]" />
-        <div className="relative mx-auto grid w-full max-w-[1500px] gap-12 px-6 pb-20 pt-16 md:px-10 lg:grid-cols-[1fr_1.1fr] lg:pt-24">
-          <div className="space-y-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/65">Spring Summer 2026</p>
-            <h1 className="max-w-xl text-5xl font-black leading-[1.05] text-white md:text-7xl">
-              Style Marketplace for Men, Women and Kids
-            </h1>
-            <p className="max-w-xl text-base leading-8 text-white/70">
-              Shop by department, dive into subcategories, and explore daily-wear types in a cleaner ecommerce flow.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/products" className="rounded-full bg-white px-7 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#111]">
-                Shop Collection
-              </Link>
-              <Link to="/products?sort=new" className="rounded-full border border-white/40 px-7 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white">
-                New Arrivals
-              </Link>
-            </div>
+      {/* Hero Video Section (Screenshot 3 Style) */}
+      <section className="relative h-[85vh] min-h-[600px] w-full bg-[#041e3a] flex items-end justify-start overflow-hidden">
+        {/* Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
+          poster="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=2000&q=80"
+        >
+          {/* A reliable generic fashion/lifestyle video URL */}
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-woman-walking-on-the-street-doing-a-fashion-pose-1049-large.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Subtle gradient so text is readable */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        
+        <div className="relative z-10 px-8 md:px-16 pb-16 md:pb-24 max-w-2xl">
+          <p className="mb-4 text-[10px] font-semibold tracking-widest text-white uppercase font-sans">
+            RALPH LAUREN
+          </p>
+          <h1 className="mb-6 text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-wide">
+            Spring/Summer 2026
+          </h1>
+          <p className="mb-8 text-white/90 text-sm md:text-base font-serif leading-relaxed max-w-md">
+            The polished charm of classic sporting pursuits inspires Ralph Lauren's vision of timeless American luxury.
+          </p>
+          <div className="flex flex-wrap gap-6">
+             <Link
+               to="/products"
+               className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white border-b border-white pb-1 hover:text-white/70 hover:border-white/70 transition-colors"
+             >
+               SHOP NOW
+             </Link>
+             <Link
+               to="/about"
+               className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white border-b border-white pb-1 hover:text-white/70 hover:border-white/70 transition-colors"
+             >
+               EXPLORE NOW
+             </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {hierarchy.map((category) => {
-              const key = category.name.toLowerCase();
-              return (
+      {/* Linen Shop Static Hero (Screenshot 1 Style) */}
+      <section className="relative h-[90vh] min-h-[600px] w-full bg-[#f8f8f8] flex items-end justify-center overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=2000&q=80"
+          alt="Linen Shop"
+          className="absolute inset-0 h-full w-full object-cover object-top"
+        />
+        {/* Subtle gradient for text readability at the bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        
+        <div className="relative z-10 text-center pb-16 md:pb-24">
+          <p className="mb-3 text-[10px] font-bold tracking-[0.3em] text-white uppercase font-sans drop-shadow-md">
+            POLO RALPH LAUREN
+          </p>
+          <h2 className="text-5xl md:text-7xl font-serif text-white tracking-wide drop-shadow-lg">
+            Linen Shop
+          </h2>
+        </div>
+      </section>
+
+      {/* 50/50 Split Section (Screenshot 2 Style) */}
+      <section className="w-full flex flex-col md:flex-row h-auto md:h-[80vh] min-h-[600px]">
+        {/* Left: Summer */}
+        <div className="relative w-full md:w-1/2 h-[60vh] md:h-full bg-gray-200 overflow-hidden group cursor-pointer">
+           <img
+             src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80"
+             alt="Summer Collection"
+             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+           />
+           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+           <div className="absolute bottom-12 left-10 md:left-16 right-10 z-10">
+              <p className="mb-3 text-[10px] font-bold tracking-[0.2em] text-white uppercase font-sans drop-shadow-md">
+                POLO RALPH LAUREN
+              </p>
+              <h2 className="mb-5 text-4xl md:text-5xl font-serif text-white tracking-wide drop-shadow-lg">
+                Summer
+              </h2>
+              <p className="mb-8 text-white/90 text-sm md:text-base font-serif leading-relaxed max-w-sm drop-shadow-md">
+                Easy styles, in a seasonal array of lightweight fabrics and silhouettes, for refined summer days.
+              </p>
+              <Link
+                to="/products?category=women"
+                className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white border-b border-white pb-1 hover:text-white/70 hover:border-white/70 transition-colors drop-shadow-md inline-block"
+              >
+                SHOP NOW
+              </Link>
+           </div>
+        </div>
+        
+        {/* Right: Special Occasion */}
+        <div className="relative w-full md:w-1/2 h-[60vh] md:h-full bg-gray-300 overflow-hidden group cursor-pointer">
+           <img
+             src="https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=1200&q=80"
+             alt="Special Occasion"
+             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+           />
+           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+           <div className="absolute bottom-12 left-10 md:left-16 right-10 z-10">
+              <p className="mb-3 text-[10px] font-bold tracking-[0.2em] text-white uppercase font-sans drop-shadow-md">
+                POLO RALPH LAUREN
+              </p>
+              <h2 className="mb-5 text-4xl md:text-5xl font-serif text-white tracking-wide drop-shadow-lg">
+                Special Occasion
+              </h2>
+              <p className="mb-8 text-white/90 text-sm md:text-base font-serif leading-relaxed max-w-sm drop-shadow-md">
+                Charming classics in seasonal hues and fabrics for spring's celebrations.
+              </p>
+              <div className="flex gap-6">
                 <Link
-                  key={category.id}
-                  to={`/${encodeURIComponent(key)}`}
-                  className="group relative h-[360px] overflow-hidden rounded-3xl border border-white/20 shadow-2xl"
+                  to="/products?category=kids"
+                  className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white border-b border-white pb-1 hover:text-white/70 hover:border-white/70 transition-colors drop-shadow-md inline-block"
                 >
-                  <img
-                    src={departmentVisuals[key]}
-                    alt={category.name}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <div className="absolute bottom-5 left-5 right-5">
-                    <p className="text-2xl font-black uppercase tracking-wide text-white">{category.name}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/70">
-                      {(category.subcategories || []).length} subcategories
-                    </p>
-                  </div>
+                  SHOP BOYS
                 </Link>
-              );
-            })}
-          </div>
+                <Link
+                  to="/products?category=kids"
+                  className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white border-b border-white pb-1 hover:text-white/70 hover:border-white/70 transition-colors drop-shadow-md inline-block"
+                >
+                  SHOP GIRLS
+                </Link>
+              </div>
+           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1500px] px-6 py-16 md:px-10">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#777]">Category Navigation</p>
-            <h2 className="mt-3 text-4xl font-black uppercase tracking-[0.04em]">Shop by Hierarchy</h2>
-          </div>
-          <Link to="/products" className="text-sm font-semibold uppercase tracking-[0.14em] text-[#444]">
-            View All Products
-          </Link>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {hierarchy.map((category) => {
-            const key = category.name.toLowerCase();
-            return (
-              <article key={category.id} className="rounded-2xl border border-[#e8e8e1] bg-white p-5 shadow-sm">
-                <Link to={`/${encodeURIComponent(key)}`} className="text-2xl font-black uppercase">
-                  {category.name}
-                </Link>
-                <div className="mt-4 space-y-3">
-                  {(category.subcategories || []).map((subcategory) => (
-                    <div key={subcategory.id} className="rounded-xl bg-[#f7f7f3] p-3">
-                      <Link
-                        to={`/products?category=${encodeURIComponent(key)}&subcategory=${subcategory.id}`}
-                        className="text-sm font-bold uppercase tracking-[0.1em] text-[#222]"
-                      >
-                        {subcategory.name}
-                      </Link>
-                      <p className="mt-1 text-xs text-[#666]">
-                        {(subcategory.types || []).slice(0, 4).map((itemType) => itemType.name).join(" | ") || "More styles"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-[1500px] px-6 pb-20 md:px-10">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#777]">Trending Picks</p>
-            <h2 className="mt-3 text-4xl font-black uppercase tracking-[0.04em]">Popular Right Now</h2>
-          </div>
+      {/* Recommended Products Strip (Classic Minimal) */}
+      <section className="mx-auto w-full max-w-[1440px] px-6 py-24 md:px-12">
+        <div className="mb-12 text-center">
+          <h2 className="text-2xl md:text-3xl font-serif tracking-widest text-[#041e3a] uppercase">Discover More</h2>
         </div>
 
         {loadingProducts ? (
-          <p className="text-sm text-[#666]">Loading products...</p>
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-[#041e3a]" />
+          </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.slice(0, 8).map((product) => {
+          <div className="grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-6 md:grid-cols-4">
+            {products.map((product) => {
               const image = buildCatalogImageUrl(product.hero_image);
               return (
-                <Link key={product.id} to={`/products/${product.slug}`} className="group overflow-hidden rounded-2xl border border-[#ecece8] bg-white shadow-sm">
-                  <div className="aspect-[4/5] overflow-hidden bg-[#f2f2ed]">
+                <div key={product.id} className="group flex flex-col">
+                  <Link to={`/products/${product.slug}`} className="relative mb-4 block aspect-[3/4] w-full overflow-hidden bg-gray-50">
                     <img
                       src={image || "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80"}
                       alt={product.product_name}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      className="h-full w-full object-cover transition duration-700"
                     />
-                  </div>
-                  <div className="p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#777]">{product.category_name}</p>
-                    <h3 className="mt-2 text-lg font-bold text-[#202020]">{product.product_name}</h3>
-                    <p className="mt-2 text-sm font-semibold text-[#111]">
+                  </Link>
+                  <div className="text-center px-2">
+                    <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-gray-500 font-sans">
+                      RALPH LAUREN
+                    </p>
+                    <Link to={`/products/${product.slug}`}>
+                      <h3 className="text-sm font-serif tracking-wide text-[#041e3a] transition-colors hover:text-gray-500 line-clamp-1">
+                        {product.product_name}
+                      </h3>
+                    </Link>
+                    <p className="mt-2 text-xs font-sans font-medium text-[#041e3a]">
                       {formatCatalogPrice(product.price_from || product.base_price)}
                     </p>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
         )}
       </section>
 
-      <section className="border-t border-[#e8e8e1] bg-white">
-        <div className="mx-auto flex w-full max-w-[1500px] flex-wrap items-center justify-between gap-6 px-6 py-8 text-sm md:px-10">
-          <p className="font-semibold uppercase tracking-[0.14em] text-[#333]">Trusted shopping flow for Men, Women, Kids</p>
-          <div className="flex flex-wrap items-center gap-4 text-[#666]">
-            <span>Secure checkout</span>
-            <span>Easy returns</span>
-            <span>Fast delivery</span>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

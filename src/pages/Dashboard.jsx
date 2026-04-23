@@ -1,4 +1,5 @@
 import AdminDashboard from "./AdminDashboard";
+import Inventory from "./Inventory";
 import InventoryDashboardPage from "./InventoryDashboardPage";
 import SalesDashboard from "./SalesDashboard";
 import SalesExecutiveOverview from "./SalesExecutiveOverview";
@@ -17,7 +18,7 @@ function Dashboard() {
   }
 
   if (user?.role === "inventory_manager") {
-    return <InventoryDashboardPage />;
+    return <Inventory />;
   }
 
   if (user?.role === "customer") {

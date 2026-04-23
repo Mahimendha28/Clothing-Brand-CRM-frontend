@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
@@ -111,7 +112,13 @@ function ReturnManagementPage() {
                 <article key={returnRequest.id} className="rounded-[24px] bg-page p-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <p className="ui-eyebrow">{returnRequest.order_number}</p>
+                      {returnRequest.order_id || returnRequest.orderId ? (
+                        <Link to={`/orders/${returnRequest.order_id || returnRequest.orderId}`} className="ui-eyebrow hover:underline">
+                          {returnRequest.order_number}
+                        </Link>
+                      ) : (
+                        <p className="ui-eyebrow">{returnRequest.order_number}</p>
+                      )}
                       <h2 className="mt-3 text-2xl font-semibold text-ink">{returnRequest.customer_name}</h2>
                       <p className="mt-3 text-sm leading-7 text-secondary">{returnRequest.reason}</p>
                       {returnRequest.customer_notes ? (

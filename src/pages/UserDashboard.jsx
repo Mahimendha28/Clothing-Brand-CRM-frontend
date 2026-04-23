@@ -266,7 +266,15 @@ function UserDashboard() {
                     <tbody>
                       {recentReturns.map((entry) => (
                         <tr key={entry.id} className="border-b border-line last:border-b-0">
-                          <td className="ui-table-cell font-medium text-ink">{entry.order_number}</td>
+                          <td className="ui-table-cell font-medium text-ink">
+                            {entry.order_id || entry.orderId ? (
+                              <Link to={`/my-orders/${entry.order_id || entry.orderId}`} className="hover:underline">
+                                {entry.order_number}
+                              </Link>
+                            ) : (
+                              entry.order_number
+                            )}
+                          </td>
                           <td className="ui-table-cell text-secondary">{formatDate(entry.created_at)}</td>
                           <td className="ui-table-cell text-secondary">{entry.reason}</td>
                           <td className="ui-table-cell">

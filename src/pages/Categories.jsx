@@ -1,39 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Button from "../components/common/Button";
 import EmptyState from "../components/common/EmptyState";
-import FormField from "../components/common/FormField";
 import PageHeader from "../components/common/PageHeader";
 import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
-import { ALLOWED_TOP_LEVEL_CATEGORIES, isAllowedTopLevelCategory } from "../constants/categories";
-import {
-  createCategory,
-  deleteCategory,
-  getCategories,
-  updateCategory
-} from "../services/authService";
+import { isAllowedTopLevelCategory } from "../constants/categories";
+import { deleteCategory, getCategories } from "../services/authService";
 
 function Categories() {
   const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: ""
-  });
-  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const visibleCategories = categories.filter((category) => isAllowedTopLevelCategory(category.name));
+
+  const visibleCategories = useMemo(
+    () => categories.filter((category) => isAllowedTopLevelCategory(category.name)),
+    [categories]
+  );
 
   const loadCategories = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await getCategories();
-      setCategories(response.categories);
+      setCategories(response.categories || []);
     } catch (apiError) {
       setError(apiError.message || "Failed to load categories");
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -43,60 +39,6 @@ function Categories() {
     loadCategories();
   }, []);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: ""
-    });
-    setEditingId(null);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    setMessage("");
-
-    if (!isAllowedTopLevelCategory(formData.name)) {
-      setError("Only Men, Women, and Kids categories are allowed.");
-      setSaving(false);
-      return;
-    }
-
-    try {
-      if (editingId) {
-        await updateCategory(editingId, formData);
-        setMessage("Category updated successfully");
-      } else {
-        await createCategory(formData);
-        setMessage("Category created successfully");
-      }
-
-      resetForm();
-      loadCategories();
-    } catch (apiError) {
-      setError(apiError.message || "Failed to save category");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (category) => {
-    setEditingId(category.id);
-    setFormData({
-      name: category.name,
-      description: category.description || ""
-    });
-  };
-
   const handleDelete = async (categoryId) => {
     const confirmed = window.confirm("Do you want to delete this category?");
 
@@ -105,103 +47,102 @@ function Categories() {
     }
 
     try {
+      setDeletingId(categoryId);
       setError("");
       setMessage("");
       await deleteCategory(categoryId);
+      setCategories((current) => current.filter((category) => category.id !== categoryId));
       setMessage("Category deleted successfully");
-      loadCategories();
     } catch (apiError) {
       setError(apiError.message || "Failed to delete category");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Category Master"
         title="Categories"
-        description="Maintain the three storefront categories used across the admin workspace."
+        description="Manage category records in a consistent table workflow with dedicated create and edit pages."
+        actions={
+          <Link to="/admin/categories/create">
+            <Button className="ui-compact-button !min-w-[148px]">Create Category</Button>
+          </Link>
+        }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <SurfaceCard>
-          <h2 className="text-base font-semibold text-ink">{editingId ? "Edit category" : "Add category"}</h2>
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <FormField
-              label="Category Name"
-              as="select"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              options={[
-                { value: "", label: "Select category" },
-                ...ALLOWED_TOP_LEVEL_CATEGORIES.map((category) => ({
-                  value: category,
-                  label: category
-                }))
-              ]}
-            />
-            <FormField
-              as="textarea"
-              label="Description"
-              name="description"
-              rows="4"
-              value={formData.description}
-              onChange={handleChange}
-            />
+      <StatusBanner tone="success">{message}</StatusBanner>
+      <StatusBanner tone="danger">{error}</StatusBanner>
 
-            <StatusBanner tone="success">{message}</StatusBanner>
-            <StatusBanner tone="danger">{error}</StatusBanner>
-
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingId ? "Update Category" : "Create Category"}
-              </Button>
-              {editingId ? (
-                <Button type="button" variant="secondary" onClick={resetForm}>
-                  Cancel
-                </Button>
-              ) : null}
-            </div>
-          </form>
-        </SurfaceCard>
-
-        <SurfaceCard>
-          <h2 className="text-base font-semibold text-ink">Category list</h2>
-          {loading ? <p className="mt-4 text-sm text-secondary">Loading categories...</p> : null}
-
-          <div className="mt-4 space-y-3">
-            {!loading && visibleCategories.length === 0 ? (
-              <EmptyState
-                title="No categories yet"
-                description="Create Men, Women, or Kids to structure the catalog."
-              />
-            ) : null}
-
-            {visibleCategories.map((category) => (
-              <div key={category.id} className="rounded-card bg-canvas p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <h3 className="text-base font-semibold text-ink">{category.name}</h3>
-                    <p className="mt-1.5 text-sm leading-6 text-secondary">
-                      {category.description || "No description added yet."}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button type="button" variant="secondary" onClick={() => handleEdit(category)}>
-                      Edit
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => handleDelete(category.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+      <SurfaceCard className="space-y-5 !p-5 md:!p-6">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Total Categories</p>
+            <p className="mt-2 text-xl font-semibold text-ink">{visibleCategories.length}</p>
+            <p className="mt-1 text-sm text-secondary">Allowed storefront categories currently configured.</p>
           </div>
-        </SurfaceCard>
-      </div>
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Allowed Set</p>
+            <p className="mt-2 text-xl font-semibold text-ink">Men, Women, Kids</p>
+            <p className="mt-1 text-sm text-secondary">Only top-level categories are available in this module.</p>
+          </div>
+          <div className="rounded-[16px] border border-line bg-page px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Workflow</p>
+            <p className="mt-2 text-xl font-semibold text-ink">List First</p>
+            <p className="mt-1 text-sm text-secondary">Create and edit now open in a dedicated form page.</p>
+          </div>
+        </div>
+
+        {loading ? <p className="text-sm text-secondary">Loading categories...</p> : null}
+
+        {!loading && !visibleCategories.length ? (
+          <EmptyState
+            title="No categories yet"
+            description="Use Create Category to add Men, Women, or Kids."
+          />
+        ) : null}
+
+        {visibleCategories.length ? (
+          <div className="overflow-x-auto rounded-[18px] border border-line">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-page">
+                <tr>
+                  <th className="ui-table-head">Category</th>
+                  <th className="ui-table-head">Description</th>
+                  <th className="ui-table-head">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleCategories.map((category) => (
+                  <tr key={category.id} className="border-b border-line align-top last:border-b-0">
+                    <td className="ui-table-cell font-medium text-ink">{category.name}</td>
+                    <td className="ui-table-cell text-secondary">{category.description || "No description added yet."}</td>
+                    <td className="ui-table-cell">
+                      <div className="flex flex-wrap gap-2">
+                        <Link to={`/admin/categories/${category.id}/edit`}>
+                          <Button type="button" variant="secondary">
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deletingId === category.id}
+                        >
+                          {deletingId === category.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </SurfaceCard>
     </div>
   );
 }

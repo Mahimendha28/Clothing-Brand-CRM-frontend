@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Search, ChevronDown, Filter } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,9 +10,22 @@ import { buildCatalogImageUrl, formatCatalogPrice, getStoreFilters, getStoreProd
 
 const normalizeOptionValue = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, "-");
 const featureCategoryKeys = new Set(["men", "women", "kids"]);
+const resolveOptionId = (options, rawValue) => {
+  if (!rawValue) {
+    return "";
+  }
+
+  if (!Number.isNaN(Number(rawValue))) {
+    return String(rawValue);
+  }
+
+  const matchedOption = (options || []).find((option) => normalizeOptionValue(option.name) === normalizeOptionValue(rawValue));
+  return matchedOption ? String(matchedOption.id) : String(rawValue);
+};
 
 function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const skipNextUrlSyncRef = useRef(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
@@ -60,48 +73,45 @@ function ProductListing() {
   }, []);
 
   useEffect(() => {
-    const resolveOptionId = (options, rawValue) => {
-      if (!rawValue) {
-        return "";
-      }
-
-      if (!Number.isNaN(Number(rawValue))) {
-        return String(rawValue);
-      }
-
-      const matchedOption = (options || []).find((option) => normalizeOptionValue(option.name) === normalizeOptionValue(rawValue));
-      return matchedOption ? String(matchedOption.id) : String(rawValue);
-    };
-
     const nextSearchTerm = searchParams.get("search") || "";
     const nextSortOption = searchParams.get("sort") || "new";
-    const nextCategory = resolveOptionId(catalogFilters.categories, searchParams.get("category") || "");
-    const nextSubcategory = resolveOptionId(catalogFilters.subcategories, searchParams.get("subcategory") || "");
-    const nextType = resolveOptionId(catalogFilters.types, searchParams.get("type") || "");
-    const nextBrand = resolveOptionId(catalogFilters.brands, searchParams.get("brand") || "");
+    const nextCategory = searchParams.get("category") || "";
+    const nextSubcategory = searchParams.get("subcategory") || "";
+    const nextType = searchParams.get("type") || "";
+    const nextBrand = searchParams.get("brand") || "";
     const nextSize = searchParams.get("size") || "";
     const nextMinPrice = searchParams.get("minPrice") || "";
     const nextMaxPrice = searchParams.get("maxPrice") || "";
+    const fallbackMaxPrice = String(catalogFilters.price_range.max || 0);
+    const targetSliderValue = nextMaxPrice || fallbackMaxPrice;
+    const nextFilters = {
+      category: nextCategory,
+      subcategory: nextSubcategory,
+      type: nextType,
+      brand: nextBrand,
+      size: nextSize,
+      minPrice: nextMinPrice,
+      maxPrice: nextMaxPrice
+    };
+    const shouldSyncFromUrl =
+      searchTerm !== nextSearchTerm ||
+      sortOption !== nextSortOption ||
+      String(sliderPrice) !== String(targetSliderValue) ||
+      JSON.stringify(filters) !== JSON.stringify(nextFilters);
+
+    if (shouldSyncFromUrl) {
+      // Prevent the URL sync effect from writing stale local state back to the URL.
+      skipNextUrlSyncRef.current = true;
+    }
 
     setSearchTerm((current) => (current === nextSearchTerm ? current : nextSearchTerm));
     setSortOption((current) => (current === nextSortOption ? current : nextSortOption));
     setSliderPrice((current) => {
-      const fallbackMaxPrice = String(catalogFilters.price_range.max || 0);
-      const targetValue = nextMaxPrice || fallbackMaxPrice;
+      const targetValue = targetSliderValue;
       return String(current) === String(targetValue) ? current : targetValue;
     });
     setFilters((current) => {
-      const nextState = {
-        category: nextCategory,
-        subcategory: nextSubcategory,
-        type: nextType,
-        brand: nextBrand,
-        size: nextSize,
-        minPrice: nextMinPrice,
-        maxPrice: nextMaxPrice
-      };
-
-      return JSON.stringify(current) === JSON.stringify(nextState) ? current : nextState;
+      return JSON.stringify(current) === JSON.stringify(nextFilters) ? current : nextFilters;
     });
   }, [searchParams, catalogFilters]);
 
@@ -111,11 +121,16 @@ function ProductListing() {
       try {
         setLoading(true);
         setError("");
+        const resolvedCategory = resolveOptionId(catalogFilters.categories, filters.category);
+        const resolvedSubcategory = resolveOptionId(catalogFilters.subcategories, filters.subcategory);
+        const resolvedType = resolveOptionId(catalogFilters.types, filters.type);
+        const resolvedBrand = resolveOptionId(catalogFilters.brands, filters.brand);
+
         const response = await getStoreProducts({
-          category: filters.category,
-          subcategory: filters.subcategory,
-          type: filters.type,
-          brand: filters.brand,
+          category: resolvedCategory,
+          subcategory: resolvedSubcategory,
+          type: resolvedType,
+          brand: resolvedBrand,
           size: filters.size,
           search: deferredSearchTerm.trim()
         });
@@ -133,9 +148,14 @@ function ProductListing() {
     };
     loadProducts();
     return () => { ignore = true; };
-  }, [filters.brand, filters.category, filters.subcategory, filters.type, filters.size, deferredSearchTerm]);
+  }, [filters.brand, filters.category, filters.subcategory, filters.type, filters.size, deferredSearchTerm, catalogFilters]);
 
   useEffect(() => {
+    if (skipNextUrlSyncRef.current) {
+      skipNextUrlSyncRef.current = false;
+      return;
+    }
+
     const params = new URLSearchParams();
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (filters.category) params.set("category", filters.category);
@@ -146,8 +166,13 @@ function ProductListing() {
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
     if (sortOption) params.set("sort", sortOption);
-    setSearchParams(params, { replace: true });
-  }, [filters, searchTerm, sortOption, setSearchParams]);
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+
+    if (nextQuery !== currentQuery) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [filters, searchTerm, sortOption, searchParams, setSearchParams]);
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => {
@@ -203,7 +228,10 @@ function ProductListing() {
   });
 
   const selectedCategory = useMemo(
-    () => (catalogFilters.categories || []).find((category) => String(category.id) === String(filters.category)) || null,
+    () => {
+      const resolvedId = resolveOptionId(catalogFilters.categories, filters.category);
+      return (catalogFilters.categories || []).find((category) => String(category.id) === String(resolvedId)) || null;
+    },
     [catalogFilters.categories, filters.category]
   );
 
@@ -215,8 +243,9 @@ function ProductListing() {
       return null;
     }
 
+    const resolvedId = resolveOptionId(catalogFilters.subcategories, filters.subcategory);
     return (
-      (catalogFilters.subcategories || []).find((subcategory) => String(subcategory.id) === String(filters.subcategory)) || null
+      (catalogFilters.subcategories || []).find((subcategory) => String(subcategory.id) === String(resolvedId)) || null
     );
   }, [catalogFilters.subcategories, filters.subcategory]);
 
@@ -409,7 +438,7 @@ function ProductListing() {
                   </label>
                   {catalogFilters.categories.map(cat => (
                      <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="radio" name="category" checked={filters.category === String(cat.id)} onChange={() => handleFilterChange("category", String(cat.id))} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
+                        <input type="radio" name="category" checked={resolveOptionId(catalogFilters.categories, filters.category) === String(cat.id)} onChange={() => handleFilterChange("category", String(cat.id))} className="w-4 h-4 text-primary bg-input border-soft rounded cursor-pointer accent-primary" />
                         <span className="text-sm text-secondary group-hover:text-primary font-medium transition-colors">{cat.name}</span>
                      </label>
                   ))}
@@ -420,7 +449,7 @@ function ProductListing() {
                <h3 className="text-sm font-bold text-primary mb-4">Subcategory</h3>
                <div className="relative">
                  <select
-                    value={filters.subcategory}
+                    value={resolveOptionId(catalogFilters.subcategories, filters.subcategory)}
                     onChange={(e) => handleFilterChange("subcategory", e.target.value)}
                     className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
                  >
@@ -437,7 +466,7 @@ function ProductListing() {
                <h3 className="text-sm font-bold text-primary mb-4">Type</h3>
                <div className="relative">
                  <select
-                    value={filters.type}
+                    value={resolveOptionId(catalogFilters.types, filters.type)}
                     onChange={(e) => handleFilterChange("type", e.target.value)}
                     className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer"
                  >
@@ -467,7 +496,7 @@ function ProductListing() {
             <div className="mb-8">
                <h3 className="text-sm font-bold text-primary mb-4">Brand</h3>
                <div className="relative">
-                 <select value={filters.brand} onChange={(e) => handleFilterChange("brand", e.target.value)} className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer">
+                 <select value={resolveOptionId(catalogFilters.brands, filters.brand)} onChange={(e) => handleFilterChange("brand", e.target.value)} className="w-full bg-canvas rounded-xl px-4 py-3 text-sm font-medium text-primary outline-none focus:ring-2 focus:ring-accent/30 appearance-none border border-soft shadow-sm cursor-pointer">
                     <option value="">All Brands</option>
                     {catalogFilters.brands.map(brand => (
                        <option key={brand.id} value={brand.id}>{brand.name}</option>

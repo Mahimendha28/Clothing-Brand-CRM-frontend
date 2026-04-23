@@ -189,7 +189,15 @@ function ReturnsPage() {
                     <tbody>
                       {paginatedReturns.map((returnRequest) => (
                         <tr key={returnRequest.id} className="border-b border-line align-top">
-                          <td className="ui-table-cell font-medium">{returnRequest.order_number}</td>
+                          <td className="ui-table-cell font-medium">
+                            {returnRequest.order_id || returnRequest.orderId ? (
+                              <Link to={`/my-orders/${returnRequest.order_id || returnRequest.orderId}`} className="hover:underline">
+                                {returnRequest.order_number}
+                              </Link>
+                            ) : (
+                              returnRequest.order_number
+                            )}
+                          </td>
                           <td className="ui-table-cell text-secondary">{formatReturnDate(returnRequest.created_at)}</td>
                           <td className="ui-table-cell">
                             <p className="font-medium">{returnRequest.reason}</p>

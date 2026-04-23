@@ -248,7 +248,9 @@ function OrderQueuePage() {
                   {paginatedOrders.map((order) => (
                     <tr key={order.id} className="border-b border-line align-top last:border-b-0">
                       <td className="ui-table-cell">
-                        <p className="font-semibold text-ink">{order.order_number}</p>
+                        <Link to={`/orders/${order.id}`} className="font-semibold text-ink hover:underline">
+                          {order.order_number}
+                        </Link>
                         <p className="mt-1 text-xs text-secondary">
                           {order.item_count} {order.item_count === 1 ? "item" : "items"}
                         </p>
