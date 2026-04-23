@@ -212,19 +212,32 @@ function DashboardLayout() {
     navigate("/");
   };
 
+  const isStaff = user?.role && user.role !== "customer";
   const useCrmShell =
+<<<<<<< HEAD
     !isCustomer &&
     (
       user?.role === "admin" ||
+=======
+    isStaff &&
+    (user?.role === "admin" ||
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
       location.pathname.startsWith("/admin") ||
       location.pathname.startsWith("/dashboard") ||
       location.pathname.startsWith("/inventory") ||
       location.pathname.startsWith("/orders") ||
       location.pathname.startsWith("/customers") ||
+<<<<<<< HEAD
       crmShellPaths.has(location.pathname)
     );
 
   const brandName = landingContent?.brand || "Sajan";
+=======
+      crmShellPaths.has(location.pathname));
+
+  const brandName = landingContent?.brand || "Badshah";
+  const brandSubtext = isStaff ? "Administration" : "Member Portal";
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
   const visibleCrmNavItems = crmNavItems.filter((item) => !item.roles || item.roles.includes(user?.role));
   const currentCrmTitle = useMemo(() => {
     if (location.pathname.startsWith("/admin/products/create")) {
@@ -324,7 +337,11 @@ function DashboardLayout() {
               </div>
               <span>{brandName}</span>
             </Link>
+<<<<<<< HEAD
             <p className="ml-10 text-sm font-medium text-muted">Administration</p>
+=======
+            <p className="text-xs text-muted font-medium ml-10">{brandSubtext}</p>
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
           </div>
 
           <nav className="mt-3 flex-1 overflow-y-auto px-4">
@@ -401,6 +418,7 @@ function DashboardLayout() {
                     className="w-full rounded-full bg-input py-2 pl-10 pr-4 text-sm text-primary placeholder:text-muted shadow-sm inset-shadow-sm transition-all focus:bg-canvas focus:outline-none focus:ring-2 focus:ring-accent/20"
                   />
                 </div>
+<<<<<<< HEAD
               </form>
             </div>
 
@@ -426,6 +444,29 @@ function DashboardLayout() {
                 <LayoutDashboard className="w-5 h-5" />
               </Link>
             </div>
+=======
+             </div>
+             
+             <div className="flex items-center gap-3">
+                {isStaff && (
+                  <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary text-canvas text-sm font-medium rounded-full shadow-sm hover:scale-105 transition-transform" onClick={() => navigate(user?.role === "admin" ? "/admin/products/create" : "/inventory")}>
+                    <span className="text-lg leading-none">+</span> New Product
+                  </button>
+                )}
+                <div className="h-6 w-px bg-strong mx-1 hidden md:block" />
+                <Link to={notificationsPath} className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors relative">
+                   <Bell className="w-5 h-5" />
+                   {unreadCount > 0 ? (
+                     <span className="absolute -top-0.5 -right-1 min-w-[18px] rounded-full bg-danger px-1.5 text-center text-[10px] font-bold leading-[18px] text-canvas">
+                       {unreadCount > 99 ? "99+" : unreadCount}
+                     </span>
+                   ) : null}
+                </Link>
+                <Link to="/" className="p-2.5 text-secondary hover:text-primary hover:bg-input rounded-full transition-colors" title="View Store">
+                   <LayoutDashboard className="w-5 h-5" />
+                </Link>
+             </div>
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
           </header>
 
           <main className="w-full px-4 py-4 sm:px-6 lg:px-8 lg:py-6">

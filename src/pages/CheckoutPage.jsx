@@ -65,263 +65,122 @@ function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [restoringCheckout, setRestoringCheckout] = useState(false);
   const { toastSuccess, toastError, toastInfo } = useToast();
+  
   const prefilledCouponCode = new URLSearchParams(location.search).get("coupon")?.trim().toUpperCase() || "";
   const stripeSessionId = new URLSearchParams(location.search).get("session_id")?.trim() || "";
   const stripeReturnState = new URLSearchParams(location.search).get("stripe")?.trim() || "";
 
-  const checkoutAddressState = {
-    fromCheckout: true,
-    returnTo: "/checkout"
-  };
+  useEffect(() => {
+    let ignore = false;
+    const processedSessions = window._processedStripeSessions || new Set();
+    const handleStripeReturn = async () => {
+       if (stripeReturnState === "success" && stripeSessionId) {
+          if (processedSessions.has(stripeSessionId)) return;
+          processedSessions.add(stripeSessionId);
+          window._processedStripeSessions = processedSessions;
+
+          try {
+             setRestoringCheckout(true);
+             const sessionStatus = await getCheckoutSessionStatus(stripeSessionId);
+             if (sessionStatus.status === "complete" || sessionStatus.payment_status === "paid") {
+                const orderRes = await createOrder({ 
+                   addressId: sessionStatus.address_id || selectedAddressId, 
+                   paymentMethod: "stripe", 
+                   paymentIntentId: sessionStatus.payment_intent_id,
+                   couponCode: sessionStatus.coupon_code || appliedCouponCode,
+                   stripeSessionId: stripeSessionId
+                });
+                toastSuccess("Payment Successful! Order Confirmed.");
+                navigate(`/my-orders/${orderRes.order.id}`, { replace: true });
+             }
+          } catch (err) {
+             console.error("Verification error:", err);
+             // Skip 409 errors as they usually mean the order was already handled by a previous attempt or webhook
+             if (!err.message.includes("409")) {
+                toastError("Payment verification failed: " + err.message);
+             }
+          } finally {
+             setRestoringCheckout(false);
+          }
+       }
+    };
+
+    if (stripeReturnState === "success") {
+       handleStripeReturn();
+    } else {
+       const loadCheckoutBase = async () => {
+         if (!user?.id) { toastError("Session expired"); return; }
+         try {
+           setLoading(true);
+           const [cartResponse, addressResponse] = await Promise.all([getCart(), getUserAddresses(user.id)]);
+           if (ignore) return;
+           const nextCart = cartResponse.cart || emptyCart;
+           const nextAddresses = addressResponse.addresses || [];
+           const preferredAddress = location.state?.preferredAddressId ? nextAddresses.find(a => String(a.id) === String(location.state.preferredAddressId)) : null;
+           const defaultAddress = preferredAddress || nextAddresses.find(a => a.is_default) || nextAddresses[0] || null;
+           startTransition(() => {
+             setCart(nextCart);
+             setAddresses(nextAddresses);
+             setSelectedAddressId(defaultAddress ? String(defaultAddress.id) : "");
+           });
+         } catch (apiError) { toastError(apiError.message); } finally { if (!ignore) setLoading(false); }
+       };
+       loadCheckoutBase();
+    }
+    return () => { ignore = true; };
+  }, [user?.id, stripeReturnState, stripeSessionId]);
 
   useEffect(() => {
     let ignore = false;
-
-    const loadCheckoutBase = async () => {
-      if (!user?.id) {
-        toastError("Customer session unavailable");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        const [cartResponse, addressResponse] = await Promise.all([getCart(), getUserAddresses(user.id)]);
-
-        if (ignore) {
-          return;
-        }
-
-        const nextCart = cartResponse.cart || emptyCart;
-        const nextAddresses = addressResponse.addresses || [];
-        const preferredAddress = location.state?.preferredAddressId
-          ? nextAddresses.find((address) => String(address.id) === String(location.state.preferredAddressId))
-          : null;
-        const defaultAddress = preferredAddress || nextAddresses.find((address) => address.is_default) || nextAddresses[0] || null;
-
-        startTransition(() => {
-          setCart(nextCart);
-          setAddresses(nextAddresses);
-          setSelectedAddressId(defaultAddress ? String(defaultAddress.id) : "");
-        });
-      } catch (apiError) {
-        if (!ignore) {
-          toastError(apiError.message || "Failed to load checkout details");
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadCheckoutBase();
-
-    return () => {
-      ignore = true;
-    };
-  }, [location.state?.preferredAddressId, user?.id]);
-
-  useEffect(() => {
-    let ignore = false;
-
     const loadPreview = async () => {
-      if (!cart.items.length) {
-        startTransition(() => {
-          setPreview(emptyPreview);
-        });
-        return;
-      }
-
+      if (!cart.items.length) { setPreview(emptyPreview); return; }
       try {
         setPreviewLoading(true);
-        const response = await getCheckoutPricePreview({
-          addressId: selectedAddressId,
-          paymentMethod,
-          couponCode: appliedCouponCode
-        });
-
-        if (!ignore) {
-          startTransition(() => {
-            setPreview(response.preview || emptyPreview);
-          });
-        }
-      } catch (apiError) {
-        if (!ignore) {
-          toastError(apiError.message || "Failed to generate checkout preview");
-        }
-      } finally {
-        if (!ignore) {
-          setPreviewLoading(false);
-        }
-      }
+        const response = await getCheckoutPricePreview({ addressId: selectedAddressId, paymentMethod, couponCode: appliedCouponCode });
+        if (!ignore) setPreview(response.preview || emptyPreview);
+      } catch (apiError) { toastError(apiError.message); } finally { if (!ignore) setPreviewLoading(false); }
     };
-
     loadPreview();
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [cart.items.length, paymentMethod, selectedAddressId, appliedCouponCode]);
 
-  const applyCouponByCode = async (couponCode) => {
-    const normalizedCode = couponCode.trim();
-
-    if (!normalizedCode) {
-      toastError("Enter a coupon code before applying it");
-      return false;
-    }
-
-    try {
-      setCouponLoading(true);
-      const response = await applyCheckoutCoupon({
-        addressId: selectedAddressId,
-        paymentMethod,
-        couponCode: normalizedCode
-      });
-
-      startTransition(() => {
-        setAppliedCouponCode(response.preview?.coupon?.code || normalizedCode.toUpperCase());
-        setCouponInput(response.preview?.coupon?.code || normalizedCode.toUpperCase());
-        setPreview(response.preview || emptyPreview);
-      });
-      toastSuccess(response.message || "Coupon applied successfully");
-      return true;
-    } catch (apiError) {
-      toastError(apiError.message || "Failed to apply coupon");
-      return false;
-    } finally {
-      setCouponLoading(false);
-    }
-  };
-
   const handleApplyCoupon = async () => {
-    await applyCouponByCode(couponInput);
+     if (!couponInput.trim()) return;
+     try {
+        setCouponLoading(true);
+        const response = await applyCheckoutCoupon({ addressId: selectedAddressId, paymentMethod, couponCode: couponInput });
+        setAppliedCouponCode(couponInput.toUpperCase());
+        setPreview(response.preview || emptyPreview);
+        toastSuccess("Coupon applied!");
+     } catch (apiError) { toastError(apiError.message); } finally { setCouponLoading(false); }
   };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCouponCode("");
-    setCouponInput("");
-    toastInfo("Coupon removed from checkout");
-  };
-
-  useEffect(() => {
-    if (!prefilledCouponCode || !cart.items.length || appliedCouponCode === prefilledCouponCode || couponLoading) {
-      return;
-    }
-
-    setCouponInput(prefilledCouponCode);
-    void applyCouponByCode(prefilledCouponCode);
-  }, [prefilledCouponCode, cart.items.length, appliedCouponCode, couponLoading, paymentMethod, selectedAddressId]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    const finalizeStripeCheckout = async () => {
-      if (stripeReturnState !== "success" || !stripeSessionId) {
-        if (stripeReturnState === "cancel" && !ignore) {
-          toastInfo("Stripe checkout was canceled. You can try again.");
-        }
-        return;
-      }
-
-      try {
-        setRestoringCheckout(true);
-        toastInfo("Verifying Stripe payment and creating your order...");
-        const sessionResponse = await getCheckoutSessionStatus(stripeSessionId);
-
-        if (sessionResponse.payment_status !== "paid" || !sessionResponse.payment_intent_id) {
-          throw new Error("Stripe session is not paid yet");
-        }
-
-        const orderResponse = await createOrder({
-          addressId: sessionResponse.address_id || selectedAddressId,
-          paymentMethod: "stripe",
-          couponCode: sessionResponse.coupon_code || appliedCouponCode,
-          paymentIntentId: sessionResponse.payment_intent_id
-        });
-
-        if (!ignore && orderResponse.order?.id) {
-          toastSuccess("Payment successful. Order created.");
-          navigate(`/my-orders/${orderResponse.order.id}`, { replace: true });
-        }
-      } catch (apiError) {
-        if (!ignore) {
-          const message = apiError.message || "Failed to finalize Stripe checkout";
-          toastError(message);
-        }
-      } finally {
-        if (!ignore) {
-          setRestoringCheckout(false);
-        }
-      }
-    };
-
-    void finalizeStripeCheckout();
-
-    return () => {
-      ignore = true;
-    };
-  }, [
-    stripeReturnState,
-    stripeSessionId,
-    selectedAddressId,
-    appliedCouponCode,
-    navigate
-  ]);
 
   const handlePlaceOrder = async () => {
-    let createdOrder = null;
-
-    if (!selectedAddressId) {
-      toastError("Please select a delivery address before placing the order");
-      return;
-    }
-
+    if (!selectedAddressId) { toastError("Select an address"); return; }
     try {
       setPlacingOrder(true);
-
       if (paymentMethod === "stripe") {
-        const sessionResponse = await createCheckoutSession({
-          addressId: selectedAddressId,
-          couponCode: appliedCouponCode
-        });
-
-        if (!sessionResponse.checkout_url) {
-          throw new Error("Stripe checkout URL could not be created");
-        }
-
-        toastInfo("Redirecting to Stripe Checkout...");
-        window.location.assign(sessionResponse.checkout_url);
+        const res = await createCheckoutSession({ addressId: selectedAddressId, couponCode: appliedCouponCode });
+        if (res.checkout_url) window.location.assign(res.checkout_url);
         return;
-      } else {
-        const orderResponse = await createOrder({
-          addressId: selectedAddressId,
-          paymentMethod,
-          couponCode: appliedCouponCode
-        });
-        createdOrder = orderResponse.order;
       }
-
-      toastSuccess("Order placed successfully");
-      navigate(`/my-orders/${createdOrder.id}`, { replace: true });
-    } catch (apiError) {
-      const message =
-        createdOrder?.id
-          ? `${apiError.message || "Checkout could not be completed"}. The order was created and is visible in My Orders.`
-          : apiError.message || "Failed to complete checkout";
-      toastError(message);
-    } finally {
-      setPlacingOrder(false);
-    }
+      const orderRes = await createOrder({ addressId: selectedAddressId, paymentMethod, couponCode: appliedCouponCode });
+      toastSuccess("Order placed!");
+      navigate(`/my-orders/${orderRes.order.id}`, { replace: true });
+    } catch (apiError) { toastError(apiError.message); } finally { setPlacingOrder(false); }
   };
 
   if (loading) {
-    return <p className="text-sm text-secondary">Loading checkout...</p>;
+     return (
+        <div className="shop-container py-20 flex flex-col items-center">
+           <div className="w-10 h-10 border-4 border-gray-100 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
+           <p className="text-xs font-black uppercase tracking-widest text-gray-400">Securing Checkout...</p>
+        </div>
+     );
   }
 
   return (
+<<<<<<< HEAD
     <div className="ui-page-wrap space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -330,160 +189,69 @@ function CheckoutPage() {
           <p className="ui-hero-copy">
             Review selected products, apply a coupon if available, choose a delivery address, and finish with COD or secure online payment.
           </p>
+=======
+    <div className="bg-gray-50 min-h-screen pb-20">
+      <div className="shop-container py-10">
+        <div className="flex items-center gap-4 mb-10">
+           <h1 className="text-2xl font-black uppercase tracking-tight">Checkout</h1>
+           <div className="h-px flex-1 bg-gray-200" />
+           <Link to="/cart" className="text-xs font-black uppercase tracking-widest text-[var(--color-primary)]">Back to Bag</Link>
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
         </div>
 
-        <Link
-          to="/cart"
-          className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-5 py-3 text-sm font-medium text-ink shadow-soft transition hover:bg-page"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Cart
-        </Link>
-      </div>
-
-      {!cart.items.length ? (
-        <div className="space-y-6">
-          <EmptyState
-            title="Your cart is empty"
-            description="Add products to the cart before opening the checkout flow."
-          />
-          <Link to="/products">
-            <Button className="!text-sm !font-medium !normal-case !tracking-[0.02em]">Browse Products</Button>
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-8 xl:grid-cols-[1fr_380px]">
-          <div className="space-y-6">
-            <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
-                  <PackageCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="ui-eyebrow">Selected Products</p>
-                  <h2 className="mt-2 font-display text-3xl text-ink">Cart review</h2>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-5">
-                {preview.selected_products.map((item) => {
-                  const imageUrl = buildCatalogImageUrl(item.hero_image);
-
-                  return (
-                    <div key={item.id} className="grid gap-4 rounded-[24px] border border-line bg-page p-4 md:grid-cols-[110px_1fr]">
-                      <div className="overflow-hidden rounded-[18px] bg-white">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={item.product_name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex min-h-[110px] items-end bg-[radial-gradient(circle_at_top,#ffffff_0%,#efe6d9_42%,#ddcdb6_100%)] p-4">
-                            <p className="font-display text-2xl leading-none text-ink">{item.product_name}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">{item.category_name}</p>
-                          <h3 className="mt-2 font-display text-3xl leading-none text-ink">{item.product_name}</h3>
-                          <p className="mt-3 text-sm text-secondary">{item.brand_name}</p>
-                          <p className="mt-3 text-sm leading-6 text-secondary">
-                            {item.variant
-                              ? `Variant: ${item.variant.size} / ${item.variant.color}${item.variant.sku ? ` - SKU ${item.variant.sku}` : ""}`
-                              : "Base product selection"}
-                          </p>
-                          <p className="mt-2 text-sm text-secondary">Quantity: {item.quantity}</p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-sm text-secondary">Line total</p>
-                          <p className="mt-2 text-xl font-semibold text-ink">{formatCatalogPrice(item.line_total)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
-                  <TicketPercent className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="ui-eyebrow">Coupon</p>
-                  <h2 className="mt-2 font-display text-3xl text-ink">Apply discount</h2>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-4 md:flex-row">
-                <input
-                  value={couponInput}
-                  onChange={(event) => setCouponInput(event.target.value.toUpperCase())}
-                  placeholder="Enter coupon code"
-                  className="ui-input"
-                />
-                <Button
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  disabled={couponLoading}
-                  className="!px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                >
-                  {couponLoading ? "Applying..." : "Apply Coupon"}
-                </Button>
-                {appliedCouponCode ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleRemoveCoupon}
-                    className="!px-5 !py-3 !text-sm !font-medium !normal-case !tracking-[0.02em]"
-                  >
-                    Remove
-                  </Button>
-                ) : null}
-              </div>
-
-              {preview.coupon ? (
-                <div className="mt-5 rounded-[24px] bg-page p-5">
-                  <p className="font-medium text-ink">{preview.coupon.code}</p>
-                  <p className="mt-2 text-sm text-secondary">{preview.coupon.title}</p>
-                  <p className="mt-2 text-sm text-secondary">
-                    Discount applied: {formatCatalogPrice(preview.summary.discount_total)}
-                  </p>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
-                    <MapPin className="h-5 w-5" />
+        {!cart.items.length ? (
+          <EmptyState title="Empty Bag" description="Add items before checking out." />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12">
+            
+            <div className="space-y-8">
+               {/* ADDRESS SECTION */}
+               <section className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-center mb-6">
+                     <h2 className="text-sm font-black uppercase tracking-widest">Select Address</h2>
+                     <Link to="/addresses" className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] px-3 py-1 border border-[var(--color-primary)] rounded hover:bg-[var(--color-primary)] hover:text-white transition-all">+ Add New</Link>
                   </div>
-                  <div>
-                    <p className="ui-eyebrow">Address Selection</p>
-                    <h2 className="mt-2 font-display text-3xl text-ink">Delivery destination</h2>
+                  
+                  <div className="space-y-4">
+                     {addresses.map(addr => (
+                        <label key={addr.id} className={`block p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedAddressId === String(addr.id) ? "border-[var(--color-primary)] bg-pink-50/10" : "border-gray-100 hover:border-gray-200"}`}>
+                           <div className="flex gap-4">
+                              <input type="radio" checked={selectedAddressId === String(addr.id)} onChange={() => setSelectedAddressId(String(addr.id))} className="mt-1 accent-[var(--color-primary)]" />
+                              <div className="flex-1">
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-black text-sm uppercase">{addr.full_name}</span>
+                                    <span className="text-[9px] font-black uppercase bg-gray-100 px-2 py-0.5 rounded text-gray-500">{addr.address_type}</span>
+                                 </div>
+                                 <p className="text-[13px] text-gray-500 leading-relaxed font-medium">
+                                    {addr.address_line_1}, {addr.city}, {addr.state} - {addr.postal_code}
+                                 </p>
+                                 <p className="text-[11px] text-gray-400 mt-2 font-bold">Mobile: <span className="text-gray-600">{addr.phone}</span></p>
+                              </div>
+                           </div>
+                        </label>
+                     ))}
                   </div>
-                </div>
+               </section>
 
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    to="/addresses"
-                    state={checkoutAddressState}
-                    className="inline-flex items-center rounded-full border border-line bg-page px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
-                  >
-                    Add Address
-                  </Link>
-                  <Link
-                    to="/addresses"
-                    state={checkoutAddressState}
-                    className="inline-flex items-center rounded-full border border-line bg-page px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
-                  >
-                    Manage Addresses
-                  </Link>
-                </div>
-              </div>
+               {/* PAYMENT SECTION */}
+               <section className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                  <h2 className="text-sm font-black uppercase tracking-widest mb-6">Payment Method</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {paymentMethods.map(m => (
+                        <label key={m.value} className={`block p-6 rounded-xl border-2 transition-all cursor-pointer ${paymentMethod === m.value ? "border-[var(--color-primary)] bg-pink-50/10" : "border-gray-100 hover:border-gray-200"}`}>
+                           <div className="flex items-center gap-4">
+                              <input type="radio" checked={paymentMethod === m.value} onChange={() => setPaymentMethod(m.value)} className="accent-[var(--color-primary)]" />
+                              <div>
+                                 <p className="font-black text-xs uppercase tracking-tight">{m.label}</p>
+                                 <p className="text-[10px] text-gray-400 font-medium mt-1">{m.description}</p>
+                              </div>
+                           </div>
+                        </label>
+                     ))}
+                  </div>
+               </section>
 
+<<<<<<< HEAD
               {!addresses.length ? (
                 <div className="mt-6 rounded-[24px] border border-dashed border-line bg-page p-5">
                   <p className="font-medium text-ink">No saved addresses yet</p>
@@ -509,63 +277,69 @@ function CheckoutPage() {
                           checked={selectedAddressId === String(address.id)}
                           onChange={() => setSelectedAddressId(String(address.id))}
                           className="mt-1"
-                        />
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-lg font-semibold text-ink">{address.full_name}</p>
-                            <span className="rounded-full bg-white px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-secondary">
-                              {address.address_type}
-                            </span>
-                            {address.is_default ? (
-                              <span className="rounded-full border border-line px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted">
-                                Default
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="mt-3 text-sm leading-6 text-secondary">
-                            {address.address_line_1}
-                            {address.address_line_2 ? `, ${address.address_line_2}` : ""}
-                            {`, ${address.city}, ${address.state} - ${address.postal_code}, ${address.country}`}
-                          </p>
-                          <p className="mt-2 text-sm text-secondary">Phone: {address.phone}</p>
-                          <div className="mt-4 flex flex-wrap gap-3">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAddressId(String(address.id))}
-                              className="text-sm font-medium text-ink underline underline-offset-4"
-                            >
-                              {selectedAddressId === String(address.id) ? "Selected for checkout" : "Use this address"}
-                            </button>
-                            <Link
-                              to="/addresses"
-                              state={{
-                                ...checkoutAddressState,
-                                editAddressId: address.id
-                              }}
-                              className="text-sm font-medium text-ink underline underline-offset-4"
-                            >
-                              Edit address
-                            </Link>
-                          </div>
+=======
+               {/* PRODUCT REVIEW */}
+               <section className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                  <h2 className="text-sm font-black uppercase tracking-widest mb-6">Order Review ({preview.summary.item_count} Items)</h2>
+                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                     {preview.selected_products.map(p => (
+                        <div key={p.id} className="w-20 shrink-0">
+                           <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                              <img src={buildCatalogImageUrl(p.hero_image)} className="w-full h-full object-cover" />
+                           </div>
+                           <p className="text-[9px] font-black mt-2 text-center uppercase tracking-tighter truncate">{p.product_name}</p>
                         </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </section>
+                     ))}
+                  </div>
+               </section>
+            </div>
 
-            <section className="rounded-[32px] border border-line bg-white p-6 shadow-soft">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="ui-eyebrow">Payment Method</p>
-                  <h2 className="mt-2 font-display text-3xl text-ink">Choose payment</h2>
-                </div>
-              </div>
+            {/* SIDEBAR SUMMARY */}
+            <aside className="space-y-6">
+               <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 sticky top-28">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-8 border-b border-gray-50 pb-4">Order Summary</h3>
+                  
+                  {/* COUPON */}
+                  <div className="mb-8">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">Apply Coupon</p>
+                     <div className="flex gap-2">
+                        <input 
+                           type="text" 
+                           value={couponInput} 
+                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())} 
+                           placeholder="CODE"
+                           className="flex-1 bg-gray-50 border border-gray-100 rounded px-4 py-2 text-xs font-black uppercase tracking-widest outline-none focus:border-[var(--color-primary)]"
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
+                        />
+                        <button onClick={handleApplyCoupon} className="text-[var(--color-primary)] text-[10px] font-black uppercase tracking-widest px-4 border border-[var(--color-primary)] rounded">Apply</button>
+                     </div>
+                  </div>
 
+                  <div className="space-y-4 text-sm font-medium">
+                     <div className="flex justify-between">
+                        <span className="text-gray-500">Order Subtotal</span>
+                        <span>{formatCatalogPrice(preview.summary.subtotal)}</span>
+                     </div>
+                     <div className="flex justify-between">
+                        <span className="text-gray-500">Coupon Discount</span>
+                        <span className="text-[var(--status-success)]">-{formatCatalogPrice(preview.summary.discount_total)}</span>
+                     </div>
+                     <div className="flex justify-between">
+                        <span className="text-gray-500">Shipping</span>
+                        <span className="text-[var(--status-success)]">{preview.summary.shipping_fee > 0 ? formatCatalogPrice(preview.summary.shipping_fee) : 'FREE'}</span>
+                     </div>
+                     <div className="flex justify-between">
+                        <span className="text-gray-500">Estimated Tax</span>
+                        <span>{formatCatalogPrice(preview.summary.tax_total)}</span>
+                     </div>
+                     
+                     <div className="border-t border-gray-100 pt-6 mt-6 flex justify-between items-end">
+                        <span className="text-sm font-black uppercase tracking-tight">Total Payable</span>
+                        <span className="text-2xl font-black">{formatCatalogPrice(preview.summary.total)}</span>
+                     </div>
+                  </div>
+
+<<<<<<< HEAD
               <div className="mt-6 grid gap-4">
                 {paymentMethods.map((method) => (
                   <label
@@ -666,6 +440,26 @@ function CheckoutPage() {
           </aside>
         </div>
       )}
+=======
+                  <button 
+                    onClick={handlePlaceOrder}
+                    disabled={placingOrder || !selectedAddressId}
+                    className="btn-primary w-full py-5 rounded-md mt-10 shadow-lg shadow-pink-100"
+                  >
+                     {placingOrder ? "PROCESSING..." : paymentMethod === "stripe" ? "PAY NOW" : "FINISH ORDER"}
+                  </button>
+
+                  <div className="mt-10 pt-10 border-t border-gray-50 space-y-4 text-[10px] text-gray-400 font-bold text-center">
+                     <p>🛡️ Secure Bank-grade Encryption</p>
+                     <p>🚚 Guaranteed delivery within 3-5 days</p>
+                  </div>
+               </div>
+            </aside>
+
+          </div>
+        )}
+      </div>
+>>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
     </div>
   );
 }
