@@ -270,13 +270,13 @@ function Home() {
 
         <div className="relative z-10 px-8 md:px-16 pb-16 md:pb-24 max-w-2xl">
           <p className="mb-4 text-[10px] font-semibold tracking-widest text-white uppercase font-sans">
-            RALPH LAUREN
+            SAJAN
           </p>
           <h1 className="mb-6 text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-wide">
             Spring/Summer 2026
           </h1>
           <p className="mb-8 text-white/90 text-sm md:text-base font-serif leading-relaxed max-w-md">
-            The polished charm of classic sporting pursuits inspires Ralph Lauren's vision of timeless American luxury.
+            The polished charm of classic sporting pursuits inspires Sajan's vision of timeless luxury.
           </p>
           <div className="flex flex-wrap gap-6">
             <Link
@@ -418,7 +418,7 @@ function Home() {
                   </Link>
                   <div className="text-center px-2">
                     <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-gray-500 font-sans">
-                      RALPH LAUREN
+                      SAJAN
                     </p>
                     <Link to={`/products/${product.slug}`}>
                       <h3 className="text-sm font-serif tracking-wide text-[#041e3a] transition-colors hover:text-gray-500 line-clamp-1">

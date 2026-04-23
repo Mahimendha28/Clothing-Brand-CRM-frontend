@@ -1,5 +1,5 @@
 export const landingContent = {
-  brand: "Badshah Clothing",
+  brand: "Sajan Clothing",
   navigation: ["Collections", "Streetwear", "Archives", "Journal"],
   hero: {
     eyebrow: "Pastel Luxury Edition",
@@ -260,7 +260,7 @@ export const landingContent = {
     },
     {
       title: "Urban Opulence",
-      eyebrow: "Badshah Exclusive",
+      eyebrow: "Sajan Exclusive",
       description: "Juxtaposing classic tailoring with oversized, relaxed fits. The new definition of modern luxury.",
       image:
         "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80"
@@ -316,7 +316,7 @@ export const authSlides = [
     eyebrow: "Global Community",
     title: "From the streets to the runway, our garments tell a story of modern luxury.",
     text: "Join a collective of individuals shaping the future of fashion.",
-    label: "Badshah Ethos",
+    label: "Sajan Ethos",
     image:
       "https://images.unsplash.com/photo-1492311915412-4ee108fccf36?auto=format&fit=crop&w=1400&q=80"
   }

@@ -224,7 +224,7 @@ function DashboardLayout() {
       crmShellPaths.has(location.pathname)
     );
 
-  const brandName = landingContent?.brand || "Badshah";
+  const brandName = landingContent?.brand || "Sajan";
   const visibleCrmNavItems = crmNavItems.filter((item) => !item.roles || item.roles.includes(user?.role));
   const currentCrmTitle = useMemo(() => {
     if (location.pathname.startsWith("/admin/products/create")) {
@@ -289,7 +289,7 @@ function DashboardLayout() {
                 <div className="flex items-center justify-between border-b border-soft px-5 py-5">
                   <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-primary">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary">
-                      <span className="text-sm font-bold leading-none text-canvas">B</span>
+                      <span className="text-sm font-bold leading-none text-canvas">S</span>
                     </div>
                     <span>{brandName}</span>
                   </Link>
@@ -320,7 +320,7 @@ function DashboardLayout() {
           <div className="px-5 py-5">
             <Link to="/" className="mb-1 flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-primary">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
-                <span className="text-base font-bold leading-none text-canvas">B</span>
+                <span className="text-base font-bold leading-none text-canvas">S</span>
               </div>
               <span>{brandName}</span>
             </Link>
@@ -445,7 +445,7 @@ function DashboardLayout() {
         <div className="flex items-center gap-4">
           <Link to="/" className="font-display text-xl font-bold tracking-tight text-primary flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-canvas text-lg leading-none font-bold">B</span>
+              <span className="text-canvas text-lg leading-none font-bold">S</span>
             </div>
             <span className="hidden sm:block">{brandName}</span>
           </Link>

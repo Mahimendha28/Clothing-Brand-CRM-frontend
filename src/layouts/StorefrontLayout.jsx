@@ -289,8 +289,8 @@ function StorefrontLayout() {
               <Menu className="h-6 w-6" />
             </button>
             <Link to="/" className="font-serif text-[22px] font-normal tracking-[0.2em] text-[#041e3a] sm:text-[26px] lg:text-[28px] uppercase">
-              <span className="hidden sm:block leading-none">{(landingContent?.brand || "RALPH LAUREN")}</span>
-              <span className="sm:hidden text-xl tracking-[0.15em] leading-none">RALPH LAUREN</span>
+              <span className="hidden sm:block leading-none">{(landingContent?.brand || "Sajan")}</span>
+              <span className="sm:hidden text-xl tracking-[0.15em] leading-none">SAJAN</span>
             </Link>
           </div>
 
@@ -522,7 +522,7 @@ function StorefrontLayout() {
               className="fixed left-0 top-0 bottom-0 z-[70] w-full max-w-[300px] bg-white flex flex-col lg:hidden border-r border-gray-200 shadow-2xl"
             >
               <div className="p-6 flex items-center justify-between border-b border-gray-200">
-                <span className="font-serif text-xl tracking-widest uppercase text-[#041e3a]">{landingContent?.brand || "RALPH LAUREN"}</span>
+                <span className="font-serif text-xl tracking-widest uppercase text-[#041e3a]">{landingContent?.brand || "Sajan"}</span>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-500 hover:text-[#041e3a] transition-colors">
                   <X className="h-6 w-6 stroke-[1.5]" />
                 </button>
@@ -590,7 +590,7 @@ function StorefrontLayout() {
 
           <div className="md:col-span-1">
             <Link to="/" className="font-serif text-2xl tracking-[0.2em] text-white flex items-center gap-2 mb-8 uppercase">
-              <span>{landingContent?.brand || "RALPH LAUREN"}</span>
+              <span>{landingContent?.brand || "Sajan"}</span>
             </Link>
             <p className="text-[11px] uppercase tracking-widest text-white/70 leading-relaxed mb-8">
               Premium quality clothing built for modern professionals. Minimalist design meets everyday comfort.
@@ -638,7 +638,7 @@ function StorefrontLayout() {
         </div>
 
         <div className="max-w-[1440px] mx-auto border-t border-white/20 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-white/50 uppercase tracking-widest">© {new Date().getFullYear()} {landingContent?.brand || "RALPH LAUREN"}. ALL RIGHTS RESERVED.</p>
+          <p className="text-[10px] text-white/50 uppercase tracking-widest">© {new Date().getFullYear()} {landingContent?.brand || "Sajan"}. ALL RIGHTS RESERVED.</p>
           <div className="flex gap-8 text-[10px] text-white/50 uppercase tracking-widest">
             <Link to="/privacy" className="hover:text-white transition-colors">Privacy Notice</Link>
             <Link to="/terms" className="hover:text-white transition-colors">Terms of Use</Link>
