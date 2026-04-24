@@ -10,11 +10,7 @@ import IconActionButton from "../components/common/IconActionButton";
 import StatusBanner from "../components/common/StatusBanner";
 import Button from "../components/common/Button";
 import { formatCatalogPrice } from "../services/catalogService";
-<<<<<<< HEAD
 import { getMyOrders } from "../services/orderService";
-=======
-import { cancelOrder, downloadOrderInvoicePdf, getMyOrders } from "../services/orderService";
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
 
 const formatOrderDate = (value) =>
   new Intl.DateTimeFormat("en-US", {
@@ -106,22 +102,6 @@ function MyOrdersPage() {
     }
   }, [cursor, filteredOrders.length]);
 
-  const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to cancel this order?")) {
-      return;
-    }
-
-    try {
-      await cancelOrder(orderId);
-      toastSuccess("Order cancelled successfully");
-      // Refresh list
-      const response = await getMyOrders();
-      setOrders(response.orders || []);
-    } catch (apiError) {
-      toastError(apiError.message || "Failed to cancel order");
-    }
-  };
-
   if (loading) {
     return <p className="text-sm text-secondary">Loading your orders...</p>;
   }
@@ -194,7 +174,6 @@ function MyOrdersPage() {
             ]}
           />
 
-<<<<<<< HEAD
           {!filteredOrders.length ? (
             <EmptyState
               title="No matching orders"
@@ -213,85 +192,6 @@ function MyOrdersPage() {
                       <th className="ui-table-head">Payment</th>
                       <th className="ui-table-head">Status</th>
                       <th className="ui-table-head text-right">Action</th>
-=======
-                  return (
-                    <tr key={order.id} className="border-b border-line align-top">
-                      <td className="px-5 py-4 font-semibold text-ink">{order.order_number}</td>
-                      <td className="px-5 py-4 text-secondary">{formatOrderDate(order.created_at)}</td>
-                      <td className="px-5 py-4 text-ink">{order.item_count}</td>
-                      <td className="px-5 py-4 text-ink">{formatCatalogPrice(order.total_amount)}</td>
-                      <td className="px-5 py-4">
-                        <p className="font-medium text-ink uppercase">{order.payment_method}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          order.order_status === 'cancelled' 
-                            ? 'bg-red-50 text-red-600' 
-                            : 'bg-page text-ink'
-                        }`}>
-                          {order.status || order.order_status}
-                        </span>
-                        <div className="mt-2 flex flex-col gap-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Payment</p>
-                          <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
-                            order.payment_status === 'paid' ? 'bg-green-50 text-green-700' :
-                            order.payment_status === 'refunded' ? 'bg-orange-50 text-orange-700' :
-                            'bg-gray-100 text-gray-500'
-                          }`}>
-                            {order.payment_status}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <Link to={`/my-orders/${order.id}`}>
-                            <Button
-                              variant="secondary"
-                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                            >
-                              View
-                            </Button>
-                          </Link>
-                          {order.order_status === "delivered" ? (
-                            <Link to={`/returns/new/${order.id}`}>
-                              <Button className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]">
-                                Return
-                              </Button>
-                            </Link>
-                          ) : null}
-                          {["placed", "confirmed", "packed"].includes(order.order_status) ? (
-                            <Button
-                              variant="outline"
-                              onClick={() => handleCancelOrder(order.id)}
-                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em] !text-red-500 border-red-100 hover:!bg-red-50"
-                            >
-                              Cancel
-                            </Button>
-                          ) : null}
-                          {canDownloadInvoice ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => handleDownloadInvoice(order.id)}
-                              disabled={pendingInvoiceOrderId === order.id}
-                              className="!px-4 !py-2 !text-xs !font-medium !normal-case !tracking-[0.02em]"
-                            >
-                              {pendingInvoiceOrderId === order.id ? "Preparing..." : "Invoice PDF"}
-                            </Button>
-                          ) : null}
-                          {hasStripeReceipt ? (
-                            <a
-                              href={order.stripe_receipt_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center rounded-full border border-line bg-white px-4 py-2 text-xs font-medium text-ink transition hover:bg-page"
-                            >
-                              Stripe Receipt
-                            </a>
-                          ) : null}
-                        </div>
-                      </td>
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
                     </tr>
                   </thead>
                   <tbody>

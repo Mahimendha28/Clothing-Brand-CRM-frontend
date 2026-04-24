@@ -14,7 +14,6 @@ import SurfaceCard from "../components/common/SurfaceCard";
 import { formatCatalogPrice } from "../services/catalogService";
 import { getOrders } from "../services/orderService";
 
-<<<<<<< HEAD
 const PAGE_SIZE = 8;
 
 const formatDate = (value) =>
@@ -38,16 +37,6 @@ const CompactSummaryCard = ({ label, value, note }) => (
     <p className="mt-1 text-sm text-secondary">{note}</p>
   </div>
 );
-=======
-const statusFilters = [
-  { value: "", label: "All" },
-  { value: "placed", label: "Pending" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" }
-];
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
 
 function OrderQueuePage() {
   const [searchParams] = useSearchParams();
@@ -239,7 +228,6 @@ function OrderQueuePage() {
           />
         ) : null}
 
-<<<<<<< HEAD
         {filteredOrders.length ? (
           <>
             <div className="overflow-x-auto rounded-[18px] border border-line">
@@ -293,35 +281,6 @@ function OrderQueuePage() {
                 </tbody>
               </table>
             </div>
-=======
-        {orders.length ? (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div key={order.id} className="rounded-card bg-canvas p-5">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div>
-                      <p className="ui-eyebrow">Order</p>
-                      <p className="mt-3 text-xl font-semibold text-ink">{order.order_number}</p>
-                      <p className="mt-2 text-sm text-secondary">{order.customer_name}</p>
-                    </div>
-                    <div>
-                      <p className="ui-eyebrow">Status</p>
-                      <p className="mt-3 text-xl font-semibold text-ink uppercase">{order.status || order.order_status}</p>
-                      <p className="mt-2 text-sm text-secondary">{order.payment_status}</p>
-                    </div>
-                    <div>
-                      <p className="ui-eyebrow">Items / Total</p>
-                      <p className="mt-3 text-xl font-semibold text-ink">{order.item_count} items</p>
-                      <p className="mt-2 text-sm text-secondary">${Number(order.total_amount).toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="ui-eyebrow">Shipment</p>
-                      <p className="mt-3 text-xl font-semibold text-ink">{order.shipment_status || "Not created"}</p>
-                      <p className="mt-2 text-sm text-secondary">{order.tracking_number || "No tracking yet"}</p>
-                    </div>
-                  </div>
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
 
             <CursorPagination
               cursor={cursor}

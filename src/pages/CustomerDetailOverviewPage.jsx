@@ -8,7 +8,12 @@ import SurfaceCard from "../components/common/SurfaceCard";
 import { getCrmCustomerNotes, getCrmCustomerOrders } from "../services/crmService";
 import { getStoredUser } from "../utils/auth";
 
-const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
 
 function CustomerDetailOverviewPage() {
   const { customer } = useOutletContext();

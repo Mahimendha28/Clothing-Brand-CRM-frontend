@@ -18,9 +18,9 @@ const handleResponse = async (response) => {
 };
 
 export const formatCatalogPrice = (value) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     maximumFractionDigits: 2
   }).format(Number(value || 0));
 
@@ -29,22 +29,11 @@ export const buildCatalogImageUrl = (imageUrl) => {
     return null;
   }
 
-  // Handle case where imageUrl might be an object
-  let url = imageUrl;
-  if (typeof imageUrl === 'object') {
-    // Try common property names for image URLs
-    url = imageUrl.url || imageUrl.image_url || imageUrl.path || null;
-  }
-  
-  if (!url || typeof url !== 'string') {
-    return null;
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
+    return imageUrl;
   }
 
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
-    return url;
-  }
-
-  return `${API_BASE_URL}${url}`;
+  return `${API_BASE_URL}${imageUrl}`;
 };
 
 export const getStoreFilters = async () => {

@@ -34,6 +34,13 @@ const initialVariantForm = {
   status: "active"
 };
 
+const formatPriceDisplay = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
+
 function ProductView() {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
@@ -271,7 +278,7 @@ function ProductView() {
     { label: "Type", value: typeLabel || "-" },
     { label: "Name", value: product.product_name },
     { label: "Slug", value: product.slug },
-    { label: "Base Price", value: `Rs. ${Number(product.base_price).toFixed(2)}` },
+    { label: "Base Price", value: formatPriceDisplay(product.base_price) },
     { label: "Status", value: product.status }
   ];
 
@@ -389,7 +396,7 @@ function ProductView() {
                       Sz: <span className="text-primary">{variant.size}</span> &bull; Col: <span className="text-primary">{variant.color}</span>
                     </p>
                     <p className="text-sm font-medium text-secondary">
-                      Rs. {Number(variant.price).toFixed(2)} &bull; {variant.stock} in stock
+                      {formatPriceDisplay(variant.price)} &bull; {variant.stock} in stock
                     </p>
                     <span
                       className={`inline-flex rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest mt-1 ${variant.status === "active"

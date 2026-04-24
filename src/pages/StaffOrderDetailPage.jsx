@@ -25,6 +25,13 @@ const initialShipmentForm = {
   notes: ""
 };
 
+const formatPriceDisplay = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
+
 function StaffOrderDetailPage() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -111,8 +118,8 @@ function StaffOrderDetailPage() {
       setMessage("");
       const response = await cancelOrder(order.id);
       setOrder(response.order || null);
-      setMessage("Order cancelled successfully");
-      toastSuccess("Order cancelled successfully");
+      setMessage(response.message || "Order cancelled successfully");
+      toastSuccess(response.message || "Order cancelled successfully");
       setShowCancelConfirm(false);
     } catch (apiError) {
       setError(apiError.message || "Failed to cancel order");
@@ -182,7 +189,7 @@ function StaffOrderDetailPage() {
     { key: "pack", label: "Pack", allowed: order.order_status === "confirmed" },
     { key: "ship", label: "Ship", allowed: order.order_status === "packed" },
     { key: "deliver", label: "Deliver", allowed: order.order_status === "shipped" },
-    { key: "cancel", label: "Cancel", allowed: order.order_status !== "cancelled" }
+    { key: "cancel", label: "Cancel", allowed: ["placed", "confirmed", "packed"].includes(order.order_status) }
   ];
 
   return (
@@ -227,13 +234,9 @@ function StaffOrderDetailPage() {
             </div>
             <div className="rounded-card bg-canvas p-4">
               <p className="ui-eyebrow">Order Status</p>
-<<<<<<< HEAD
               <div className="mt-3">
                 <StatusPill value={order.order_status} />
               </div>
-=======
-              <p className="mt-3 text-xl font-semibold text-ink uppercase">{order.status || order.order_status}</p>
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
               <p className="mt-2 text-sm text-secondary">{order.payment_method}</p>
             </div>
             <div className="rounded-card bg-canvas p-4">
@@ -244,16 +247,6 @@ function StaffOrderDetailPage() {
               <p className="mt-2 text-sm text-secondary">{order.shipment?.tracking_number || "No tracking number"}</p>
             </div>
           </div>
-
-          {order.is_cancelled && (
-            <div className="rounded-card border-red-100 bg-red-50 p-6">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-red-600">Cancellation Details</p>
-              <p className="mt-3 text-lg font-medium text-red-900">{order.cancel_reason || "No reason provided"}</p>
-              {order.cancelled_at && (
-                <p className="mt-2 text-sm text-red-700">Cancelled at: {new Date(order.cancelled_at).toLocaleString()}</p>
-              )}
-            </div>
-          )}
 
           <div className="space-y-4">
             {order.items.map((item) => (
@@ -267,7 +260,7 @@ function StaffOrderDetailPage() {
                     </p>
                   </div>
                   <div className="text-sm text-secondary">
-                    Qty {item.quantity} | ${Number(item.line_total).toFixed(2)}
+                    Qty {item.quantity} | {formatPriceDisplay(item.line_total)}
                   </div>
                 </div>
               </div>

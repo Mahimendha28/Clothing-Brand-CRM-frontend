@@ -9,14 +9,12 @@ import StatusBanner from "../components/common/StatusBanner";
 import { useToast } from "../context/ToastContext";
 import { buildCatalogImageUrl, formatCatalogPrice } from "../services/catalogService";
 import { cancelOrder, downloadOrderInvoicePdf, getOrderById } from "../services/orderService";
+import { emitNotificationsUpdated } from "../utils/notificationEvents";
 
 const orderTimelineSteps = [
-<<<<<<< HEAD
   { key: "placed", label: "Placed" },
-=======
-  { key: "placed", label: "Pending" },
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
   { key: "confirmed", label: "Confirmed" },
+  { key: "packed", label: "Packed" },
   { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" }
 ];
@@ -78,13 +76,9 @@ function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
-<<<<<<< HEAD
   const [cancellingOrder, setCancellingOrder] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-=======
-  const [cancelling, setCancelling] = useState(false);
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
   const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
@@ -137,38 +131,24 @@ function OrderDetailPage() {
   };
 
   const handleCancelOrder = async () => {
-<<<<<<< HEAD
     if (!order?.id) {
-=======
-    if (!order?.id || !window.confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
       return;
     }
 
     try {
-<<<<<<< HEAD
       setCancellingOrder(true);
       const response = await cancelOrder(order.id, cancelReason.trim());
       if (response.order) {
         setOrder(response.order);
       }
-      toastSuccess("Order cancelled successfully");
+      emitNotificationsUpdated();
+      toastSuccess(response.message || "Order cancelled successfully");
       setShowCancelDialog(false);
       setCancelReason("");
     } catch (apiError) {
       toastError(apiError.message || "Failed to cancel order");
     } finally {
       setCancellingOrder(false);
-=======
-      setCancelling(true);
-      const response = await cancelOrder(order.id);
-      setOrder(response.order);
-      toastSuccess("Order cancelled successfully");
-    } catch (apiError) {
-      toastError(apiError.message || "Failed to cancel order");
-    } finally {
-      setCancelling(false);
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
     }
   };
 
@@ -215,66 +195,13 @@ function OrderDetailPage() {
           </p>
         </div>
 
-<<<<<<< HEAD
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-page px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink">
             {order.order_status}
-=======
-        <div className="flex flex-wrap gap-3">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-            order.order_status === 'cancelled' 
-              ? 'bg-red-50 text-red-600' 
-              : 'bg-page text-ink'
-          }`}>
-            {order.status || order.order_status}
-          </span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-            order.payment_status === 'paid' ? 'bg-green-50 text-green-700' : 
-            order.payment_status === 'refunded' ? 'bg-orange-50 text-orange-700' : 
-            'bg-input text-secondary'
-          }`}>
-            {order.payment_status}
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
           </span>
           <span className="rounded-full border border-line px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary">
             {order.payment_method}
           </span>
-<<<<<<< HEAD
-=======
-          {order.order_status === "delivered" ? (
-            <Link to={`/returns/new/${order.id}`}>
-              <Button
-                type="button"
-                variant="secondary"
-                className="!px-5 !py-2.5 !text-[11px] !font-semibold !uppercase !tracking-[0.18em]"
-              >
-                Request Return
-              </Button>
-            </Link>
-          ) : null}
-          {order.payment_status === "paid" ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDownloadInvoice}
-              disabled={downloadingInvoice}
-              className="!px-5 !py-2.5 !text-[11px] !font-semibold !uppercase !tracking-[0.18em]"
-            >
-              {downloadingInvoice ? "Preparing Invoice" : "Invoice PDF"}
-            </Button>
-          ) : null}
-          {["placed", "confirmed", "packed"].includes(order.order_status) ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancelOrder}
-              disabled={cancelling}
-              className="border-red-200 !px-5 !py-2.5 !text-[11px] !font-semibold !uppercase !tracking-[0.18em] !text-red-600 hover:!bg-red-50"
-            >
-              {cancelling ? "Cancelling..." : "Cancel Order"}
-            </Button>
-          ) : null}
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
         </div>
       </div>
 
@@ -402,31 +329,8 @@ function OrderDetailPage() {
             </div>
 
             {order.order_status === "cancelled" ? (
-<<<<<<< HEAD
               <div className="mt-4 rounded-[16px] border border-line bg-page p-4">
                 <p className="text-sm text-ink">This order was cancelled before delivery completion.</p>
-=======
-              <div className="mt-5 space-y-4 rounded-[24px] border border-red-100 bg-red-50 p-5 p-6">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-red-600">Cancellation status</p>
-                  <p className="mt-2 text-lg font-medium text-red-900">
-                    This order was cancelled.
-                  </p>
-                </div>
-                {order.cancel_reason && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-red-600">Reason</p>
-                    <p className="mt-1 text-sm text-red-700 leading-relaxed italic">
-                      "{order.cancel_reason}"
-                    </p>
-                  </div>
-                )}
-                {order.cancelled_at && (
-                  <p className="mt-2 text-[11px] text-red-400">
-                    Cancelled on {formatOrderDate(order.cancelled_at)}
-                  </p>
-                )}
->>>>>>> 1de91db6071b7668a3db0c1e9aa694ca24f4e776
               </div>
             ) : null}
           </section>

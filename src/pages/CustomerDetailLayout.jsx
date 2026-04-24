@@ -7,7 +7,12 @@ import StatusBanner from "../components/common/StatusBanner";
 import SurfaceCard from "../components/common/SurfaceCard";
 import { getCrmCustomerById } from "../services/crmService";
 
-const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
 
 const formatDateTime = (value) => {
   if (!value) {

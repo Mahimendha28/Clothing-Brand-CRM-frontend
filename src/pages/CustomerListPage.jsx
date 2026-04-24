@@ -14,7 +14,12 @@ const segmentFilters = [
   { value: "top-buyers", label: "Top Buyers" }
 ];
 
-const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
 
 const formatDate = (value) => {
   if (!value) {

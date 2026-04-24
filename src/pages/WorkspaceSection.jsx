@@ -73,7 +73,7 @@ const sectionContent = {
     icon: BarChart3,
     metrics: [
       { label: "Net Growth", value: "+12.4%", note: "Revenue trend compared with the previous reporting window." },
-      { label: "Average Order", value: "$684", note: "Current basket value across completed orders." },
+      { label: "Average Order", value: "₹684", note: "Current basket value across completed orders." },
       { label: "Repeat Rate", value: "38%", note: "Customers returning for an additional purchase cycle." }
     ],
     highlights: [
